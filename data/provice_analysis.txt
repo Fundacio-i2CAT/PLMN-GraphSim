@@ -1,0 +1,482 @@
+Loading data from 214.csv...
+Assigning cells to provinces...
+
+==========================================================================================
+TOTAL CELLS BY PROVINCE - ALL OPERATORS
+==========================================================================================
+
+Provincia                       Total Cells      4G eNBs      5G gNBs
+------------------------------------------------------------------------------------------
+Barcelona                            11,340        6,935          309
+Madrid                                8,754        4,674          465
+Asturias                              5,955        3,757          417
+Burgos                                5,660        3,051           77
+Huesca                                4,157        1,961           45
+Las Palmas                            3,498        1,713           39
+Navarra                               3,109        1,203           13
+Málaga                                2,876        1,075            0
+Vizcaya                               2,805          952            0
+Valencia                              2,741        1,273            0
+León                                  2,739        1,537          126
+Murcia                                2,580        1,634            0
+Toledo                                2,500        1,381           58
+Sevilla                               2,352          978            0
+Lleida                                2,268        1,276           26
+Girona                                2,183        1,361           30
+Almería                               2,139        1,355            0
+Islas Baleares                        2,098        1,502           20
+Cantabria                             2,084          899            0
+Granada                               1,956          933            0
+Albacete                              1,910          940            0
+Valladolid                            1,852        1,053           67
+Guadalajara                           1,755        1,010           50
+Alicante                              1,628          981          182
+A Coruña                              1,626          828            0
+Zaragoza                              1,572          759            0
+Badajoz                               1,534          477            0
+Cádiz                                 1,527          436            0
+Córdoba                               1,333          492            0
+Jaén                                  1,130          529            0
+Teruel                                1,099          342            0
+Cuenca                                1,064          476           23
+Castellón                             1,037          433            0
+Soria                                   892          455           73
+Ciudad Real                             838          400            0
+Segovia                                 772          338            0
+Pontevedra                              720          223            0
+Guipúzcoa                               694          312            0
+Tarragona                               684          441            0
+Zamora                                  658          367           13
+Salamanca                               597          208            0
+Cáceres                                 490          108            0
+Palencia                                484          142           14
+Huelva                                  420           26            0
+Lugo                                    389          144            0
+Ávila                                   328           68            0
+Ourense                                 241           27            0
+Santa Cruz de Tenerife                   19           10            0
+Ceuta                                    13            0            0
+Melilla                                  12            2            0
+
+Unknown/Outside boundaries            1,248
+
+==========================================================================================
+DETAILED ANALYSIS BY PROVINCE - MAJOR OPERATORS
+==========================================================================================
+
+──────────────────────────────────────────────────────────────────────────────────────────
+ANDALUCÍA
+──────────────────────────────────────────────────────────────────────────────────────────
+
+  Almería:
+    Telefonica  :    929 cells  |  4G:   488 eNBs  |  5G:    0 gNBs
+    Orange      :    717 cells  |  4G:   557 eNBs  |  5G:    0 gNBs
+    Vodafone    :    470 cells  |  4G:   289 eNBs  |  5G:    0 gNBs
+    TOTAL       :  2,116 cells  |  4G: 1,334 eNBs  |  5G:    0 gNBs
+
+  Cádiz:
+    Telefonica  :    708 cells  |  4G:    94 eNBs  |  5G:    0 gNBs
+    Orange      :    499 cells  |  4G:   213 eNBs  |  5G:    0 gNBs
+    Vodafone    :    317 cells  |  4G:   129 eNBs  |  5G:    0 gNBs
+    TOTAL       :  1,524 cells  |  4G:   436 eNBs  |  5G:    0 gNBs
+
+  Córdoba:
+    Telefonica  :    620 cells  |  4G:   140 eNBs  |  5G:    0 gNBs
+    Orange      :    377 cells  |  4G:   195 eNBs  |  5G:    0 gNBs
+    Vodafone    :    335 cells  |  4G:   156 eNBs  |  5G:    0 gNBs
+    TOTAL       :  1,332 cells  |  4G:   491 eNBs  |  5G:    0 gNBs
+
+  Granada:
+    Telefonica  :    952 cells  |  4G:   354 eNBs  |  5G:    0 gNBs
+    Orange      :    548 cells  |  4G:   375 eNBs  |  5G:    0 gNBs
+    Vodafone    :    423 cells  |  4G:   174 eNBs  |  5G:    0 gNBs
+    TOTAL       :  1,923 cells  |  4G:   903 eNBs  |  5G:    0 gNBs
+
+  Huelva:
+    Telefonica  :    330 cells  |  4G:    18 eNBs  |  5G:    0 gNBs
+    Orange      :     77 cells  |  4G:     7 eNBs  |  5G:    0 gNBs
+    Vodafone    :     13 cells  |  4G:     1 eNBs  |  5G:    0 gNBs
+    TOTAL       :    420 cells  |  4G:    26 eNBs  |  5G:    0 gNBs
+
+  Jaén:
+    Telefonica  :    460 cells  |  4G:   163 eNBs  |  5G:    0 gNBs
+    Orange      :    359 cells  |  4G:   212 eNBs  |  5G:    0 gNBs
+    Vodafone    :    305 cells  |  4G:   148 eNBs  |  5G:    0 gNBs
+    TOTAL       :  1,124 cells  |  4G:   523 eNBs  |  5G:    0 gNBs
+
+  Málaga:
+    Telefonica  :  1,384 cells  |  4G:   231 eNBs  |  5G:    0 gNBs
+    Orange      :    829 cells  |  4G:   550 eNBs  |  5G:    0 gNBs
+    Vodafone    :    652 cells  |  4G:   285 eNBs  |  5G:    0 gNBs
+    TOTAL       :  2,865 cells  |  4G: 1,066 eNBs  |  5G:    0 gNBs
+
+  Sevilla:
+    Telefonica  :  1,241 cells  |  4G:   327 eNBs  |  5G:    0 gNBs
+    Orange      :    642 cells  |  4G:   334 eNBs  |  5G:    0 gNBs
+    Vodafone    :    461 cells  |  4G:   309 eNBs  |  5G:    0 gNBs
+    TOTAL       :  2,344 cells  |  4G:   970 eNBs  |  5G:    0 gNBs
+
+──────────────────────────────────────────────────────────────────────────────────────────
+ARAGÓN
+──────────────────────────────────────────────────────────────────────────────────────────
+
+  Huesca:
+    Telefonica  :  2,056 cells  |  4G:   858 eNBs  |  5G:   45 gNBs
+    Orange      :    973 cells  |  4G:   534 eNBs  |  5G:    0 gNBs
+    Vodafone    :  1,115 cells  |  4G:   561 eNBs  |  5G:    0 gNBs
+    TOTAL       :  4,144 cells  |  4G: 1,953 eNBs  |  5G:   45 gNBs
+
+  Teruel:
+    Telefonica  :    502 cells  |  4G:   129 eNBs  |  5G:    0 gNBs
+    Orange      :    353 cells  |  4G:   142 eNBs  |  5G:    0 gNBs
+    Vodafone    :    243 cells  |  4G:    70 eNBs  |  5G:    0 gNBs
+    TOTAL       :  1,098 cells  |  4G:   341 eNBs  |  5G:    0 gNBs
+
+  Zaragoza:
+    Telefonica  :    663 cells  |  4G:   292 eNBs  |  5G:    0 gNBs
+    Orange      :    448 cells  |  4G:   205 eNBs  |  5G:    0 gNBs
+    Vodafone    :    452 cells  |  4G:   258 eNBs  |  5G:    0 gNBs
+    TOTAL       :  1,563 cells  |  4G:   755 eNBs  |  5G:    0 gNBs
+
+──────────────────────────────────────────────────────────────────────────────────────────
+ASTURIAS
+──────────────────────────────────────────────────────────────────────────────────────────
+
+  Asturias:
+    Telefonica  :  2,378 cells  |  4G: 1,299 eNBs  |  5G:  302 gNBs
+    Orange      :  2,241 cells  |  4G: 1,561 eNBs  |  5G:  114 gNBs
+    Vodafone    :  1,091 cells  |  4G:   664 eNBs  |  5G:    1 gNBs
+    TOTAL       :  5,710 cells  |  4G: 3,524 eNBs  |  5G:  417 gNBs
+
+──────────────────────────────────────────────────────────────────────────────────────────
+CANARIAS
+──────────────────────────────────────────────────────────────────────────────────────────
+
+  Las Palmas:
+    Telefonica  :  2,081 cells  |  4G:   919 eNBs  |  5G:   39 gNBs
+    Orange      :  1,111 cells  |  4G:   656 eNBs  |  5G:    0 gNBs
+    Vodafone    :    259 cells  |  4G:    96 eNBs  |  5G:    0 gNBs
+    TOTAL       :  3,451 cells  |  4G: 1,671 eNBs  |  5G:   39 gNBs
+
+  Santa Cruz de Tenerife:
+    Telefonica  :     11 cells  |  4G:     6 eNBs  |  5G:    0 gNBs
+    Orange      :      8 cells  |  4G:     4 eNBs  |  5G:    0 gNBs
+    TOTAL       :     19 cells  |  4G:    10 eNBs  |  5G:    0 gNBs
+
+──────────────────────────────────────────────────────────────────────────────────────────
+CANTABRIA
+──────────────────────────────────────────────────────────────────────────────────────────
+
+  Cantabria:
+    Telefonica  :    688 cells  |  4G:   325 eNBs  |  5G:    0 gNBs
+    Orange      :    747 cells  |  4G:   260 eNBs  |  5G:    0 gNBs
+    Vodafone    :    645 cells  |  4G:   310 eNBs  |  5G:    0 gNBs
+    TOTAL       :  2,080 cells  |  4G:   895 eNBs  |  5G:    0 gNBs
+
+──────────────────────────────────────────────────────────────────────────────────────────
+CASTILLA Y LEÓN
+──────────────────────────────────────────────────────────────────────────────────────────
+
+  Burgos:
+    Telefonica  :  1,592 cells  |  4G:   670 eNBs  |  5G:   77 gNBs
+    Orange      :  2,991 cells  |  4G: 1,906 eNBs  |  5G:    0 gNBs
+    Vodafone    :  1,060 cells  |  4G:   465 eNBs  |  5G:    0 gNBs
+    TOTAL       :  5,643 cells  |  4G: 3,041 eNBs  |  5G:   77 gNBs
+
+  León:
+    Telefonica  :  1,018 cells  |  4G:   403 eNBs  |  5G:   74 gNBs
+    Orange      :  1,223 cells  |  4G:   893 eNBs  |  5G:   41 gNBs
+    Vodafone    :    440 cells  |  4G:   184 eNBs  |  5G:   11 gNBs
+    TOTAL       :  2,681 cells  |  4G: 1,480 eNBs  |  5G:  126 gNBs
+
+  Palencia:
+    Telefonica  :    248 cells  |  4G:    62 eNBs  |  5G:   14 gNBs
+    Orange      :    129 cells  |  4G:    31 eNBs  |  5G:    0 gNBs
+    Vodafone    :    101 cells  |  4G:    45 eNBs  |  5G:    0 gNBs
+    TOTAL       :    478 cells  |  4G:   138 eNBs  |  5G:   14 gNBs
+
+  Salamanca:
+    Telefonica  :    335 cells  |  4G:   124 eNBs  |  5G:    0 gNBs
+    Orange      :     71 cells  |  4G:    10 eNBs  |  5G:    0 gNBs
+    Vodafone    :    184 cells  |  4G:    70 eNBs  |  5G:    0 gNBs
+    TOTAL       :    590 cells  |  4G:   204 eNBs  |  5G:    0 gNBs
+
+  Segovia:
+    Telefonica  :    493 cells  |  4G:   233 eNBs  |  5G:    0 gNBs
+    Orange      :    158 cells  |  4G:    69 eNBs  |  5G:    0 gNBs
+    Vodafone    :    121 cells  |  4G:    36 eNBs  |  5G:    0 gNBs
+    TOTAL       :    772 cells  |  4G:   338 eNBs  |  5G:    0 gNBs
+
+  Soria:
+    Telefonica  :    482 cells  |  4G:   220 eNBs  |  5G:   73 gNBs
+    Orange      :    191 cells  |  4G:   103 eNBs  |  5G:    0 gNBs
+    Vodafone    :    219 cells  |  4G:   132 eNBs  |  5G:    0 gNBs
+    TOTAL       :    892 cells  |  4G:   455 eNBs  |  5G:   73 gNBs
+
+  Valladolid:
+    Telefonica  :    812 cells  |  4G:   308 eNBs  |  5G:   63 gNBs
+    Orange      :    558 cells  |  4G:   393 eNBs  |  5G:    2 gNBs
+    Vodafone    :    401 cells  |  4G:   272 eNBs  |  5G:    2 gNBs
+    TOTAL       :  1,771 cells  |  4G:   973 eNBs  |  5G:   67 gNBs
+
+  Zamora:
+    Telefonica  :    308 cells  |  4G:   134 eNBs  |  5G:   13 gNBs
+    Orange      :    183 cells  |  4G:   135 eNBs  |  5G:    0 gNBs
+    Vodafone    :    154 cells  |  4G:    85 eNBs  |  5G:    0 gNBs
+    TOTAL       :    645 cells  |  4G:   354 eNBs  |  5G:   13 gNBs
+
+  Ávila:
+    Telefonica  :    207 cells  |  4G:    37 eNBs  |  5G:    0 gNBs
+    Orange      :     59 cells  |  4G:    10 eNBs  |  5G:    0 gNBs
+    Vodafone    :     62 cells  |  4G:    21 eNBs  |  5G:    0 gNBs
+    TOTAL       :    328 cells  |  4G:    68 eNBs  |  5G:    0 gNBs
+
+──────────────────────────────────────────────────────────────────────────────────────────
+CASTILLA-LA MANCHA
+──────────────────────────────────────────────────────────────────────────────────────────
+
+  Albacete:
+    Telefonica  :    806 cells  |  4G:   343 eNBs  |  5G:    0 gNBs
+    Orange      :    663 cells  |  4G:   362 eNBs  |  5G:    0 gNBs
+    Vodafone    :    432 cells  |  4G:   227 eNBs  |  5G:    0 gNBs
+    TOTAL       :  1,901 cells  |  4G:   932 eNBs  |  5G:    0 gNBs
+
+  Ciudad Real:
+    Telefonica  :    358 cells  |  4G:   133 eNBs  |  5G:    0 gNBs
+    Orange      :    242 cells  |  4G:   132 eNBs  |  5G:    0 gNBs
+    Vodafone    :    219 cells  |  4G:   120 eNBs  |  5G:    0 gNBs
+    TOTAL       :    819 cells  |  4G:   385 eNBs  |  5G:    0 gNBs
+
+  Cuenca:
+    Telefonica  :    556 cells  |  4G:   191 eNBs  |  5G:   23 gNBs
+    Orange      :    293 cells  |  4G:   155 eNBs  |  5G:    0 gNBs
+    Vodafone    :    214 cells  |  4G:   129 eNBs  |  5G:    0 gNBs
+    TOTAL       :  1,063 cells  |  4G:   475 eNBs  |  5G:   23 gNBs
+
+  Guadalajara:
+    Telefonica  :    910 cells  |  4G:   479 eNBs  |  5G:   50 gNBs
+    Orange      :    442 cells  |  4G:   246 eNBs  |  5G:    0 gNBs
+    Vodafone    :    399 cells  |  4G:   284 eNBs  |  5G:    0 gNBs
+    TOTAL       :  1,751 cells  |  4G: 1,009 eNBs  |  5G:   50 gNBs
+
+  Toledo:
+    Telefonica  :  1,151 cells  |  4G:   401 eNBs  |  5G:   58 gNBs
+    Orange      :    673 cells  |  4G:   513 eNBs  |  5G:    0 gNBs
+    Vodafone    :    656 cells  |  4G:   451 eNBs  |  5G:    0 gNBs
+    TOTAL       :  2,480 cells  |  4G: 1,365 eNBs  |  5G:   58 gNBs
+
+──────────────────────────────────────────────────────────────────────────────────────────
+CATALUÑA
+──────────────────────────────────────────────────────────────────────────────────────────
+
+  Barcelona:
+    Telefonica  :  5,847 cells  |  4G: 3,585 eNBs  |  5G:  308 gNBs
+    Orange      :  3,717 cells  |  4G: 2,211 eNBs  |  5G:    1 gNBs
+    Vodafone    :  1,725 cells  |  4G: 1,092 eNBs  |  5G:    0 gNBs
+    TOTAL       : 11,289 cells  |  4G: 6,888 eNBs  |  5G:  309 gNBs
+
+  Girona:
+    Telefonica  :    884 cells  |  4G:   498 eNBs  |  5G:   30 gNBs
+    Orange      :    651 cells  |  4G:   374 eNBs  |  5G:    0 gNBs
+    Vodafone    :    635 cells  |  4G:   484 eNBs  |  5G:    0 gNBs
+    TOTAL       :  2,170 cells  |  4G: 1,356 eNBs  |  5G:   30 gNBs
+
+  Lleida:
+    Telefonica  :    947 cells  |  4G:   496 eNBs  |  5G:   26 gNBs
+    Orange      :    556 cells  |  4G:   340 eNBs  |  5G:    0 gNBs
+    Vodafone    :    695 cells  |  4G:   385 eNBs  |  5G:    0 gNBs
+    TOTAL       :  2,198 cells  |  4G: 1,221 eNBs  |  5G:   26 gNBs
+
+  Tarragona:
+    Telefonica  :    300 cells  |  4G:   189 eNBs  |  5G:    0 gNBs
+    Orange      :    273 cells  |  4G:   187 eNBs  |  5G:    0 gNBs
+    Vodafone    :    104 cells  |  4G:    60 eNBs  |  5G:    0 gNBs
+    TOTAL       :    677 cells  |  4G:   436 eNBs  |  5G:    0 gNBs
+
+──────────────────────────────────────────────────────────────────────────────────────────
+CEUTA
+──────────────────────────────────────────────────────────────────────────────────────────
+
+  Ceuta:
+    Telefonica  :     12 cells  |  4G:     0 eNBs  |  5G:    0 gNBs
+    Orange      :      1 cells  |  4G:     0 eNBs  |  5G:    0 gNBs
+    TOTAL       :     13 cells  |  4G:     0 eNBs  |  5G:    0 gNBs
+
+──────────────────────────────────────────────────────────────────────────────────────────
+COMUNIDAD VALENCIANA
+──────────────────────────────────────────────────────────────────────────────────────────
+
+  Alicante:
+    Telefonica  :    869 cells  |  4G:   426 eNBs  |  5G:  182 gNBs
+    Orange      :    527 cells  |  4G:   385 eNBs  |  5G:    0 gNBs
+    Vodafone    :    221 cells  |  4G:   160 eNBs  |  5G:    0 gNBs
+    TOTAL       :  1,617 cells  |  4G:   971 eNBs  |  5G:  182 gNBs
+
+  Castellón:
+    Telefonica  :    376 cells  |  4G:   127 eNBs  |  5G:    0 gNBs
+    Orange      :    552 cells  |  4G:   269 eNBs  |  5G:    0 gNBs
+    Vodafone    :    104 cells  |  4G:    32 eNBs  |  5G:    0 gNBs
+    TOTAL       :  1,032 cells  |  4G:   428 eNBs  |  5G:    0 gNBs
+
+  Valencia:
+    Telefonica  :  1,625 cells  |  4G:   781 eNBs  |  5G:    0 gNBs
+    Orange      :    631 cells  |  4G:   281 eNBs  |  5G:    0 gNBs
+    Vodafone    :    449 cells  |  4G:   183 eNBs  |  5G:    0 gNBs
+    TOTAL       :  2,705 cells  |  4G: 1,245 eNBs  |  5G:    0 gNBs
+
+──────────────────────────────────────────────────────────────────────────────────────────
+EXTREMADURA
+──────────────────────────────────────────────────────────────────────────────────────────
+
+  Badajoz:
+    Telefonica  :    690 cells  |  4G:   161 eNBs  |  5G:    0 gNBs
+    Orange      :    494 cells  |  4G:   234 eNBs  |  5G:    0 gNBs
+    Vodafone    :    347 cells  |  4G:    79 eNBs  |  5G:    0 gNBs
+    TOTAL       :  1,531 cells  |  4G:   474 eNBs  |  5G:    0 gNBs
+
+  Cáceres:
+    Telefonica  :    190 cells  |  4G:    39 eNBs  |  5G:    0 gNBs
+    Orange      :    151 cells  |  4G:    32 eNBs  |  5G:    0 gNBs
+    Vodafone    :    149 cells  |  4G:    37 eNBs  |  5G:    0 gNBs
+    TOTAL       :    490 cells  |  4G:   108 eNBs  |  5G:    0 gNBs
+
+──────────────────────────────────────────────────────────────────────────────────────────
+GALICIA
+──────────────────────────────────────────────────────────────────────────────────────────
+
+  A Coruña:
+    Telefonica  :  1,028 cells  |  4G:   434 eNBs  |  5G:    0 gNBs
+    Orange      :    363 cells  |  4G:   235 eNBs  |  5G:    0 gNBs
+    Vodafone    :    234 cells  |  4G:   159 eNBs  |  5G:    0 gNBs
+    TOTAL       :  1,625 cells  |  4G:   828 eNBs  |  5G:    0 gNBs
+
+  Lugo:
+    Telefonica  :    209 cells  |  4G:    74 eNBs  |  5G:    0 gNBs
+    Orange      :     86 cells  |  4G:    34 eNBs  |  5G:    0 gNBs
+    Vodafone    :     94 cells  |  4G:    36 eNBs  |  5G:    0 gNBs
+    TOTAL       :    389 cells  |  4G:   144 eNBs  |  5G:    0 gNBs
+
+  Ourense:
+    Telefonica  :    104 cells  |  4G:     0 eNBs  |  5G:    0 gNBs
+    Orange      :     65 cells  |  4G:    27 eNBs  |  5G:    0 gNBs
+    Vodafone    :     72 cells  |  4G:     0 eNBs  |  5G:    0 gNBs
+    TOTAL       :    241 cells  |  4G:    27 eNBs  |  5G:    0 gNBs
+
+  Pontevedra:
+    Telefonica  :    588 cells  |  4G:   208 eNBs  |  5G:    0 gNBs
+    Orange      :     52 cells  |  4G:    11 eNBs  |  5G:    0 gNBs
+    Vodafone    :     79 cells  |  4G:     3 eNBs  |  5G:    0 gNBs
+    TOTAL       :    719 cells  |  4G:   222 eNBs  |  5G:    0 gNBs
+
+──────────────────────────────────────────────────────────────────────────────────────────
+ISLAS BALEARES
+──────────────────────────────────────────────────────────────────────────────────────────
+
+  Islas Baleares:
+    Telefonica  :    977 cells  |  4G:   587 eNBs  |  5G:   20 gNBs
+    Orange      :    628 cells  |  4G:   572 eNBs  |  5G:    0 gNBs
+    Vodafone    :    447 cells  |  4G:   301 eNBs  |  5G:    0 gNBs
+    TOTAL       :  2,052 cells  |  4G: 1,460 eNBs  |  5G:   20 gNBs
+
+──────────────────────────────────────────────────────────────────────────────────────────
+MADRID
+──────────────────────────────────────────────────────────────────────────────────────────
+
+  Madrid:
+    Telefonica  :  5,852 cells  |  4G: 2,832 eNBs  |  5G:  463 gNBs
+    Orange      :  1,818 cells  |  4G: 1,300 eNBs  |  5G:    2 gNBs
+    Vodafone    :  1,044 cells  |  4G:   505 eNBs  |  5G:    0 gNBs
+    TOTAL       :  8,714 cells  |  4G: 4,637 eNBs  |  5G:  465 gNBs
+
+──────────────────────────────────────────────────────────────────────────────────────────
+MELILLA
+──────────────────────────────────────────────────────────────────────────────────────────
+
+  Melilla:
+    Telefonica  :      1 cells  |  4G:     0 eNBs  |  5G:    0 gNBs
+    Vodafone    :     11 cells  |  4G:     2 eNBs  |  5G:    0 gNBs
+    TOTAL       :     12 cells  |  4G:     2 eNBs  |  5G:    0 gNBs
+
+──────────────────────────────────────────────────────────────────────────────────────────
+MURCIA
+──────────────────────────────────────────────────────────────────────────────────────────
+
+  Murcia:
+    Telefonica  :  1,025 cells  |  4G:   657 eNBs  |  5G:    0 gNBs
+    Orange      :  1,080 cells  |  4G:   712 eNBs  |  5G:    0 gNBs
+    Vodafone    :    411 cells  |  4G:   205 eNBs  |  5G:    0 gNBs
+    TOTAL       :  2,516 cells  |  4G: 1,574 eNBs  |  5G:    0 gNBs
+
+──────────────────────────────────────────────────────────────────────────────────────────
+NAVARRA
+──────────────────────────────────────────────────────────────────────────────────────────
+
+  Navarra:
+    Telefonica  :  1,403 cells  |  4G:   583 eNBs  |  5G:   13 gNBs
+    Orange      :  1,043 cells  |  4G:   368 eNBs  |  5G:    0 gNBs
+    Vodafone    :    657 cells  |  4G:   246 eNBs  |  5G:    0 gNBs
+    TOTAL       :  3,103 cells  |  4G: 1,197 eNBs  |  5G:   13 gNBs
+
+──────────────────────────────────────────────────────────────────────────────────────────
+PAÍS VASCO
+──────────────────────────────────────────────────────────────────────────────────────────
+
+  Guipúzcoa:
+    Telefonica  :    222 cells  |  4G:   131 eNBs  |  5G:    0 gNBs
+    Orange      :    329 cells  |  4G:   136 eNBs  |  5G:    0 gNBs
+    Vodafone    :    141 cells  |  4G:    44 eNBs  |  5G:    0 gNBs
+    TOTAL       :    692 cells  |  4G:   311 eNBs  |  5G:    0 gNBs
+
+  Vizcaya:
+    Telefonica  :    537 cells  |  4G:   179 eNBs  |  5G:    0 gNBs
+    Orange      :  1,529 cells  |  4G:   708 eNBs  |  5G:    0 gNBs
+    Vodafone    :    735 cells  |  4G:    61 eNBs  |  5G:    0 gNBs
+    TOTAL       :  2,801 cells  |  4G:   948 eNBs  |  5G:    0 gNBs
+
+==========================================================================================
+TOP 15 PROVINCES BY 5G DEPLOYMENT
+==========================================================================================
+
+Rank   Provincia                   Total gNBs Breakdown
+------------------------------------------------------------------------------------------
+1      Madrid                             465   Orange:   2  |  Telefonica: 463
+2      Asturias                           417   Orange: 114  |  Telefonica: 302  |  Vodafone:   1
+3      Barcelona                          309   Orange:   1  |  Telefonica: 308
+4      Alicante                           182   Telefonica: 182
+5      León                               126   Orange:  41  |  Telefonica:  74  |  Vodafone:  11
+6      Burgos                              77   Telefonica:  77
+7      Soria                               73   Telefonica:  73
+8      Valladolid                          67   Orange:   2  |  Telefonica:  63  |  Vodafone:   2
+9      Toledo                              58   Telefonica:  58
+10     Guadalajara                         50   Telefonica:  50
+11     Huesca                              45   Telefonica:  45
+12     Las Palmas                          39   Telefonica:  39
+13     Girona                              30   Telefonica:  30
+14     Lleida                              26   Telefonica:  26
+15     Cuenca                              23   Telefonica:  23
+
+==========================================================================================
+TOP 15 PROVINCES BY 4G LTE COVERAGE
+==========================================================================================
+
+Rank   Provincia                         eNBs
+------------------------------------------------------------------------------------------
+1      Barcelona                        6,888
+2      Madrid                           4,637
+3      Asturias                         3,524
+4      Burgos                           3,041
+5      Huesca                           1,953
+6      Las Palmas                       1,671
+7      Murcia                           1,574
+8      León                             1,480
+9      Islas Baleares                   1,460
+10     Toledo                           1,365
+11     Girona                           1,356
+12     Almería                          1,334
+13     Valencia                         1,245
+14     Lleida                           1,221
+15     Navarra                          1,197
+
+==========================================================================================
+Analysis complete!
+==========================================================================================
