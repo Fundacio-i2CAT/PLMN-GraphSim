@@ -56,8 +56,8 @@ function load_and_deploy_network(csv_path::String, pop_csv_path::String, operato
         min_dist = Inf
         best_prov = ""
         
-        for (name, centroid) in PROVINCE_CENTROIDS
-            d = (gnb.lat - centroid.lat)^2 + (gnb.lon - centroid.lon)^2
+        for (name, anchor) in PROVINCE_ANCHORS
+            d = (gnb.lat - anchor.lat)^2 + (gnb.lon - anchor.lon)^2
             if d < min_dist
                 min_dist = d
                 best_prov = name

@@ -21,10 +21,10 @@ elseif choice == "2"
     println("\n>>> Running Simulation...")
     include("scripts/run_simulation.jl")
 elseif choice == "3"
-elseif choice == "3"
     println("\n>>> Generating Plots...")
     include("scripts/plot_topology.jl")
-elseif choice == "q".")
+elseif choice == "q"
+    println("Exiting...")
 else
     println("Invalid choice.")
 end
