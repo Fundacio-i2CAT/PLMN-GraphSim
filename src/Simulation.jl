@@ -10,6 +10,7 @@ using CSV
 using Dates
 using ..Types
 using ..DataLoading
+using ..AgentGeneration
 
 export run_operator_simulation, init_global_state, create_session_context
 
@@ -46,38 +47,8 @@ end
 
 @resumable function user_lifecycle(env, user_id, sim_state, topology::NetworkTopology)
     # 1. User Placement (Population Distribution)
-    # Pick a Province based on Population Probability
-    r = rand()
-    cumulative = 0.0
-    selected_province = ""
-
-    # Weighted Random Selection
-    for (i, prob) in enumerate(topology.province_probs)
-        cumulative += prob
-        if r <= cumulative
-            selected_province = topology.province_names[i]
-            break
-        end
-    end
-
-    # Fallback (floating point errors)
-    if selected_province == "" && !isempty(topology.province_names)
-        selected_province = topology.province_names[end]
-    end
-
-    # Pick a random gNB within that province
-    gnb_idx = 1
-    if selected_province != "" && haskey(topology.province_bins, selected_province)
-        candidates = topology.province_bins[selected_province]
-        if !isempty(candidates)
-            gnb_idx = rand(candidates)
-        else
-            # Fallback to global random if bin is empty (shouldn't happen due to filtering)
-            gnb_idx = rand(1:length(topology.gnb_locations))
-        end
-    else
-        gnb_idx = rand(1:length(topology.gnb_locations))
-    end
+    # Use unified AgentGeneration logic
+    _, gnb_idx = select_agent_location(topology)
 
     assigned_upf_idx = topology.gnb_to_upf_map[gnb_idx]
 

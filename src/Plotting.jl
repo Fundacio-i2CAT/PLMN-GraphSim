@@ -7,6 +7,7 @@ using Clustering
 using Random
 using ..Types
 using ..DataLoading
+using ..AgentGeneration
 
 export plot_operator_topology_with_cities
 
@@ -16,51 +17,39 @@ const NUM_AGENTS_TO_PLOT = 2000
 # --- Reference Cities (Provincial Capitals & Major Cities) ---
 # Moved to Types.jl as REFERENCE_CITIES
 
-# --- Generate Agents ---
-function generate_agents(df_gnb, num_agents)
-    println("Generating $num_agents random agents based on gNB density...")
-    agent_lons = Float64[]
-    agent_lats = Float64[]
-    
-    num_gnbs = nrow(df_gnb)
-    if num_gnbs == 0
-        return agent_lons, agent_lats
-    end
-    
-    for _ in 1:num_agents
-        # Pick a random gNB
-        idx = rand(1:num_gnbs)
-        gnb = df_gnb[idx, :]
-        
-        # Add small jitter to simulate user being *near* the tower, not *on* it
-        # 0.01 degrees is roughly 1km
-        jitter_lon = (rand() - 0.5) * 0.02 
-        jitter_lat = (rand() - 0.5) * 0.02
-        
-        push!(agent_lons, gnb.lon + jitter_lon)
-        push!(agent_lats, gnb.lat + jitter_lat)
-    end
-    
-    return agent_lons, agent_lats
-end
-
 # --- Plotting ---
 function plot_operator_topology_with_cities(operator_name::String, operator_id::Int, num_upfs::Int, scenario_name::String)
     csv_path = joinpath(@__DIR__, "../data/214.csv")
+    pop_csv_path = joinpath(@__DIR__, "../data/population_ine.csv")
+
     if !isfile(csv_path)
         error("Data file not found at $csv_path")
     end
+    if !isfile(pop_csv_path)
+        error("Population data file not found at $pop_csv_path")
+    end
     
-    # 1. Get Data
-    df_gnb, upf_lons, upf_lats = load_and_cluster(csv_path, operator_id, num_upfs)
+    # 1. Get Data (Using unified topology loader)
+    topology = load_and_deploy_network(csv_path, pop_csv_path, operator_id, num_upfs)
     
-    if nrow(df_gnb) == 0
+    if isempty(topology.gnb_locations)
         println("No data for $operator_name. Skipping.")
         return
     end
 
-    # 2. Generate Agents
-    agent_lons, agent_lats = generate_agents(df_gnb, NUM_AGENTS_TO_PLOT)
+    # 2. Generate Agents (Using unified AgentGeneration)
+    println("Generating $NUM_AGENTS_TO_PLOT agents using population density...")
+    agent_locs, _ = generate_agent_locations(topology, NUM_AGENTS_TO_PLOT)
+    
+    agent_lons = [p.lon for p in agent_locs]
+    agent_lats = [p.lat for p in agent_locs]
+
+    # Extract gNB and UPF coords for plotting
+    gnb_lons = [p.lon for p in topology.gnb_locations]
+    gnb_lats = [p.lat for p in topology.gnb_locations]
+    
+    upf_lons = [p.lon for p in topology.upf_locations]
+    upf_lats = [p.lat for p in topology.upf_locations]
 
     println("Plotting for $operator_name ($scenario_name)...")
     
@@ -76,7 +65,7 @@ function plot_operator_topology_with_cities(operator_name::String, operator_id::
     )
     
     # 1. Plot gNBs (Base Stations) - Orange (Better visibility)
-    scatter!(p, df_gnb.lon, df_gnb.lat, 
+    scatter!(p, gnb_lons, gnb_lats, 
         label = "gNBs (Base Stations)", 
         markersize = 1.5, 
         markercolor = :orange, 
