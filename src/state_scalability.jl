@@ -20,26 +20,26 @@ struct SessionContext5G
     dl_far::FAR          # FAR struct
 end
 
-# --- 6G Structures (Constant Growth) ---
+# --- 6G-RUPA Structures (Constant Growth) ---
 # Equation 7/8: S_GUPF = 2 * C_fwd + Q * C_QoS
 # Topological aggregation means we route by prefix, not per tunnel.
 
-struct ForwardingEntry6G
+struct ForwardingEntry6GRUPA
     dest_prefix::UInt32
     mask::UInt32
     output_interface::Int32
 end
 
-struct QoSConfig6G
+struct QoSConfig6GRUPA
     qfi::Int8
     priority::Int8
     packet_delay_budget::Float64
     packet_error_rate::Float64
 end
 
-struct GUPFState6G
-    forwarding_table::Vector{ForwardingEntry6G}
-    qos_profiles::Vector{QoSConfig6G}
+struct GUPFState6GRUPA
+    forwarding_table::Vector{ForwardingEntry6GRUPA}
+    qos_profiles::Vector{QoSConfig6GRUPA}
 end
 
 function run_scalability_test()
@@ -60,14 +60,14 @@ function run_scalability_test()
         state_5g = Vector{SessionContext5G}(undef, total_sessions)
         size_5g_mb = Base.summarysize(state_5g) / (1024^2)
 
-        # --- 6G Simulation ---
+        # --- 6G-RUPA Simulation ---
         # State is constant regardless of N.
         fwd_table = [
-            ForwardingEntry6G(0x0A000000, 0xFFFFFF00, 1), 
-            ForwardingEntry6G(0x0A000100, 0xFFFFFF00, 2)
+            ForwardingEntry6GRUPA(0x0A000000, 0xFFFFFF00, 1), 
+            ForwardingEntry6GRUPA(0x0A000100, 0xFFFFFF00, 2)
         ]
-        qos_table = [QoSConfig6G(Int8(i), Int8(i), 0.5, 1e-6) for i in 1:16]
-        state_6g = GUPFState6G(fwd_table, qos_table)
+        qos_table = [QoSConfig6GRUPA(Int8(i), Int8(i), 0.5, 1e-6) for i in 1:16]
+        state_6g = GUPFState6GRUPA(fwd_table, qos_table)
         size_6g_mb = Base.summarysize(state_6g) / (1024^2)
 
         factor = size_5g_mb / size_6g_mb
@@ -85,7 +85,7 @@ function run_scalability_test()
         state_5g = Vector{SessionContext5G}(undef, total_sessions)
         size_5g_mb = Base.summarysize(state_5g) / (1024^2)
 
-        # --- 6G Simulation ---
+        # --- 6G-RUPA Simulation ---
         # State is constant!
         size_6g_mb = 0.00048065 # Hardcoded from previous run for speed/consistency
 
