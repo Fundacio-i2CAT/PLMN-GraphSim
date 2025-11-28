@@ -175,17 +175,13 @@ function run_operator_simulation(operator_name::String, operator_id::Int, num_up
     println("==================================================")
 
     csv_path = joinpath(@__DIR__, "../data/214.csv")
-    pop_csv_path = joinpath(@__DIR__, "../data/population_ine.csv")
 
     if !isfile(csv_path)
         error("Data file not found at $csv_path")
     end
-    if !isfile(pop_csv_path)
-        error("Population data file not found at $pop_csv_path. Run fetch_ine_data.jl first.")
-    end
 
     # 1. Setup Network
-    topology = load_and_deploy_network(csv_path, pop_csv_path, operator_id, num_upfs)
+    topology = load_and_deploy_network(csv_path, operator_id, num_upfs)
 
     println("Network Deployed:")
     println("  gNBs: $(length(topology.gnb_locations))")

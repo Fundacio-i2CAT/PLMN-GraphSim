@@ -7,12 +7,53 @@ using HTTP
 using JSON
 using ..Types
 
-export load_and_deploy_network, fetch_population_by_province, load_and_cluster
+export load_and_deploy_network, load_and_cluster, load_municipalities
 
 # INE API Base URL
 const INE_BASE_URL = "https://servicios.ine.es/wstempus/js/es"
 
-function load_and_deploy_network(csv_path::String, pop_csv_path::String, operator_net_id::Int, num_upfs::Int)
+function load_municipalities(csv_path::String)
+    println("Loading Municipalities from $csv_path...")
+    # CSV uses ';' as delimiter and ',' as decimal separator
+    df = CSV.read(csv_path, DataFrame; delim=';', decimal=',')
+    
+    municipalities = Vector{Municipality}()
+    
+    for row in eachrow(df)
+        # Parse Code (COD_INE)
+        # Sometimes it's an integer, sometimes string. Ensure string.
+        code = string(row.COD_INE)
+        
+        # Parse Name
+        name = row.NOMBRE_ACTUAL
+        
+        # Parse Population
+        pop = ismissing(row.POBLACION_MUNI) ? 0 : Int(row.POBLACION_MUNI)
+        
+        # Parse Area (Superficie)
+        area = ismissing(row.SUPERFICIE) ? 0.0 : Float64(row.SUPERFICIE)
+        
+        # Parse Coordinates
+        # Note: CSV.read with decimal=',' should handle this, but let's be safe
+        lat = row.LATITUD_ETRS89
+        lon = row.LONGITUD_ETRS89
+        
+        # Filter invalid coordinates (e.g. 0,0 or missing)
+        if !ismissing(lat) && !ismissing(lon) && lat != 0.0 && lon != 0.0
+             # Filter Canary Islands (Lat < 30) if desired, but let's keep them if they are in the file
+             # The simulation usually filters gNBs, so if we filter munis too it's consistent.
+             # Mainland Spain is roughly > 35 Lat.
+             if lat > 35.0
+                push!(municipalities, Municipality(code, name, pop, GeoPoint(lat, lon), area))
+             end
+        end
+    end
+    
+    println("  Loaded $(length(municipalities)) municipalities.")
+    return municipalities
+end
+
+function load_and_deploy_network(csv_path::String, operator_net_id::Int, num_upfs::Int)
     println("Loading gNB data from $csv_path for Operator ID: $operator_net_id...")
     df = CSV.read(csv_path, DataFrame; header=[:radio, :mcc, :net, :area, :cell, :unit, :lon, :lat, :range, :samples, :changeable, :created, :updated, :avg_signal])
     
@@ -30,55 +71,63 @@ function load_and_deploy_network(csv_path::String, pop_csv_path::String, operato
     
     println("  Found $(nrow(df)) valid gNBs for Operator $operator_net_id.")
     
-    # --- Load Population Data ---
-    println("Loading Population Data from $pop_csv_path...")
-    pop_df = CSV.read(pop_csv_path, DataFrame)
-    filter!(row -> row.Province != "Total Nacional", pop_df)
-    # Filter out Canary Islands
-    filter!(row -> row.Province != "Palmas, Las" && row.Province != "Santa Cruz de Tenerife", pop_df)
+    # --- Load Municipality Data ---
+    # Assume the file is in data/municipalities_coordinates.csv
+    # We construct the path relative to the csv_path (which is in data/)
+    data_dir = dirname(csv_path)
+    muni_csv_path = joinpath(data_dir, "municipalities_coordinates.csv")
     
-    total_pop = sum(pop_df.Population)
-    pop_df.prob = pop_df.Population ./ total_pop
-    
-    province_names = String.(pop_df.Province)
-    province_probs = Float64.(pop_df.prob)
-    
-    # --- Bin gNBs to Provinces ---
-    println("Classifying gNBs into provinces...")
-    province_bins = Dict{String, Vector{Int}}()
-    for name in province_names
-        province_bins[name] = Int[]
+    municipalities = Vector{Municipality}()
+    if isfile(muni_csv_path)
+        municipalities = load_municipalities(muni_csv_path)
+    else
+        println("Warning: Municipality data not found at $muni_csv_path. Using empty list.")
+    end
+
+    # --- Bin gNBs to Municipalities ---
+    println("Classifying gNBs into municipalities...")
+    municipality_bins = Dict{String, Vector{Int}}()
+    for m in municipalities
+        municipality_bins[m.code] = Int[]
     end
     
     gnb_points = [GeoPoint(r.lat, r.lon) for r in eachrow(df)]
     
-    for (i, gnb) in enumerate(gnb_points)
-        min_dist = Inf
-        best_prov = ""
-        
-        for (name, anchor) in PROVINCE_ANCHORS
-            d = (gnb.lat - anchor.lat)^2 + (gnb.lon - anchor.lon)^2
-            if d < min_dist
-                min_dist = d
-                best_prov = name
+    # If we have municipalities, use them for binning
+    if !isempty(municipalities)
+        for (i, gnb) in enumerate(gnb_points)
+            min_dist = Inf
+            best_muni_code = ""
+            
+            # Optimization: Only check munis within a reasonable range? 
+            # For 8000 munis and 2000 gNBs, 16M checks is fine (seconds).
+            for m in municipalities
+                # Simple Euclidean distance squared (sufficient for nearest neighbor on small scale)
+                d = (gnb.lat - m.location.lat)^2 + (gnb.lon - m.location.lon)^2
+                if d < min_dist
+                    min_dist = d
+                    best_muni_code = m.code
+                end
+            end
+            
+            if haskey(municipality_bins, best_muni_code)
+                push!(municipality_bins[best_muni_code], i)
             end
         end
-        
-        if haskey(province_bins, best_prov)
-            push!(province_bins[best_prov], i)
-        end
     end
+
+    # Filter municipalities that have coverage (at least 1 gNB)
+    # We only want to spawn agents in municipalities where they can connect.
+    # OR we spawn them in any municipality and they connect to nearest gNB (even if far).
+    # Let's stick to "Only spawn where there is coverage" to avoid artifacts of users connecting 50km away.
+    valid_muni_indices = [i for i in 1:length(municipalities) if !isempty(municipality_bins[municipalities[i].code])]
+    final_municipalities = municipalities[valid_muni_indices]
     
-    # Remove empty bins from probability list to avoid selecting empty provinces
-    valid_indices = [i for i in 1:length(province_names) if !isempty(province_bins[province_names[i]])]
-    final_names = province_names[valid_indices]
-    final_probs = province_probs[valid_indices]
-    # Renormalize probabilities
-    if !isempty(final_probs)
-        final_probs = final_probs ./ sum(final_probs)
-    end
+    # Calculate probabilities based on population
+    total_muni_pop = sum([m.population for m in final_municipalities])
+    muni_probs = [Float64(m.population) / total_muni_pop for m in final_municipalities]
     
-    println("  Provinces with coverage: $(length(final_names)) / $(length(province_names))")
+    println("  Municipalities with coverage: $(length(final_municipalities)) / $(length(municipalities))")
 
     # --- Deploy UPFs using K-Means Clustering ---
     actual_k = min(num_upfs, nrow(df))
@@ -95,75 +144,7 @@ function load_and_deploy_network(csv_path::String, pop_csv_path::String, operato
     # Map each gNB to nearest UPF (assignments from kmeans)
     gnb_to_upf = R.assignments
     
-    return NetworkTopology(gnb_points, upf_locs, gnb_to_upf, province_bins, final_names, final_probs)
-end
-
-function fetch_population_by_province()
-    println("Fetching population data from INE API...")
-
-    # Table ID 2852: Resident population by date, sex, age group and province
-    # We filter for:
-    # - Sex: Total (ID 0 or similar, usually implicit if not requested or we sum it)
-    # - Age: Total
-    # - Date: Last available
-    
-    # Actually, a simpler table is "Population by province" (Main Series)
-    # Let's try to fetch the data for Table 2852 but requesting only the "Total" values.
-    # URL pattern: DATOS_TABLA/{TableID}?nult=1 (Last data)
-    
-    # Note: In a real scenario, we might need to inspect the metadata to get the exact codes for "Total".
-    # For this example, I will simulate the structure if the fetch fails, or use a direct download if possible.
-    
-    # Let's try a direct JSON fetch for the latest data
-    url = "$INE_BASE_URL/DATOS_TABLA/2852?nult=1"
-    
-    try
-        resp = HTTP.get(url)
-        data = JSON.parse(String(resp.body))
-        
-        # The INE API returns a list of time series. We need to filter for "Total" population per province.
-        # The "Nombre" field usually contains the description: "Albacete. Total. Total. ..."
-        
-        provinces = String[]
-        populations = Int[]
-        
-        for entry in data
-            name = entry["Nombre"]
-            # We look for entries that represent the TOTAL population for a province
-            # Format is often: "ProvinceName. Total. Total. ..."
-            
-            # Simple heuristic: Check if it contains "Total" and extract the province name
-            # This is a simplification; robust parsing requires checking metadata codes (Variables).
-            
-            # Let's assume we want to parse the value:
-            if occursin("Total", name) && !occursin("Españoles", name) && !occursin("Extranjeros", name)
-                # Extract value
-                if !isempty(entry["Data"])
-                    val = entry["Data"][1]["Valor"]
-                    
-                    # Extract Province Name (First part of the string)
-                    prov_name = split(name, ".")[1]
-                    
-                    push!(provinces, strip(prov_name))
-                    push!(populations, Int(round(val)))
-                end
-            end
-        end
-        
-        # Create DataFrame
-        df = DataFrame(Province = provinces, Population = populations)
-        
-        # Aggregate duplicates if any (due to loose filtering)
-        df = combine(groupby(df, :Province), :Population => maximum => :Population)
-        
-        println("Fetched data for $(nrow(df)) provinces.")
-        return df
-        
-    catch e
-        println("Error fetching from INE API: $e")
-        println("Falling back to manual/mock data for demonstration.")
-        return DataFrame()
-    end
+    return NetworkTopology(gnb_points, upf_locs, gnb_to_upf, final_municipalities, municipality_bins, muni_probs)
 end
 
 # --- Load Data & Cluster (for Plotting) ---
