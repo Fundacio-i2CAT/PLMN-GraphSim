@@ -43,12 +43,37 @@ function create_session_context()
     return SessionContext5G(rand(UInt32), rand(UInt32), FAR(0x01, rand(UInt32)), FAR(0x01, rand(UInt32)))
 end
 
+function find_serving_gnb(topology::NetworkTopology, user_loc::GeoPoint)
+    min_dist = Inf
+    best_idx = 0
+    
+    # Optimization: We could use a spatial index, but for 40k points and 2k agents, 
+    # brute force is ~80M ops. In Julia this is < 1s.
+    for (i, gnb) in enumerate(topology.gnb_locations)
+        # Euclidean distance approximation is fine for finding nearest neighbor locally
+        d2 = (gnb.lat - user_loc.lat)^2 + (gnb.lon - user_loc.lon)^2
+        if d2 < min_dist
+            min_dist = d2
+            best_idx = i
+        end
+    end
+    return best_idx
+end
+
 # --- DES Processes ---
 
 @resumable function user_lifecycle(env, user_id, sim_state, topology::NetworkTopology)
     # 1. User Placement (Population Distribution)
     # Use unified AgentGeneration logic
-    _, gnb_idx = select_agent_location(topology)
+    user_loc = select_agent_location(topology)
+
+    # 2. Connect to Network (Find nearest gNB)
+    gnb_idx = find_serving_gnb(topology, user_loc)
+    
+    if gnb_idx == 0
+        # Should not happen given the logic, but safety check
+        return
+    end
 
     assigned_upf_idx = topology.gnb_to_upf_map[gnb_idx]
 
