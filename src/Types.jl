@@ -5,6 +5,7 @@ using Graphs
 using MetaGraphsNext
 using Distributions
 using Random
+using GeometryBasics
 
 export FAR, SessionContext5G, ForwardingEntry6GRUPA, QoSConfig6GRUPA
 export SimGlobalState, GeoPoint, NetworkTopology, GUPFState6GRUPA, Municipality
@@ -22,6 +23,7 @@ struct Municipality
     population::Int
     location::GeoPoint
     area::Float64 # In hectares
+    polygon::Any # GeometryBasics.Polygon or MultiPolygon or similar
 end
 
 struct FAR

@@ -35,7 +35,7 @@ function plot_operator_topology_with_cities(operator_name::String, operator_id::
 
     # 2. Generate Agents (Using unified AgentGeneration)
     println("Generating $NUM_AGENTS_TO_PLOT agents using population density...")
-    agent_locs, _ = generate_agent_locations(topology, NUM_AGENTS_TO_PLOT)
+    agent_locs = generate_agent_locations(topology, NUM_AGENTS_TO_PLOT)
     
     agent_lons = [p.lon for p in agent_locs]
     agent_lats = [p.lat for p in agent_locs]

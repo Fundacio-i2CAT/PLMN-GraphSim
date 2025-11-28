@@ -5,6 +5,8 @@ using DataFrames
 using Clustering
 using HTTP
 using JSON
+using JSON3
+using GeoJSON
 using ..Types
 
 export load_and_deploy_network, load_and_cluster, load_municipalities
@@ -12,17 +14,68 @@ export load_and_deploy_network, load_and_cluster, load_municipalities
 # INE API Base URL
 const INE_BASE_URL = "https://servicios.ine.es/wstempus/js/es"
 
-function load_municipalities(csv_path::String)
+function load_municipality_polygons(geojson_path::String)
+    println("Loading Municipality Polygons from $geojson_path...")
+    json_str = read(geojson_path, String)
+    # Use JSON3 directly to ensure we get the 'id'
+    json_obj = JSON3.read(json_str)
+    
+    polygons = Dict{String, Any}()
+    
+    if haskey(json_obj, :features)
+        for feature in json_obj.features
+            muni_id = nothing
+            
+            # Check properties for CODIGOINE (ESRI format)
+            if haskey(feature, :properties) && haskey(feature.properties, :CODIGOINE)
+                muni_id = string(feature.properties.CODIGOINE)
+            end
+            
+            # Fallback: Check top-level id or other properties
+            if isnothing(muni_id) && haskey(feature, :id)
+                muni_id = string(feature.id)
+            end
+            
+            if !isnothing(muni_id) && haskey(feature, :geometry)
+                # Convert JSON3 geometry object to GeoJSON wrapper/GeometryBasics
+                geom_str = JSON3.write(feature.geometry)
+                geom_obj = GeoJSON.read(geom_str)
+                polygons[muni_id] = geom_obj
+            end
+        end
+    end
+    
+    println("  Loaded $(length(polygons)) polygons.")
+    return polygons
+end
+
+function load_municipalities(csv_path::String, geojson_path::String="")
     println("Loading Municipalities from $csv_path...")
     # CSV uses ';' as delimiter and ',' as decimal separator
     df = CSV.read(csv_path, DataFrame; delim=';', decimal=',')
+    
+    # Load Polygons if available
+    polygons = Dict{String, Any}()
+    if !isempty(geojson_path) && isfile(geojson_path)
+        polygons = load_municipality_polygons(geojson_path)
+    end
     
     municipalities = Vector{Municipality}()
     
     for row in eachrow(df)
         # Parse Code (COD_INE)
-        # Sometimes it's an integer, sometimes string. Ensure string.
-        code = string(row.COD_INE)
+        # CSV format: 01001000000 (11 digits)
+        # GeoJSON format: 01001 (5 digits)
+        # We need to extract the first 5 digits from the CSV code to match.
+        full_code = string(row.COD_INE)
+        
+        # Ensure we have at least 5 digits
+        if length(full_code) >= 5
+            # Take first 5 digits: Province (2) + Municipality (3)
+            code = full_code[1:5]
+        else
+            code = full_code
+        end
         
         # Parse Name
         name = row.NOMBRE_ACTUAL
@@ -34,17 +87,16 @@ function load_municipalities(csv_path::String)
         area = ismissing(row.SUPERFICIE) ? 0.0 : Float64(row.SUPERFICIE)
         
         # Parse Coordinates
-        # Note: CSV.read with decimal=',' should handle this, but let's be safe
         lat = row.LATITUD_ETRS89
         lon = row.LONGITUD_ETRS89
         
-        # Filter invalid coordinates (e.g. 0,0 or missing)
+        # Get Polygon
+        poly = get(polygons, code, nothing)
+        
+        # Filter invalid coordinates
         if !ismissing(lat) && !ismissing(lon) && lat != 0.0 && lon != 0.0
-             # Filter Canary Islands (Lat < 30) if desired, but let's keep them if they are in the file
-             # The simulation usually filters gNBs, so if we filter munis too it's consistent.
-             # Mainland Spain is roughly > 35 Lat.
              if lat > 35.0
-                push!(municipalities, Municipality(code, name, pop, GeoPoint(lat, lon), area))
+                push!(municipalities, Municipality(code, name, pop, GeoPoint(lat, lon), area, poly))
              end
         end
     end
@@ -58,8 +110,6 @@ function load_and_deploy_network(csv_path::String, operator_net_id::Int, num_upf
     df = CSV.read(csv_path, DataFrame; header=[:radio, :mcc, :net, :area, :cell, :unit, :lon, :lat, :range, :samples, :changeable, :created, :updated, :avg_signal])
     
     # Filter valid coordinates for Spain (approx bounding box)
-    # Mainland Spain + Ceuta/Melilla (Excluding Canary Islands)
-    # Lat: 35 to 45, Lon: -19 to 5
     filter!(row -> 35.0 <= row.lat <= 45.0 && -19.0 <= row.lon <= 5.0, df)
 
     # Filter for Specific Operator
@@ -72,14 +122,14 @@ function load_and_deploy_network(csv_path::String, operator_net_id::Int, num_upf
     println("  Found $(nrow(df)) valid gNBs for Operator $operator_net_id.")
     
     # --- Load Municipality Data ---
-    # Assume the file is in data/municipalities_coordinates.csv
-    # We construct the path relative to the csv_path (which is in data/)
     data_dir = dirname(csv_path)
     muni_csv_path = joinpath(data_dir, "municipalities_coordinates.csv")
+    # Use the new ESRI file
+    muni_geojson_path = joinpath(data_dir, "esri_municipios.geojson")
     
     municipalities = Vector{Municipality}()
     if isfile(muni_csv_path)
-        municipalities = load_municipalities(muni_csv_path)
+        municipalities = load_municipalities(muni_csv_path, muni_geojson_path)
     else
         println("Warning: Municipality data not found at $muni_csv_path. Using empty list.")
     end
