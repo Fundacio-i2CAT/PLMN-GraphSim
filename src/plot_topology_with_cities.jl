@@ -6,7 +6,7 @@ using Random
 using Printf
 
 # --- Configuration ---
-const NUM_UPFS = 52 # One per province
+const NUM_UPFS = 50 # One per province (excluding Canary Islands)
 const NUM_AGENTS_TO_PLOT = 2000 
 
 # --- Reference Cities (Provincial Capitals & Major Cities) ---
@@ -69,8 +69,8 @@ function load_and_cluster(csv_path::String, operator_id::Int)
     println("Loading gNB data from $csv_path for Operator $operator_id...")
     df = CSV.read(csv_path, DataFrame; header=[:radio, :mcc, :net, :area, :cell, :unit, :lon, :lat, :range, :samples, :changeable, :created, :updated, :avg_signal])
     
-    # Filter valid coordinates for Spain
-    filter!(row -> 35.0 <= row.lat <= 45.0 && -10.0 <= row.lon <= 5.0, df)
+    # Filter valid coordinates for Spain (Mainland + Ceuta/Melilla, excluding Canary Islands)
+    filter!(row -> 35.0 <= row.lat <= 45.0 && -19.0 <= row.lon <= 5.0, df)
 
     # Filter for Specific Operator
     filter!(row -> row.net == operator_id, df)
