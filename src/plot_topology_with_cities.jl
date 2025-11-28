@@ -6,7 +6,6 @@ using Random
 using Printf
 
 # --- Configuration ---
-const NUM_UPFS = 50 # One per province (excluding Canary Islands)
 const NUM_AGENTS_TO_PLOT = 2000 
 
 # --- Reference Cities (Provincial Capitals & Major Cities) ---
@@ -65,7 +64,7 @@ const CITIES = [
 ]
 
 # --- Load Data & Cluster ---
-function load_and_cluster(csv_path::String, operator_id::Int)
+function load_and_cluster(csv_path::String, operator_id::Int, num_upfs::Int)
     println("Loading gNB data from $csv_path for Operator $operator_id...")
     df = CSV.read(csv_path, DataFrame; header=[:radio, :mcc, :net, :area, :cell, :unit, :lon, :lat, :range, :samples, :changeable, :created, :updated, :avg_signal])
     
@@ -82,7 +81,7 @@ function load_and_cluster(csv_path::String, operator_id::Int)
     println("  Found $(nrow(df)) valid gNBs.")
     
     # K-Means for UPFs
-    k = min(NUM_UPFS, nrow(df))
+    k = min(num_upfs, nrow(df))
     println("Clustering into $k UPF regions...")
     R = kmeans(gnb_coords, k; maxiter=100)
     
@@ -121,14 +120,14 @@ function generate_agents(df_gnb, num_agents)
 end
 
 # --- Plotting ---
-function plot_operator_topology_with_cities(operator_name::String, operator_id::Int)
+function plot_operator_topology_with_cities(operator_name::String, operator_id::Int, num_upfs::Int, scenario_name::String)
     csv_path = joinpath(@__DIR__, "../data/214.csv")
     if !isfile(csv_path)
         error("Data file not found at $csv_path")
     end
     
     # 1. Get Data
-    df_gnb, upf_lons, upf_lats = load_and_cluster(csv_path, operator_id)
+    df_gnb, upf_lons, upf_lats = load_and_cluster(csv_path, operator_id, num_upfs)
     
     if nrow(df_gnb) == 0
         println("No data for $operator_name. Skipping.")
@@ -138,11 +137,11 @@ function plot_operator_topology_with_cities(operator_name::String, operator_id::
     # 2. Generate Agents
     agent_lons, agent_lats = generate_agents(df_gnb, NUM_AGENTS_TO_PLOT)
 
-    println("Plotting for $operator_name...")
+    println("Plotting for $operator_name ($scenario_name)...")
     
     # Create Plot
     p = plot(
-        title = "6G-RUPA Topology: $operator_name (Spain)",
+        title = "6G-RUPA Topology: $operator_name - $scenario_name",
         xlabel = "Longitude",
         ylabel = "Latitude",
         legend = :outertopright,
@@ -170,7 +169,7 @@ function plot_operator_topology_with_cities(operator_name::String, operator_id::
     
     # 3. Plot UPFs (Core Network) - Large red squares
     scatter!(p, upf_lons, upf_lats, 
-        label = "UPFs (Provincial Hubs)", 
+        label = "UPFs ($num_upfs Hubs)", 
         markersize = 7, 
         markercolor = :red, 
         markershape = :square,
@@ -198,16 +197,24 @@ function plot_operator_topology_with_cities(operator_name::String, operator_id::
     if !isdir(output_dir)
         mkpath(output_dir)
     end
-    output_filename = "topology_map_cities_$(lowercase(operator_name)).png"
+    output_filename = "topology_map_cities_$(lowercase(operator_name))_$(lowercase(scenario_name)).png"
     output_path = joinpath(output_dir, output_filename)
     savefig(p, output_path)
     println("Plot saved to $output_path")
 end
 
 function plot_all_operators()
-    plot_operator_topology_with_cities("Vodafone", 1)
-    plot_operator_topology_with_cities("Orange", 3)
-    plot_operator_topology_with_cities("Movistar", 7)
+    # Scenario 1: Centralized (3 UPFs)
+    println("\n--- Plotting Centralized Scenario (3 UPFs) ---")
+    plot_operator_topology_with_cities("Vodafone", 1, 3, "Centralized")
+    plot_operator_topology_with_cities("Orange", 3, 3, "Centralized")
+    plot_operator_topology_with_cities("Movistar", 7, 3, "Centralized")
+
+    # Scenario 2: Distributed (50 UPFs)
+    println("\n--- Plotting Distributed Scenario (50 UPFs) ---")
+    plot_operator_topology_with_cities("Vodafone", 1, 50, "Distributed")
+    plot_operator_topology_with_cities("Orange", 3, 50, "Distributed")
+    plot_operator_topology_with_cities("Movistar", 7, 50, "Distributed")
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
