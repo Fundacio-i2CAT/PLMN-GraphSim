@@ -13,7 +13,7 @@ using Geodesy
 
 # --- Configuration ---
 const SPAIN_POPULATION = 47_000_000
-# Demographics: ~14.5% under 15 (no phone), 96% of >15 have phone
+# Demographics: ~14.5% under 15 (no phone), 96% of >15 have phone, source INE 2023
 const RATIO_UNDER_15 = 0.145 
 const PHONE_ADOPTION_OVER_15 = 0.96 
 const EFFECTIVE_POPULATION = SPAIN_POPULATION * (1 - RATIO_UNDER_15) * PHONE_ADOPTION_OVER_15
@@ -22,8 +22,12 @@ const SIMULATION_SCALE = 1_00 # 1 Agent = 100 people
 const NUM_AGENTS = ceil(Int, EFFECTIVE_POPULATION / SIMULATION_SCALE)
 const NUM_UPFS = 50 # Number of UPFs (One per Province + Ceuta/Melilla - Canary Islands)
 
+# Number of PDU Sessions per User
+# Standard Smartphone: 1 (Internet) or 2 (Internet + IMS for VoNR)
+const MIN_SESSIONS = 1
+const MAX_SESSIONS = 2 
+
 # --- Shared Structures ---
-# (Reusing the lightweight structures for memory tracking)
 struct FAR
     action::UInt8
     destination_ip::UInt32
@@ -36,13 +40,13 @@ struct SessionContext5G
     dl_far::FAR
 end
 
-struct ForwardingEntry6G
+struct ForwardingEntry6GRUPA
     dest_prefix::UInt32
     mask::UInt32
     output_interface::Int32
 end
 
-struct QoSConfig6G
+struct QoSConfig6GRUPA
     qfi::Int8
     priority::Int8
     packet_delay_budget::Float64
@@ -52,8 +56,8 @@ end
 # --- Simulation State ---
 mutable struct SimGlobalState
     active_sessions_5g::Vector{SessionContext5G}
-    forwarding_table_6g::Vector{ForwardingEntry6G}
-    qos_profiles_6g::Vector{QoSConfig6G}
+    forwarding_table_6g::Vector{ForwardingEntry6GRUPA}
+    qos_profiles_6g::Vector{QoSConfig6GRUPA}
     
     history_time::Vector{Float64}
     history_size_5g_mb::Vector{Float64}
@@ -61,8 +65,8 @@ mutable struct SimGlobalState
 end
 
 function init_global_state()
-    fwd = [ForwardingEntry6G(0x0A000000, 0xFFFFFF00, 1), ForwardingEntry6G(0x0A000100, 0xFFFFFF00, 2)]
-    qos = [QoSConfig6G(Int8(i), Int8(i), 0.5, 1e-6) for i in 1:16]
+    fwd = [ForwardingEntry6GRUPA(0x0A000000, 0xFFFFFF00, 1), ForwardingEntry6GRUPA(0x0A000100, 0xFFFFFF00, 2)]
+    qos = [QoSConfig6GRUPA(Int8(i), Int8(i), 0.5, 1e-6) for i in 1:16]
     return SimGlobalState(Vector{SessionContext5G}(), fwd, qos, Float64[], Float64[], Float64[])
 end
 
@@ -277,9 +281,13 @@ end
     # user -> gnb -> upf
     
     # Create 5G State (Allocation)
-    # 1 Session per user (scaled)
-    ctx = create_session_context()
-    push!(sim_state.active_sessions_5g, ctx)
+    # Simulate multiple sessions per user (e.g. Internet, VoLTE, IoT device)
+    num_sessions = rand(MIN_SESSIONS:MAX_SESSIONS)
+    
+    for _ in 1:num_sessions
+        ctx = create_session_context()
+        push!(sim_state.active_sessions_5g, ctx)
+    end
     
     record_metrics(env, sim_state)
     
@@ -288,8 +296,14 @@ end
     @yield timeout(env, duration)
     
     # Disconnect
+    # Remove the same number of sessions we added
+    # (We just pop any session because we are tracking aggregate memory size, not individual identity)
     if !isempty(sim_state.active_sessions_5g)
-        pop!(sim_state.active_sessions_5g)
+        for _ in 1:num_sessions
+            if !isempty(sim_state.active_sessions_5g)
+                pop!(sim_state.active_sessions_5g)
+            end
+        end
     end
     record_metrics(env, sim_state)
 end
@@ -308,7 +322,7 @@ function save_simulation_results(operator_name::String, scenario_name::String, s
     df = DataFrame(
         Time = state.history_time,
         Size5G_MB = state.history_size_5g_mb,
-        Size6G_MB = state.history_size_6g_mb
+        Size6GRUPA_MB = state.history_size_6g_mb
     )
     
     # Create results directory if it doesn't exist
@@ -368,7 +382,7 @@ function run_operator_simulation(operator_name::String, operator_id::Int, num_up
     real_world_5g_mb = last(global_state.history_size_5g_mb) * SIMULATION_SCALE
     println("\n--- Real World Extrapolation ($operator_name - $scenario_name) ---")
     println("Estimated 5G State for $(round(EFFECTIVE_POPULATION/1e6, digits=2))M Users: $(real_world_5g_mb / 1024) GB")
-    println("Estimated 6G State (Constant): $(last(global_state.history_size_6g_mb)) MB")
+    println("Estimated 6G-RUPA State (Constant): $(last(global_state.history_size_6g_mb)) MB")
 
     save_simulation_results(operator_name, scenario_name, global_state)
 end
