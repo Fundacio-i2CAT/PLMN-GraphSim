@@ -20,17 +20,13 @@ const NUM_AGENTS_TO_PLOT = 2000
 # --- Plotting ---
 function plot_operator_topology_with_cities(operator_name::String, operator_id::Int, num_upfs::Int, scenario_name::String)
     csv_path = joinpath(@__DIR__, "../data/214.csv")
-    pop_csv_path = joinpath(@__DIR__, "../data/population_ine.csv")
 
     if !isfile(csv_path)
         error("Data file not found at $csv_path")
     end
-    if !isfile(pop_csv_path)
-        error("Population data file not found at $pop_csv_path")
-    end
     
     # 1. Get Data (Using unified topology loader)
-    topology = load_and_deploy_network(csv_path, pop_csv_path, operator_id, num_upfs)
+    topology = load_and_deploy_network(csv_path, operator_id, num_upfs)
     
     if isempty(topology.gnb_locations)
         println("No data for $operator_name. Skipping.")
