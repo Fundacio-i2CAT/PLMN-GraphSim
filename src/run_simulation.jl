@@ -13,8 +13,13 @@ using Geodesy
 
 # --- Configuration ---
 const SPAIN_POPULATION = 47_000_000
+# Demographics: ~14.5% under 15 (no phone), 96% of >15 have phone
+const RATIO_UNDER_15 = 0.145 
+const PHONE_ADOPTION_OVER_15 = 0.96 
+const EFFECTIVE_POPULATION = SPAIN_POPULATION * (1 - RATIO_UNDER_15) * PHONE_ADOPTION_OVER_15
+
 const SIMULATION_SCALE = 1_000 # 1 Agent = 1,000 people
-const NUM_AGENTS = ceil(Int, SPAIN_POPULATION / SIMULATION_SCALE)
+const NUM_AGENTS = ceil(Int, EFFECTIVE_POPULATION / SIMULATION_SCALE)
 const NUM_UPFS = 50 # Number of UPFs (One per Province + Ceuta/Melilla - Canary Islands)
 
 # --- Shared Structures ---
@@ -362,7 +367,7 @@ function run_operator_simulation(operator_name::String, operator_id::Int, num_up
     # Calculate Scaled Impact
     real_world_5g_mb = last(global_state.history_size_5g_mb) * SIMULATION_SCALE
     println("\n--- Real World Extrapolation ($operator_name - $scenario_name) ---")
-    println("Estimated 5G State for 47M Users: $(real_world_5g_mb / 1024) GB")
+    println("Estimated 5G State for $(round(EFFECTIVE_POPULATION/1e6, digits=2))M Users: $(real_world_5g_mb / 1024) GB")
     println("Estimated 6G State (Constant): $(last(global_state.history_size_6g_mb)) MB")
 
     save_simulation_results(operator_name, scenario_name, global_state)
