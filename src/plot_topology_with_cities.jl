@@ -7,7 +7,7 @@ using Printf
 
 # --- Configuration ---
 const NUM_UPFS = 52 # One per province
-const NUM_AGENTS_TO_PLOT = 5000 
+const NUM_AGENTS_TO_PLOT = 2000 
 
 # --- Reference Cities (Provincial Capitals & Major Cities) ---
 # Name, Lat, Lon
@@ -159,12 +159,12 @@ function plot_operator_topology_with_cities(operator_name::String, operator_id::
         markerstrokewidth = 0
     )
 
-    # 2. Plot Agents (Users) - Black dots
+    # 2. Plot Agents (Users) - Blue dots (High visibility)
     scatter!(p, agent_lons, agent_lats, 
         label = "Users (Agents)", 
         markersize = 1.5, 
-        markercolor = :black, 
-        markeralpha = 0.4,
+        markercolor = :blue, 
+        markeralpha = 0.6, 
         markerstrokewidth = 0
     )
     
