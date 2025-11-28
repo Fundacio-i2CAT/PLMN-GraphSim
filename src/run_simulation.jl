@@ -18,7 +18,7 @@ const RATIO_UNDER_15 = 0.145
 const PHONE_ADOPTION_OVER_15 = 0.96 
 const EFFECTIVE_POPULATION = SPAIN_POPULATION * (1 - RATIO_UNDER_15) * PHONE_ADOPTION_OVER_15
 
-const SIMULATION_SCALE = 1_000 # 1 Agent = 1,000 people
+const SIMULATION_SCALE = 1_00 # 1 Agent = 100 people
 const NUM_AGENTS = ceil(Int, EFFECTIVE_POPULATION / SIMULATION_SCALE)
 const NUM_UPFS = 50 # Number of UPFs (One per Province + Ceuta/Melilla - Canary Islands)
 
