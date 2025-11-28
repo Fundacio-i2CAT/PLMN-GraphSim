@@ -170,16 +170,24 @@ function print_forwarding_tables(state::SimGlobalState)
     
     println("\n[5G Architecture] Per-UPF Session Contexts (Dynamic State):")
     for (i, sessions) in enumerate(state.upf_sessions_5g)
-        println("  UPF #$i: $(length(sessions)) Active PDU Sessions")
+        mem_mb = Base.summarysize(sessions) / (1024^2)
+        num_entries = length(sessions)
+        println("  UPF #$i:")
+        println("    Forwarding Entries: $num_entries (Active PDU Sessions)")
+        println("    Memory Usage:       $(round(mem_mb, digits=4)) MB")
         if !isempty(sessions)
             # Print first session as sample
             s = sessions[1]
-            println("    Sample Session: UL_TEID=$(s.ul_teid), DL_TEID=$(s.dl_teid), DestIP=$(s.ul_far.destination_ip)")
+            println("    Sample Session:     UL_TEID=$(s.ul_teid), DL_TEID=$(s.dl_teid), DestIP=$(s.ul_far.destination_ip)")
         end
     end
 
     println("\n[6G-RUPA Architecture] GUPF Forwarding Table (Static/Topological State):")
     println("  (Note: This table is identical for all GUPFs in this simulation scenario)")
+    
+    mem_6g = (Base.summarysize(state.forwarding_table_6g) + Base.summarysize(state.qos_profiles_6g)) / (1024^2)
+    println("  Total Memory per GUPF: $(round(mem_6g, digits=6)) MB")
+
     println("  Forwarding Table ($(length(state.forwarding_table_6g)) entries):")
     for (i, entry) in enumerate(state.forwarding_table_6g)
         println("    Entry #$i: Prefix=$(entry.dest_prefix), Mask=$(entry.mask), OutIf=$(entry.output_interface)")
