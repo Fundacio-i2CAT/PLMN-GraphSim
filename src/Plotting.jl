@@ -1,9 +1,14 @@
+module Plotting
+
 using Plots
 using CSV
 using DataFrames
 using Clustering
 using Random
-using Printf
+using ..Types
+using ..DataLoading
+
+export plot_operator_topology_with_cities
 
 # --- Configuration ---
 const NUM_AGENTS_TO_PLOT = 2000 
@@ -62,34 +67,6 @@ const CITIES = [
     ("Huesca", 42.1361, -0.4087),
     ("Ávila", 40.6565, -4.6813)
 ]
-
-# --- Load Data & Cluster ---
-function load_and_cluster(csv_path::String, operator_id::Int, num_upfs::Int)
-    println("Loading gNB data from $csv_path for Operator $operator_id...")
-    df = CSV.read(csv_path, DataFrame; header=[:radio, :mcc, :net, :area, :cell, :unit, :lon, :lat, :range, :samples, :changeable, :created, :updated, :avg_signal])
-    
-    # Filter valid coordinates for Spain (Mainland + Ceuta/Melilla, excluding Canary Islands)
-    filter!(row -> 35.0 <= row.lat <= 45.0 && -19.0 <= row.lon <= 5.0, df)
-
-    # Filter for Specific Operator
-    filter!(row -> row.net == operator_id, df)
-    
-    gnb_coords = Matrix{Float64}(undef, 2, nrow(df))
-    gnb_coords[1, :] = df.lon
-    gnb_coords[2, :] = df.lat
-    
-    println("  Found $(nrow(df)) valid gNBs.")
-    
-    # K-Means for UPFs
-    k = min(num_upfs, nrow(df))
-    println("Clustering into $k UPF regions...")
-    R = kmeans(gnb_coords, k; maxiter=100)
-    
-    upf_lons = R.centers[1, :]
-    upf_lats = R.centers[2, :]
-    
-    return df, upf_lons, upf_lats
-end
 
 # --- Generate Agents ---
 function generate_agents(df_gnb, num_agents)
@@ -203,20 +180,4 @@ function plot_operator_topology_with_cities(operator_name::String, operator_id::
     println("Plot saved to $output_path")
 end
 
-function plot_all_operators()
-    # Scenario 1: Centralized (3 UPFs)
-    println("\n--- Plotting Centralized Scenario (3 UPFs) ---")
-    plot_operator_topology_with_cities("Vodafone", 1, 3, "Centralized")
-    plot_operator_topology_with_cities("Orange", 3, 3, "Centralized")
-    plot_operator_topology_with_cities("Movistar", 7, 3, "Centralized")
-
-    # Scenario 2: Distributed (50 UPFs)
-    println("\n--- Plotting Distributed Scenario (50 UPFs) ---")
-    plot_operator_topology_with_cities("Vodafone", 1, 50, "Distributed")
-    plot_operator_topology_with_cities("Orange", 3, 50, "Distributed")
-    plot_operator_topology_with_cities("Movistar", 7, 50, "Distributed")
-end
-
-if abspath(PROGRAM_FILE) == @__FILE__
-    plot_all_operators()
 end
