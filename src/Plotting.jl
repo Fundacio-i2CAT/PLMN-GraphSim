@@ -14,59 +14,7 @@ export plot_operator_topology_with_cities
 const NUM_AGENTS_TO_PLOT = 2000 
 
 # --- Reference Cities (Provincial Capitals & Major Cities) ---
-# Name, Lat, Lon
-const CITIES = [
-    ("Madrid", 40.4168, -3.7038),
-    ("Barcelona", 41.3851, 2.1734),
-    ("Valencia", 39.4699, -0.3763),
-    ("Seville", 37.3891, -5.9845),
-    ("Zaragoza", 41.6488, -0.8891),
-    ("Málaga", 36.7212, -4.4217),
-    ("Murcia", 37.9922, -1.1307),
-    ("Palma", 39.5696, 2.6502),
-    ("Bilbao", 43.2630, -2.9350),
-    ("Alicante", 38.3452, -0.4810),
-    ("Córdoba", 37.8882, -4.7794),
-    ("Valladolid", 41.6523, -4.7245),
-    ("Vigo", 42.2406, -8.7207),
-    ("Gijón", 43.5322, -5.6611),
-    ("A Coruña", 43.3623, -8.4115),
-    ("Vitoria", 42.8467, -2.6716),
-    ("Granada", 37.1773, -3.5986),
-    ("Oviedo", 43.3619, -5.8494),
-    ("Pamplona", 42.8125, -1.6458),
-    ("Almería", 36.8340, -2.4637),
-    ("San Sebastián", 43.3183, -1.9812),
-    ("Burgos", 42.3439, -3.6969),
-    ("Santander", 43.4623, -3.8099),
-    ("Castellón", 39.9864, -0.0513),
-    ("Albacete", 38.9943, -1.8585),
-    ("Logroño", 42.4623, -2.4449),
-    ("Badajoz", 38.8794, -6.9706),
-    ("Salamanca", 40.9701, -5.6635),
-    ("Huelva", 37.2614, -6.9447),
-    ("Lleida", 41.6176, 0.6200),
-    ("Tarragona", 41.1189, 1.2445),
-    ("León", 42.5987, -5.5671),
-    ("Cádiz", 36.5271, -6.2886),
-    ("Jaén", 37.7749, -3.7902),
-    ("Ourense", 42.3358, -7.8639),
-    ("Lugo", 43.0125, -7.5558),
-    ("Girona", 41.9794, 2.8214),
-    ("Cáceres", 39.4753, -6.3723),
-    ("Santiago", 42.8782, -8.5448),
-    ("Toledo", 39.8628, -4.0273),
-    ("Guadalajara", 40.6328, -3.1602),
-    ("Cuenca", 40.0704, -2.1374),
-    ("Ciudad Real", 38.9848, -3.9274),
-    ("Zamora", 41.5063, -5.7446),
-    ("Palencia", 42.0095, -4.5286),
-    ("Segovia", 40.9429, -4.1088),
-    ("Soria", 41.7640, -2.4688),
-    ("Teruel", 40.3456, -1.1065),
-    ("Huesca", 42.1361, -0.4087),
-    ("Ávila", 40.6565, -4.6813)
-]
+# Moved to Types.jl as REFERENCE_CITIES
 
 # --- Generate Agents ---
 function generate_agents(df_gnb, num_agents)
@@ -154,9 +102,9 @@ function plot_operator_topology_with_cities(operator_name::String, operator_id::
     )
 
     # 3. Plot Reference Cities - Green Stars
-    city_lons = [c[3] for c in CITIES]
-    city_lats = [c[2] for c in CITIES]
-    city_names = [c[1] for c in CITIES]
+    city_lons = [c[2].lon for c in REFERENCE_CITIES]
+    city_lats = [c[2].lat for c in REFERENCE_CITIES]
+    city_names = [c[1] for c in REFERENCE_CITIES]
 
     scatter!(p, city_lons, city_lats,
         label = "Major Cities",
@@ -167,7 +115,7 @@ function plot_operator_topology_with_cities(operator_name::String, operator_id::
     )
 
     # Annotate Cities
-    annotate!(p, [(city_lons[i], city_lats[i] + 0.1, text(city_names[i], 8, :black, :bottom)) for i in 1:length(CITIES)])
+    annotate!(p, [(city_lons[i], city_lats[i] + 0.1, text(city_names[i], 8, :black, :bottom)) for i in 1:length(REFERENCE_CITIES)])
     
     # Save
     output_dir = joinpath(@__DIR__, "../images")
