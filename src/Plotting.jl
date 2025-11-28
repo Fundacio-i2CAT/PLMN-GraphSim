@@ -71,7 +71,8 @@ function plot_operator_topology_with_cities(operator_name::String, operator_id::
         ylabel = "Latitude",
         legend = :outertopright,
         size = (1200, 1000),
-        aspect_ratio = :equal
+        aspect_ratio = :equal,
+        ylims = (35, 44)
     )
     
     # 1. Plot gNBs (Base Stations) - Orange (Better visibility)
@@ -100,6 +101,9 @@ function plot_operator_topology_with_cities(operator_name::String, operator_id::
         markershape = :square,
         markerstrokewidth = 1
     )
+
+    # Annotate UPFs with their ID
+    annotate!(p, [(upf_lons[i], upf_lats[i], text(string(i), 8, :white, :center)) for i in 1:length(upf_lons)])
 
     # 3. Plot Reference Cities - Green Stars
     city_lons = [c[2].lon for c in REFERENCE_CITIES]
