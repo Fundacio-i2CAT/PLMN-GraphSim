@@ -55,19 +55,28 @@ end
 
 # --- Simulation State ---
 mutable struct SimGlobalState
-    active_sessions_5g::Vector{SessionContext5G}
+    # 5G State: Per UPF (Vector of Vectors)
+    upf_sessions_5g::Vector{Vector{SessionContext5G}}
+    
+    # 6G-RUPA State: Per GUPF (Constant/Topology based)
     forwarding_table_6g::Vector{ForwardingEntry6GRUPA}
     qos_profiles_6g::Vector{QoSConfig6GRUPA}
     
+    # Metrics History
     history_time::Vector{Float64}
-    history_size_5g_mb::Vector{Float64}
-    history_size_6g_mb::Vector{Float64}
+    history_total_5g_mb::Vector{Float64}
+    history_max_upf_5g_mb::Vector{Float64} # The bottleneck UPF
+    history_6g_mb::Vector{Float64}
 end
 
-function init_global_state()
+function init_global_state(num_upfs::Int)
+    # Initialize empty session lists for each UPF
+    upf_sessions = [Vector{SessionContext5G}() for _ in 1:num_upfs]
+    
     fwd = [ForwardingEntry6GRUPA(0x0A000000, 0xFFFFFF00, 1), ForwardingEntry6GRUPA(0x0A000100, 0xFFFFFF00, 2)]
     qos = [QoSConfig6GRUPA(Int8(i), Int8(i), 0.5, 1e-6) for i in 1:16]
-    return SimGlobalState(Vector{SessionContext5G}(), fwd, qos, Float64[], Float64[], Float64[])
+    
+    return SimGlobalState(upf_sessions, fwd, qos, Float64[], Float64[], Float64[], Float64[])
 end
 
 function create_session_context()
@@ -148,7 +157,6 @@ const PROVINCE_CENTROIDS = Dict(
 
 function load_and_deploy_network(csv_path::String, pop_csv_path::String, operator_net_id::Int, num_upfs::Int)
     println("Loading gNB data from $csv_path for Operator ID: $operator_net_id...")
-    # Columns: radio, mcc, net, area, cell, unit, lon, lat, ...
     df = CSV.read(csv_path, DataFrame; header=[:radio, :mcc, :net, :area, :cell, :unit, :lon, :lat, :range, :samples, :changeable, :created, :updated, :avg_signal])
     
     # Filter valid coordinates for Spain (approx bounding box)
@@ -286,43 +294,63 @@ end
     
     for _ in 1:num_sessions
         ctx = create_session_context()
-        push!(sim_state.active_sessions_5g, ctx)
+        push!(sim_state.upf_sessions_5g[assigned_upf_idx], ctx)
     end
-    
-    record_metrics(env, sim_state)
     
     # Active duration
     duration = rand(Exponential(20.0))
     @yield timeout(env, duration)
     
     # Disconnect
-    # Remove the same number of sessions we added
-    # (We just pop any session because we are tracking aggregate memory size, not individual identity)
-    if !isempty(sim_state.active_sessions_5g)
+    # Remove the same number of sessions we added from the specific UPF
+    if !isempty(sim_state.upf_sessions_5g[assigned_upf_idx])
         for _ in 1:num_sessions
-            if !isempty(sim_state.active_sessions_5g)
-                pop!(sim_state.active_sessions_5g)
+            if !isempty(sim_state.upf_sessions_5g[assigned_upf_idx])
+                pop!(sim_state.upf_sessions_5g[assigned_upf_idx])
             end
         end
     end
-    record_metrics(env, sim_state)
 end
 
-function record_metrics(env, sim_state)
-    current_time = now(env)
-    size_5g = Base.summarysize(sim_state.active_sessions_5g) / (1024^2)
-    size_6g = (Base.summarysize(sim_state.forwarding_table_6g) + Base.summarysize(sim_state.qos_profiles_6g)) / (1024^2)
-    
-    push!(sim_state.history_time, current_time)
-    push!(sim_state.history_size_5g_mb, size_5g)
-    push!(sim_state.history_size_6g_mb, size_6g)
+@resumable function monitor_metrics(env, sim_state::SimGlobalState)
+    while true
+        current_time = now(env)
+        
+        # Calculate 5G State
+        # We want: Total Network State AND Max State on a single UPF (Bottleneck)
+        total_5g_size = 0.0
+        max_upf_size = 0.0
+        
+        for sessions in sim_state.upf_sessions_5g
+            # Calculate size of this UPF's session list
+            # Note: summarysize is accurate but can be slow. 
+            # For simulation speed, we can estimate: count * sizeof(SessionContext5G)
+            # But let's stick to summarysize for accuracy unless it's too slow.
+            upf_size = Base.summarysize(sessions) / (1024^2)
+            total_5g_size += upf_size
+            if upf_size > max_upf_size
+                max_upf_size = upf_size
+            end
+        end
+        
+        # Calculate 6G-RUPA State (Constant per GUPF)
+        size_6g = (Base.summarysize(sim_state.forwarding_table_6g) + Base.summarysize(sim_state.qos_profiles_6g)) / (1024^2)
+        
+        push!(sim_state.history_time, current_time)
+        push!(sim_state.history_total_5g_mb, total_5g_size)
+        push!(sim_state.history_max_upf_5g_mb, max_upf_size)
+        push!(sim_state.history_6g_mb, size_6g)
+        
+        @yield timeout(env, 1.0) # Sample every 1.0 time unit
+    end
 end
 
 function save_simulation_results(operator_name::String, scenario_name::String, state::SimGlobalState)
     df = DataFrame(
         Time = state.history_time,
-        Size5G_MB = state.history_size_5g_mb,
-        Size6GRUPA_MB = state.history_size_6g_mb
+        Total_5G_MB = state.history_total_5g_mb,
+        Max_UPF_5G_MB = state.history_max_upf_5g_mb,
+        Size6GRUPA_MB = state.history_6g_mb
     )
     
     # Create results directory if it doesn't exist
@@ -363,7 +391,10 @@ function run_operator_simulation(operator_name::String, operator_id::Int, num_up
     
     # 2. Setup Simulation
     sim = Simulation()
-    global_state = init_global_state()
+    global_state = init_global_state(length(topology.upf_locations))
+    
+    # Start Monitor Process
+    @process monitor_metrics(sim, global_state)
     
     # Spawn Agents
     for i in 1:NUM_AGENTS
@@ -375,14 +406,18 @@ function run_operator_simulation(operator_name::String, operator_id::Int, num_up
     run(sim, 100.0) # Run for 100 time units
     
     println("Simulation Complete.")
-    println("Final 5G UPF State Size: $(last(global_state.history_size_5g_mb)) MB")
-    println("Final 6G-RUPA GUPF State Size: $(last(global_state.history_size_6g_mb)) MB")
+    println("Final Total 5G State: $(last(global_state.history_total_5g_mb)) MB")
+    println("Final Max UPF 5G State: $(last(global_state.history_max_upf_5g_mb)) MB")
+    println("Final 6G-RUPA GUPF State: $(last(global_state.history_6g_mb)) MB")
     
     # Calculate Scaled Impact
-    real_world_5g_mb = last(global_state.history_size_5g_mb) * SIMULATION_SCALE
+    real_world_total_5g_mb = last(global_state.history_total_5g_mb) * SIMULATION_SCALE
+    real_world_max_upf_5g_mb = last(global_state.history_max_upf_5g_mb) * SIMULATION_SCALE
+    
     println("\n--- Real World Extrapolation ($operator_name - $scenario_name) ---")
-    println("Estimated 5G State for $(round(EFFECTIVE_POPULATION/1e6, digits=2))M Users: $(real_world_5g_mb / 1024) GB")
-    println("Estimated 6G-RUPA State (Constant): $(last(global_state.history_size_6g_mb)) MB")
+    println("Estimated Total 5G Network State: $(real_world_total_5g_mb / 1024) GB")
+    println("Estimated Max UPF Load (Bottleneck): $(real_world_max_upf_5g_mb / 1024) GB")
+    println("Estimated 6G-RUPA State (Constant per Node): $(last(global_state.history_6g_mb)) MB")
 
     save_simulation_results(operator_name, scenario_name, global_state)
 end
