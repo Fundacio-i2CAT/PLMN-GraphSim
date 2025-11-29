@@ -1,5 +1,7 @@
 images/
 results/
+coverage/
+coverage_html/
 *.cov
 *.log
 lcov.info
