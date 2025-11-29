@@ -11,7 +11,7 @@ using ..AgentGeneration
 
 export plot_operator_topology_with_cities
 
-function plot_operator_topology_with_cities(operator_name::String, operator_id::Int, num_upfs::Int, scenario_name::String; scale_factor::Int=10000)
+function plot_operator_topology_with_cities(operator_name::String, operator_id::Int, num_upfs::Int, scenario_name::String; scale_factor::Int=1000)
     csv_path = joinpath(@__DIR__, "../data/214.csv")
 
     if !isfile(csv_path)
@@ -30,10 +30,10 @@ function plot_operator_topology_with_cities(operator_name::String, operator_id::
     num_agents = ceil(Int, EFFECTIVE_POPULATION / scale_factor)
     println("Generating $num_agents agents using population density (Scale: 1:$scale_factor)...")
     
-    # Limit plotting if too many agents (e.g. > 50k) to avoid crashing plots
-    if num_agents > 50000
-        println("Warning: Too many agents ($num_agents). Capping at 50,000 for plotting.")
-        num_agents = 50000
+    # Limit plotting if too many agents (e.g. > 100k) to avoid crashing plots
+    if num_agents > 100000
+        println("Warning: Too many agents ($num_agents). Capping at 100,000 for plotting.")
+        num_agents = 100000
     end
 
     agent_locs = generate_agent_locations(topology, num_agents)
