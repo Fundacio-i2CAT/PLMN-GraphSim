@@ -26,15 +26,29 @@ function init_global_state(topology::NetworkTopology)
 
     # 6G-RUPA State Initialization
     # Each UPF needs a forwarding entry for each gNB it serves.
-    # We populate this based on the topology map.
+    # We populate this based on the topology graph edges (One entry per connected gNB).
+    # That way we avoid implementing all the topological routing logic as well as defining
+    # the proper addressing scheme.
     forwarding_tables_6g = [Vector{ForwardingEntry6GRUPA}() for _ in 1:num_upfs]
 
-    for (gnb_idx, upf_idx) in enumerate(topology.gnb_to_upf_map)
-        # Create a route for this gNB in its assigned UPF
-        # In reality, this would be a prefix (e.g. 10.1.1.0/24)
-        # We use dummy values but the count is correct.
-        entry = ForwardingEntry6GRUPA(UInt32(gnb_idx), 0xFFFFFF00, Int32(1))
-        push!(forwarding_tables_6g[upf_idx], entry)
+    for i in 1:num_upfs
+        upf_label = (:UPF, i)
+        # Check if UPF exists in graph (it should)
+        if haskey(topology.graph, upf_label)
+            u_code = code_for(topology.graph, upf_label)
+            # Iterate over all neighbors (connected edges)
+            for v_code in neighbors(topology.graph, u_code)
+                v_label = label_for(topology.graph, v_code)
+                # If the neighbor is a gNB, add a forwarding entry
+                if v_label[1] == :gNB
+                    gnb_id = v_label[2]
+                    # Create a route for this gNB
+                    # Destination Prefix = gNB ID (simplified representation)
+                    entry = ForwardingEntry6GRUPA(UInt32(gnb_id), 0xFFFFFF00, Int32(1))
+                    push!(forwarding_tables_6g[i], entry)
+                end
+            end
+        end
     end
 
     qos = [QoSConfig6GRUPA(Int8(i), Int8(i), 0.5, 1e-6) for i in 1:16]
