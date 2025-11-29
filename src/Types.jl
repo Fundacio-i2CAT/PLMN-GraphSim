@@ -10,6 +10,14 @@ using GeometryBasics
 export FAR, SessionContext5G, ForwardingEntry6GRUPA, QoSConfig6GRUPA
 export SimGlobalState, GeoPoint, NetworkTopology, GUPFState6GRUPA, Municipality
 export REFERENCE_CITIES
+export SPAIN_POPULATION, RATIO_UNDER_15, PHONE_ADOPTION_OVER_15, EFFECTIVE_POPULATION
+
+# --- Constants ---
+const SPAIN_POPULATION = 49_442_844 # INE, 2025
+# Demographics: ~14.5% under 15 (no phone), 96% of >15 have phone, source INE 2023
+const RATIO_UNDER_15 = 0.145
+const PHONE_ADOPTION_OVER_15 = 0.96
+const EFFECTIVE_POPULATION = SPAIN_POPULATION * (1 - RATIO_UNDER_15) * PHONE_ADOPTION_OVER_15
 
 # --- Shared Structures ---
 struct GeoPoint
@@ -55,11 +63,11 @@ end
 mutable struct SimGlobalState
     # 5G State: Per UPF (Vector of Vectors)
     upf_sessions_5g::Vector{Vector{SessionContext5G}}
-    
+
     # 6G-RUPA State: Per GUPF (Constant/Topology based)
     forwarding_table_6g::Vector{ForwardingEntry6GRUPA}
     qos_profiles_6g::Vector{QoSConfig6GRUPA}
-    
+
     # Metrics History
     history_time::Vector{Float64}
     history_total_5g_mb::Vector{Float64}
@@ -78,10 +86,10 @@ struct NetworkTopology
     gnb_locations::Vector{GeoPoint}
     upf_locations::Vector{GeoPoint}
     gnb_to_upf_map::Vector{Int} # Index of UPF for each gNB
-    
+
     # Municipality Distribution (More granular)
     municipalities::Vector{Municipality}
-    municipality_bins::Dict{String, Vector{Int}} # Muni Code -> List of gNB indices
+    municipality_bins::Dict{String,Vector{Int}} # Muni Code -> List of gNB indices
     municipality_probs::Vector{Float64} # Probability of each municipality (aligned with municipalities vector)
 end
 

@@ -170,14 +170,18 @@ function load_and_deploy_network(csv_path::String, operator_net_id::Int, num_upf
     # We only want to spawn agents in municipalities where they can connect.
     # OR we spawn them in any municipality and they connect to nearest gNB (even if far).
     # Let's stick to "Only spawn where there is coverage" to avoid artifacts of users connecting 50km away.
-    valid_muni_indices = [i for i in 1:length(municipalities) if !isempty(municipality_bins[municipalities[i].code])]
-    final_municipalities = municipalities[valid_muni_indices]
+    # valid_muni_indices = [i for i in 1:length(municipalities) if !isempty(municipality_bins[municipalities[i].code])]
+    # final_municipalities = municipalities[valid_muni_indices]
+    
+    # User Request: Agents should be placed independently from gNBs.
+    # We use all municipalities that have valid data.
+    final_municipalities = municipalities
     
     # Calculate probabilities based on population
     total_muni_pop = sum([m.population for m in final_municipalities])
     muni_probs = [Float64(m.population) / total_muni_pop for m in final_municipalities]
     
-    println("  Municipalities with coverage: $(length(final_municipalities)) / $(length(municipalities))")
+    println("  Municipalities available for agents: $(length(final_municipalities))")
 
     # --- Deploy UPFs using K-Means Clustering ---
     actual_k = min(num_upfs, nrow(df))
