@@ -15,14 +15,7 @@ using ..AgentGeneration
 export run_operator_simulation, init_global_state, create_session_context
 
 # --- Configuration ---
-const SPAIN_POPULATION = 47_000_000
-# Demographics: ~14.5% under 15 (no phone), 96% of >15 have phone, source INE 2023
-const RATIO_UNDER_15 = 0.145
-const PHONE_ADOPTION_OVER_15 = 0.96
-const EFFECTIVE_POPULATION = SPAIN_POPULATION * (1 - RATIO_UNDER_15) * PHONE_ADOPTION_OVER_15
-
-const SIMULATION_SCALE = 1_00 # 1 Agent = 100 people
-const NUM_AGENTS = ceil(Int, EFFECTIVE_POPULATION / SIMULATION_SCALE)
+# Population constants moved to Types.jl
 
 # Number of PDU Sessions per User
 # Standard Smartphone: 1 (Internet) or 2 (Internet + IMS for VoNR)
@@ -194,10 +187,15 @@ function print_forwarding_tables(state::SimGlobalState)
     end
 end
 
-function run_operator_simulation(operator_name::String, operator_id::Int, num_upfs::Int, scenario_name::String)
+function run_operator_simulation(operator_name::String, operator_id::Int, num_upfs::Int, scenario_name::String; scale_factor::Int=1000)
     println("\n==================================================")
     println("RUNNING SIMULATION: $operator_name ($scenario_name)")
     println("==================================================")
+
+    num_agents = ceil(Int, EFFECTIVE_POPULATION / scale_factor)
+    println("Configuration:")
+    println("  Scale Factor: 1 Agent = $scale_factor UEs")
+    println("  Total Agents: $num_agents")
 
     csv_path = joinpath(@__DIR__, "../data/214.csv")
 
@@ -211,7 +209,7 @@ function run_operator_simulation(operator_name::String, operator_id::Int, num_up
     println("Network Deployed:")
     println("  gNBs: $(length(topology.gnb_locations))")
     println("  UPFs: $(length(topology.upf_locations))")
-    println("  Simulated Users: $NUM_AGENTS (Stress Test)")
+    println("  Simulated Users: $num_agents")
 
     # 2. Setup Simulation
     sim = ConcurrentSim.Simulation()
@@ -221,7 +219,7 @@ function run_operator_simulation(operator_name::String, operator_id::Int, num_up
     @process monitor_metrics(sim, global_state)
 
     # Spawn Agents
-    for i in 1:NUM_AGENTS
+    for i in 1:num_agents
         @process user_lifecycle(sim, i, global_state, topology)
     end
 
@@ -235,8 +233,8 @@ function run_operator_simulation(operator_name::String, operator_id::Int, num_up
     println("Final 6G-RUPA GUPF State: $(last(global_state.history_6g_mb)) MB")
 
     # Calculate Scaled Impact
-    real_world_total_5g_mb = last(global_state.history_total_5g_mb) * SIMULATION_SCALE
-    real_world_max_upf_5g_mb = last(global_state.history_max_upf_5g_mb) * SIMULATION_SCALE
+    real_world_total_5g_mb = last(global_state.history_total_5g_mb) * scale_factor
+    real_world_max_upf_5g_mb = last(global_state.history_max_upf_5g_mb) * scale_factor
 
     println("\n--- Real World Extrapolation ($operator_name - $scenario_name) ---")
     println("Estimated Total 5G Network State: $(real_world_total_5g_mb / 1024) GB")
