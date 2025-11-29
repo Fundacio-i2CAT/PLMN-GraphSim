@@ -20,6 +20,11 @@ const RATIO_UNDER_15 = 0.145
 const PHONE_ADOPTION_OVER_15 = 0.96
 const EFFECTIVE_POPULATION = SPAIN_POPULATION * (1 - RATIO_UNDER_15) * PHONE_ADOPTION_OVER_15
 
+# --- Simulation Constants ---
+# Estimated memory footprint per 5G Session (PDR + FAR + QER + URR + Context overhead)
+# This is a theoretical value for a C/C++ data plane implementation, not the Julia struct size.
+const BYTES_PER_SESSION_5G = 512 
+
 # --- Shared Structures ---
 struct GeoPoint
     lat::Float64
@@ -77,17 +82,20 @@ end
 # --- Simulation State ---
 mutable struct SimGlobalState
     # 5G State: Per UPF (Vector of Vectors)
+    # Dynamic: Grows with number of sessions
     upf_sessions_5g::Vector{Vector{SessionContext5G}}
 
-    # 6G-RUPA State: Per GUPF (Constant/Topology based)
-    forwarding_table_6g::Vector{ForwardingEntry6GRUPA}
+    # 6G-RUPA State: Per GUPF (Vector of Vectors)
+    # Static/Topology-based: Depends on number of gNBs/subnets served
+    forwarding_tables_6g::Vector{Vector{ForwardingEntry6GRUPA}}
     qos_profiles_6g::Vector{QoSConfig6GRUPA}
 
     # Metrics History
     history_time::Vector{Float64}
     history_total_5g_mb::Vector{Float64}
     history_max_upf_5g_mb::Vector{Float64} # The bottleneck UPF
-    history_6g_mb::Vector{Float64}
+    history_total_6g_mb::Vector{Float64}
+    history_max_upf_6g_mb::Vector{Float64}
 end
 
 struct GUPFState6GRUPA
