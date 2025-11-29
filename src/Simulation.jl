@@ -212,6 +212,36 @@ function save_simulation_results(operator_name::String, scenario_name::String, s
     println("Results saved to $filename")
 end
 
+function save_raw_upf_data(operator_name::String, scenario_name::String, state::SimGlobalState, scale_factor::Int)
+    # 5G Data (Scaled to Real World)
+    upf_ids = 1:length(state.upf_sessions_5g)
+    # Calculate 5G metrics
+    entries_5g = [length(s) * scale_factor for s in state.upf_sessions_5g]
+    mem_5g_mb = [Base.summarysize(s) / (1024^2) * scale_factor for s in state.upf_sessions_5g]
+    # Average bytes per entry (including vector overhead distributed)
+    mem_per_entry_5g = [length(s) > 0 ? (Base.summarysize(s) / length(s)) : 0.0 for s in state.upf_sessions_5g]
+    # Calculate 6G metrics
+    entries_6g = [length(t) for t in state.forwarding_tables_6g]
+    mem_6g_mb = [Base.summarysize(t) / (1024^2) for t in state.forwarding_tables_6g]
+    mem_per_entry_6g = [length(t) > 0 ? (Base.summarysize(t) / length(t)) : 0.0 for t in state.forwarding_tables_6g]
+    df = DataFrame(
+        UPF_ID=upf_ids,
+        Entries_5G=entries_5g,
+        Total_Mem_5G_MB=mem_5g_mb,
+        Bytes_Per_Entry_5G=mem_per_entry_5g,
+        Entries_6G=entries_6g,
+        Total_Mem_6G_MB=mem_6g_mb,
+        Bytes_Per_Entry_6G=mem_per_entry_6g
+    )
+    results_dir = joinpath(@__DIR__, "../results")
+    if !isdir(results_dir)
+        mkdir(results_dir)
+    end
+    filename = "raw_upf_state_$(operator_name)_$(scenario_name).csv"
+    CSV.write(joinpath(results_dir, filename), df)
+    println("Raw UPF state data saved to $filename")
+end
+
 function print_forwarding_tables(state::SimGlobalState, scale_factor::Int)
     println("\n--- Detailed Forwarding State Dump ---")
     println("\n[5G Architecture] Per-UPF Session Contexts (Dynamic State):")
@@ -231,7 +261,7 @@ function print_forwarding_tables(state::SimGlobalState, scale_factor::Int)
         mem_mb = Base.summarysize(table) / (1024^2)
         num_entries = length(table)
         println("  GUPF #$i:")
-        println("    Forwarding Entries: $num_entries (Routes to gNBs)")
+        println("    Forwarding Entries: $num_entries")
         println("    Memory Usage:       $(round(mem_mb, digits=6)) MB")
     end
 end
@@ -305,6 +335,7 @@ function run_operator_simulation(operator_name::String, operator_id::Int, num_up
     println("Estimated Max GUPF Load (Bottleneck): $(real_world_max_upf_6g_mb) MB")
     print_forwarding_tables(global_state, scale_factor)
     save_simulation_results(operator_name, scenario_name, global_state)
+    save_raw_upf_data(operator_name, scenario_name, global_state, scale_factor)
 end
 
 end
