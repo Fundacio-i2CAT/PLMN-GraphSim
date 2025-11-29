@@ -14,21 +14,14 @@ using ..AgentGeneration
 
 export run_operator_simulation, init_global_state, create_session_context
 
-# --- Configuration ---
-# Population constants moved to Types.jl
-
-# Number of PDU Sessions per User
-# Standard Smartphone: 1 (Internet) or 2 (Internet + IMS for VoNR)
+# # Number of PDU Sessions per User. Tipycal eMBB UE: Internet + IMS for VoNR)
 const MIN_SESSIONS = 1
 const MAX_SESSIONS = 2
 
 function init_global_state(num_upfs::Int)
-    # Initialize empty session lists for each UPF
-    upf_sessions = [Vector{SessionContext5G}() for _ in 1:num_upfs]
-
+    upf_sessions = [Vector{SessionContext5G}() for _ in 1:num_upfs] # Number of PDU Sessions per User
     fwd = [ForwardingEntry6GRUPA(0x0A000000, 0xFFFFFF00, 1), ForwardingEntry6GRUPA(0x0A000100, 0xFFFFFF00, 2)]
     qos = [QoSConfig6GRUPA(Int8(i), Int8(i), 0.5, 1e-6) for i in 1:16]
-
     return SimGlobalState(upf_sessions, fwd, qos, Float64[], Float64[], Float64[], Float64[])
 end
 
@@ -39,7 +32,6 @@ end
 function find_serving_gnb(topology::NetworkTopology, user_loc::GeoPoint)
     min_dist = Inf
     best_idx = 0
-    
     # Optimization: We could use a spatial index, but for 40k points and 2k agents, 
     # brute force is ~80M ops. In Julia this is < 1s.
     for (i, gnb) in enumerate(topology.gnb_locations)
@@ -56,32 +48,21 @@ end
 # --- DES Processes ---
 
 @resumable function user_lifecycle(env, user_id, sim_state, topology::NetworkTopology)
-    # 1. User Placement (Population Distribution)
-    # Use unified AgentGeneration logic
-    user_loc = select_agent_location(topology)
-
-    # 2. Connect to Network (Find nearest gNB)
-    gnb_idx = find_serving_gnb(topology, user_loc)
-    
+    user_loc = select_agent_location(topology) # User Placement (Population Distribution)
+    gnb_idx = find_serving_gnb(topology, user_loc) # Connect to Network -> Find nearest gNB
     if gnb_idx == 0
-        # Should not happen given the logic, but safety check
-        return
+        return # Should never happen, but safety check
     end
-
     assigned_upf_idx = topology.gnb_to_upf_map[gnb_idx]
-
-    # Arrival
     arrival_delay = rand(Exponential(5.0)) # Spread out arrivals
     @yield timeout(env, arrival_delay)
 
     # Connect
-    # In a full simulation, we would calculate latency based on distance:
-    # user -> gnb -> upf
+    # TODO In a full simulation, we would calculate latency based on distance: user -> gnb -> upf
 
-    # Create 5G State (Allocation)
-    # Simulate multiple sessions per user (e.g. Internet, VoLTE, IoT device)
+    # Create 5G Forwarding State (Allocation)
+    # Simulate multiple sessions per user (e.g. Internet, VoLTE, IoT device...)
     num_sessions = rand(MIN_SESSIONS:MAX_SESSIONS)
-
     for _ in 1:num_sessions
         ctx = create_session_context()
         push!(sim_state.upf_sessions_5g[assigned_upf_idx], ctx)
@@ -105,15 +86,14 @@ end
 @resumable function monitor_metrics(env, sim_state::SimGlobalState)
     while true
         current_time = now(env)
-
         # Calculate 5G State
-        # We want: Total Network State AND Max State on a single UPF (Bottleneck)
+        # By now, total Network State AND Max State on a single UPF (Bottleneck)
         total_5g_size = 0.0
         max_upf_size = 0.0
 
         for sessions in sim_state.upf_sessions_5g
             # Calculate size of this UPF's session list
-            # Note: summarysize is accurate but can be slow. 
+            # XXX: summarysize is accurate but can be slow. 
             # For simulation speed, we can estimate: count * sizeof(SessionContext5G)
             # But let's stick to summarysize for accuracy unless it's too slow.
             upf_size = Base.summarysize(sessions) / (1024^2)
@@ -124,8 +104,8 @@ end
         end
 
         # Calculate 6G-RUPA State (Constant per GUPF)
+        # TODO Calculation wrong, come back to this
         size_6g = (Base.summarysize(sim_state.forwarding_table_6g) + Base.summarysize(sim_state.qos_profiles_6g)) / (1024^2)
-
         push!(sim_state.history_time, current_time)
         push!(sim_state.history_total_5g_mb, total_5g_size)
         push!(sim_state.history_max_upf_5g_mb, max_upf_size)
@@ -142,13 +122,11 @@ function save_simulation_results(operator_name::String, scenario_name::String, s
         Max_UPF_5G_MB=state.history_max_upf_5g_mb,
         Size6GRUPA_MB=state.history_6g_mb
     )
-
     # Create results directory if it doesn't exist
     results_dir = joinpath(@__DIR__, "../results")
     if !isdir(results_dir)
         mkdir(results_dir)
     end
-
     filename = "simulation_results_$(operator_name)_$(scenario_name).csv"
     CSV.write(joinpath(results_dir, filename), df)
     println("Results saved to $filename")
@@ -156,7 +134,6 @@ end
 
 function print_forwarding_tables(state::SimGlobalState)
     println("\n--- Detailed Forwarding State Dump ---")
-    
     println("\n[5G Architecture] Per-UPF Session Contexts (Dynamic State):")
     for (i, sessions) in enumerate(state.upf_sessions_5g)
         mem_mb = Base.summarysize(sessions) / (1024^2)
@@ -173,7 +150,7 @@ function print_forwarding_tables(state::SimGlobalState)
 
     println("\n[6G-RUPA Architecture] GUPF Forwarding Table (Static/Topological State):")
     println("  (Note: This table is identical for all GUPFs in this simulation scenario)")
-    
+
     mem_6g = (Base.summarysize(state.forwarding_table_6g) + Base.summarysize(state.qos_profiles_6g)) / (1024^2)
     println("  Total Memory per GUPF: $(round(mem_6g, digits=6)) MB")
 

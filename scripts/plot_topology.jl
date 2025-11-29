@@ -6,8 +6,8 @@ using DesJulia6gRupa.Plotting
 function plot_all_operators()
     # Scale Factor for Plotting
     # Use a larger scale factor (fewer points) for plotting to keep it clean and fast
-    # 1:10000 is reasonable (~4000 points)
-    SCALE = 10
+    # 1:1000 is reasonable (~40,000 points)
+    SCALE = 1000
 
     # Scenario 1: Centralized (3 UPFs)
     println("\n--- Plotting Centralized Scenario (3 UPFs) ---")
