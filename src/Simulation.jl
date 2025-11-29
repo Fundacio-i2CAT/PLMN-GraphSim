@@ -20,11 +20,35 @@ export run_operator_simulation, init_global_state, create_session_context
 const MIN_SESSIONS = 1
 const MAX_SESSIONS = 2
 
-function init_global_state(num_upfs::Int)
+function init_global_state(topology::NetworkTopology)
+    num_upfs = length(topology.upf_locations)
     upf_sessions = [Vector{SessionContext5G}() for _ in 1:num_upfs] # Number of PDU Sessions per User
-    fwd = [ForwardingEntry6GRUPA(0x0A000000, 0xFFFFFF00, 1), ForwardingEntry6GRUPA(0x0A000100, 0xFFFFFF00, 2)]
+    
+    # 6G-RUPA State Initialization
+    # Each UPF needs a forwarding entry for each gNB it serves.
+    # We populate this based on the topology map.
+    forwarding_tables_6g = [Vector{ForwardingEntry6GRUPA}() for _ in 1:num_upfs]
+    
+    for (gnb_idx, upf_idx) in enumerate(topology.gnb_to_upf_map)
+        # Create a route for this gNB in its assigned UPF
+        # In reality, this would be a prefix (e.g. 10.1.1.0/24)
+        # We use dummy values but the count is correct.
+        entry = ForwardingEntry6GRUPA(UInt32(gnb_idx), 0xFFFFFF00, Int32(1))
+        push!(forwarding_tables_6g[upf_idx], entry)
+    end
+
     qos = [QoSConfig6GRUPA(Int8(i), Int8(i), 0.5, 1e-6) for i in 1:16]
-    return SimGlobalState(upf_sessions, fwd, qos, Float64[], Float64[], Float64[], Float64[])
+    
+    return SimGlobalState(
+        upf_sessions, 
+        forwarding_tables_6g, 
+        qos, 
+        Float64[], # time
+        Float64[], # total 5g mb
+        Float64[], # max upf 5g mb
+        Float64[], # total 6g mb
+        Float64[]  # max upf 6g mb
+    )
 end
 
 function create_session_context()
@@ -95,7 +119,8 @@ end
     end
 
     # Remove Agent from Graph (Cleanup)
-    rem_vertex!(topology.graph, (:Agent, user_id))
+    # MetaGraphsNext uses delete! for removing vertices by label
+    delete!(topology.graph, (:Agent, user_id))
 end
 
 @resumable function monitor_metrics(env, sim_state::SimGlobalState)
@@ -118,13 +143,31 @@ end
             end
         end
 
-        # Calculate 6G-RUPA State (Constant per GUPF)
-        # TODO Calculation wrong, come back to this
-        size_6g = (Base.summarysize(sim_state.forwarding_table_6g) + Base.summarysize(sim_state.qos_profiles_6g)) / (1024^2)
+        # Calculate 6G-RUPA State (Static per GUPF, but we track it for consistency)
+        total_6g_size = 0.0
+        max_upf_6g_size = 0.0
+        
+        # QoS Profiles are shared/global usually, or per UPF. Let's assume per UPF copy.
+        qos_size = Base.summarysize(sim_state.qos_profiles_6g) / (1024^2)
+
+        for table in sim_state.forwarding_tables_6g
+            # Size of the forwarding table for this UPF
+            table_size = Base.summarysize(table) / (1024^2)
+            
+            # Total state for this UPF = Table + QoS
+            upf_total = table_size + qos_size
+            
+            total_6g_size += upf_total
+            if upf_total > max_upf_6g_size
+                max_upf_6g_size = upf_total
+            end
+        end
+
         push!(sim_state.history_time, current_time)
         push!(sim_state.history_total_5g_mb, total_5g_size)
         push!(sim_state.history_max_upf_5g_mb, max_upf_size)
-        push!(sim_state.history_6g_mb, size_6g)
+        push!(sim_state.history_total_6g_mb, total_6g_size)
+        push!(sim_state.history_max_upf_6g_mb, max_upf_6g_size)
 
         @yield timeout(env, 1.0) # Sample every 1.0 time unit
     end
@@ -135,7 +178,8 @@ function save_simulation_results(operator_name::String, scenario_name::String, s
         Time=state.history_time,
         Total_5G_MB=state.history_total_5g_mb,
         Max_UPF_5G_MB=state.history_max_upf_5g_mb,
-        Size6GRUPA_MB=state.history_6g_mb
+        Total_6G_MB=state.history_total_6g_mb,
+        Max_UPF_6G_MB=state.history_max_upf_6g_mb
     )
     # Create results directory if it doesn't exist
     results_dir = joinpath(@__DIR__, "../results")
@@ -156,38 +200,33 @@ function print_forwarding_tables(state::SimGlobalState)
         println("  UPF #$i:")
         println("    Forwarding Entries: $num_entries (Active PDU Sessions)")
         println("    Memory Usage:       $(round(mem_mb, digits=4)) MB")
-        if !isempty(sessions)
-            # Print first session as sample
-            s = sessions[1]
-            println("    Sample Session:     UL_TEID=$(s.ul_teid), DL_TEID=$(s.dl_teid), DestIP=$(s.ul_far.destination_ip)")
-        end
     end
 
-    println("\n[6G-RUPA Architecture] GUPF Forwarding Table (Static/Topological State):")
-    println("  (Note: This table is identical for all GUPFs in this simulation scenario)")
-
-    mem_6g = (Base.summarysize(state.forwarding_table_6g) + Base.summarysize(state.qos_profiles_6g)) / (1024^2)
-    println("  Total Memory per GUPF: $(round(mem_6g, digits=6)) MB")
-
-    println("  Forwarding Table ($(length(state.forwarding_table_6g)) entries):")
-    for (i, entry) in enumerate(state.forwarding_table_6g)
-        println("    Entry #$i: Prefix=$(entry.dest_prefix), Mask=$(entry.mask), OutIf=$(entry.output_interface)")
-    end
-    println("  QoS Profiles ($(length(state.qos_profiles_6g)) entries):")
-    for (i, qos) in enumerate(state.qos_profiles_6g)
-        println("    Profile #$i: QFI=$(qos.qfi), Prio=$(qos.priority), Delay=$(qos.packet_delay_budget)ms")
+    println("\n[6G-RUPA Architecture] GUPF Forwarding Tables (Static/Topological State):")
+    for (i, table) in enumerate(state.forwarding_tables_6g)
+        mem_mb = Base.summarysize(table) / (1024^2)
+        num_entries = length(table)
+        println("  GUPF #$i:")
+        println("    Forwarding Entries: $num_entries (Routes to gNBs)")
+        println("    Memory Usage:       $(round(mem_mb, digits=6)) MB")
     end
 end
 
-function run_operator_simulation(operator_name::String, operator_id::Int, num_upfs::Int, scenario_name::String; scale_factor::Int=1000)
+function run_operator_simulation(operator_name::String, operator_id::Int, num_upfs::Int, scenario_name::String; scale_factor::Int=1)
     println("\n==================================================")
     println("RUNNING SIMULATION: $operator_name ($scenario_name)")
     println("==================================================")
 
+    # Simplification: 1 Agent = 1 UE
+    # We use a smaller population for testing, or the full effective population if scale_factor=1
+    # But to avoid crashing with 40M agents, let's assume the user passes a reasonable scale_factor
+    # that results in a manageable number of agents for the simulation engine.
+    # However, for the "1 UE = 1 Agent" logic requested, we treat the simulated agents as the total universe.
+    
     num_agents = ceil(Int, EFFECTIVE_POPULATION / scale_factor)
     println("Configuration:")
-    println("  Scale Factor: 1 Agent = $scale_factor UEs")
-    println("  Total Agents: $num_agents")
+    println("  Scale Factor: 1 Agent represents $scale_factor real people (Simulation uses $num_agents agents)")
+    println("  Assumption: 1 Active UE per Agent")
 
     csv_path = joinpath(@__DIR__, "../data/214.csv")
 
@@ -205,7 +244,7 @@ function run_operator_simulation(operator_name::String, operator_id::Int, num_up
 
     # 2. Setup Simulation
     sim = ConcurrentSim.Simulation()
-    global_state = init_global_state(length(topology.upf_locations))
+    global_state = init_global_state(topology)
 
     # Start Monitor Process
     @process monitor_metrics(sim, global_state)
@@ -222,16 +261,23 @@ function run_operator_simulation(operator_name::String, operator_id::Int, num_up
     println("Simulation Complete.")
     println("Final Total 5G State: $(last(global_state.history_total_5g_mb)) MB")
     println("Final Max UPF 5G State: $(last(global_state.history_max_upf_5g_mb)) MB")
-    println("Final 6G-RUPA GUPF State: $(last(global_state.history_6g_mb)) MB")
+    println("Final Total 6G-RUPA State: $(last(global_state.history_total_6g_mb)) MB")
+    println("Final Max GUPF 6G-RUPA State: $(last(global_state.history_max_upf_6g_mb)) MB")
 
     # Calculate Scaled Impact
-    real_world_total_5g_mb = last(global_state.history_total_5g_mb) * scale_factor
-    real_world_max_upf_5g_mb = last(global_state.history_max_upf_5g_mb) * scale_factor
+    # Simplification: 1 Agent = 1 UE. No scaling factor applied to the count.
+    real_world_total_5g_mb = last(global_state.history_total_5g_mb)
+    real_world_max_upf_5g_mb = last(global_state.history_max_upf_5g_mb)
+    
+    # 6G State is NOT scaled by agents, as it depends on gNBs (which are real/full scale)
+    real_world_total_6g_mb = last(global_state.history_total_6g_mb)
+    real_world_max_upf_6g_mb = last(global_state.history_max_upf_6g_mb)
 
     println("\n--- Real World Extrapolation ($operator_name - $scenario_name) ---")
-    println("Estimated Total 5G Network State: $(real_world_total_5g_mb / 1024) GB")
-    println("Estimated Max UPF Load (Bottleneck): $(real_world_max_upf_5g_mb / 1024) GB")
-    println("Estimated 6G-RUPA State (Constant per Node): $(last(global_state.history_6g_mb)) MB")
+    println("Estimated Total 5G Network State: $(real_world_total_5g_mb) MB")
+    println("Estimated Max UPF Load (Bottleneck): $(real_world_max_upf_5g_mb) MB")
+    println("Estimated Total 6G-RUPA State: $(real_world_total_6g_mb) MB")
+    println("Estimated Max GUPF Load (Bottleneck): $(real_world_max_upf_6g_mb) MB")
 
     print_forwarding_tables(global_state)
 

@@ -116,9 +116,9 @@ function is_point_inside(pt, poly)
         # We assume coordinates(poly) gives us something iterable of points
         coords = coordinates(poly)
         
-        # PolygonOps.inpolygon returns 1 (inside), 0 (boundary), -1 (outside)
-        # We consider boundary as inside
-        return PolygonOps.inpolygon(pt, coords) >= 0
+        # PolygonOps.inpolygon returns 1 (inside), 0 (boundary), -1 (outside) by default?
+        # We force explicit return values to be safe: in=1, on=1, out=0
+        return PolygonOps.inpolygon(pt, coords, in=1, on=1, out=0) == 1
         
     elseif isa(poly, GeometryBasics.MultiPolygon)
         for p in poly
