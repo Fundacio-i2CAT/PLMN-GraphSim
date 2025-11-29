@@ -8,6 +8,8 @@ using Random
 using DataFrames
 using CSV
 using Dates
+using Graphs
+using MetaGraphsNext
 using ..Types
 using ..DataLoading
 using ..AgentGeneration
@@ -53,6 +55,16 @@ end
     if gnb_idx == 0
         return # Should never happen, but safety check
     end
+
+    # Add Agent to Graph and Connect to gNB
+    # We use a lock or ensure thread safety if running in parallel threads, 
+    # but ConcurrentSim is single-threaded (coroutine based), so this is safe.
+    add_vertex!(topology.graph, (:Agent, user_id), user_loc)
+    
+    gnb_loc = topology.gnb_locations[gnb_idx]
+    dist_km = haversine_distance(user_loc, gnb_loc)
+    add_edge!(topology.graph, (:Agent, user_id), (:gNB, gnb_idx), dist_km)
+
     assigned_upf_idx = topology.gnb_to_upf_map[gnb_idx]
     arrival_delay = rand(Exponential(5.0)) # Spread out arrivals
     @yield timeout(env, arrival_delay)
@@ -81,6 +93,9 @@ end
             end
         end
     end
+
+    # Remove Agent from Graph (Cleanup)
+    rem_vertex!(topology.graph, (:Agent, user_id))
 end
 
 @resumable function monitor_metrics(env, sim_state::SimGlobalState)
