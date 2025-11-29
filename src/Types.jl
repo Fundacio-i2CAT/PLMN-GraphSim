@@ -11,6 +11,7 @@ export FAR, SessionContext5G, ForwardingEntry6GRUPA, QoSConfig6GRUPA
 export SimGlobalState, GeoPoint, NetworkTopology, GUPFState6GRUPA, Municipality
 export REFERENCE_CITIES
 export SPAIN_POPULATION, RATIO_UNDER_15, PHONE_ADOPTION_OVER_15, EFFECTIVE_POPULATION
+export haversine_distance
 
 # --- Constants ---
 const SPAIN_POPULATION = 49_442_844 # INE, 2025
@@ -23,6 +24,20 @@ const EFFECTIVE_POPULATION = SPAIN_POPULATION * (1 - RATIO_UNDER_15) * PHONE_ADO
 struct GeoPoint
     lat::Float64
     lon::Float64
+end
+
+"""
+    haversine_distance(p1::GeoPoint, p2::GeoPoint)
+
+Calculates the Haversine distance between two GeoPoints in kilometers.
+"""
+function haversine_distance(p1::GeoPoint, p2::GeoPoint)
+    R = 6371.0 # Earth radius in km
+    dlat = deg2rad(p2.lat - p1.lat)
+    dlon = deg2rad(p2.lon - p1.lon)
+    a = sin(dlat/2)^2 + cos(deg2rad(p1.lat)) * cos(deg2rad(p2.lat)) * sin(dlon/2)^2
+    c = 2 * atan(sqrt(a), sqrt(1-a))
+    return R * c
 end
 
 struct Municipality
@@ -91,6 +106,13 @@ struct NetworkTopology
     municipalities::Vector{Municipality}
     municipality_bins::Dict{String,Vector{Int}} # Muni Code -> List of gNB indices
     municipality_probs::Vector{Float64} # Probability of each municipality (aligned with municipalities vector)
+    
+    # Graph Representation
+    # Nodes: 
+    #   1..N_gNB (gNBs)
+    #   N_gNB+1..N_gNB+N_UPF (UPFs)
+    #   Dynamic: Agents
+    graph::AbstractGraph 
 end
 
 # --- Reference Cities (Provincial Capitals & Major Cities) ---

@@ -5,11 +5,13 @@ using CSV
 using DataFrames
 using Clustering
 using Random
+using Graphs
+using MetaGraphsNext
 using ..Types
 using ..DataLoading
 using ..AgentGeneration
 
-export plot_operator_topology_with_cities
+export plot_operator_topology_with_cities, plot_network_graph
 
 function plot_operator_topology_with_cities(operator_name::String, operator_id::Int, num_upfs::Int, scenario_name::String; scale_factor::Int=1000)
     csv_path = joinpath(@__DIR__, "../data/214.csv")
@@ -108,6 +110,101 @@ function plot_operator_topology_with_cities(operator_name::String, operator_id::
     output_path = joinpath(output_dir, output_filename)
     savefig(p, output_path)
     println("Plot saved to $output_path")
+end
+
+"""
+    plot_network_graph(topology::NetworkTopology, operator_name::String, scenario_name::String)
+
+Visualizes the network graph structure.
+- Draws lines between gNBs and their assigned UPFs.
+- Color-codes clusters (each UPF + connected gNBs = one color).
+- Shows the "forest of trees" structure.
+"""
+function plot_network_graph(topology::NetworkTopology, operator_name::String, scenario_name::String)
+    println("Generating Graph Visualization for $operator_name...")
+    
+    p = plot(
+        title="6G-RUPA Network Graph: $operator_name",
+        xlabel="Longitude",
+        ylabel="Latitude",
+        legend=false,
+        size=(1200, 1000),
+        aspect_ratio=:equal,
+        ylims=(35, 44)
+    )
+
+    # 1. Draw Edges (gNB <-> UPF)
+    # We use the NaN separator technique for fast plotting of many segments
+    # We will group them by UPF to color-code the clusters
+    
+    num_upfs = length(topology.upf_locations)
+    colors = distinguishable_colors(num_upfs + 2, [colorant"white", colorant"black"])
+    # Drop white/black to ensure visibility
+    cluster_colors = colors[3:end]
+
+    println("  Drawing connections for $num_upfs clusters...")
+
+    for upf_idx in 1:num_upfs
+        upf_loc = topology.upf_locations[upf_idx]
+        
+        # Find all gNBs connected to this UPF
+        # We can use the map for speed, or the graph. Let's use the map as it's O(1) lookup per gNB
+        connected_gnb_indices = findall(x -> x == upf_idx, topology.gnb_to_upf_map)
+        
+        if isempty(connected_gnb_indices)
+            continue
+        end
+
+        # Build coordinate vectors with NaN separators
+        # [upf_x, gnb1_x, NaN, upf_x, gnb2_x, NaN, ...]
+        seg_lons = Float64[]
+        seg_lats = Float64[]
+        
+        for gnb_idx in connected_gnb_indices
+            gnb_loc = topology.gnb_locations[gnb_idx]
+            push!(seg_lons, upf_loc.lon, gnb_loc.lon, NaN)
+            push!(seg_lats, upf_loc.lat, gnb_loc.lat, NaN)
+        end
+
+        # Plot this cluster's edges
+        plot!(p, seg_lons, seg_lats, 
+            linecolor=cluster_colors[upf_idx], 
+            linewidth=0.5, 
+            alpha=0.6
+        )
+    end
+
+    # 2. Plot Nodes
+    gnb_lons = [p.lon for p in topology.gnb_locations]
+    gnb_lats = [p.lat for p in topology.gnb_locations]
+    upf_lons = [p.lon for p in topology.upf_locations]
+    upf_lats = [p.lat for p in topology.upf_locations]
+
+    scatter!(p, gnb_lons, gnb_lats,
+        label="gNBs",
+        markersize=2,
+        markercolor=:grey,
+        markeralpha=0.5,
+        markerstrokewidth=0
+    )
+
+    scatter!(p, upf_lons, upf_lats,
+        label="UPFs",
+        markersize=6,
+        markercolor=:black,
+        markershape=:rect,
+        markerstrokewidth=1
+    )
+
+    # Save
+    output_dir = joinpath(@__DIR__, "../images")
+    if !isdir(output_dir)
+        mkpath(output_dir)
+    end
+    output_filename = "graph_viz_$(lowercase(operator_name))_$(lowercase(scenario_name)).png"
+    output_path = joinpath(output_dir, output_filename)
+    savefig(p, output_path)
+    println("Graph visualization saved to $output_path")
 end
 
 end

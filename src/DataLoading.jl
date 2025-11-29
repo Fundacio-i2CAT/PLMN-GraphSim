@@ -7,6 +7,8 @@ using HTTP
 using JSON
 using JSON3
 using GeoJSON
+using Graphs
+using MetaGraphsNext
 using ..Types
 
 export load_and_deploy_network, load_and_cluster, load_municipalities
@@ -155,7 +157,42 @@ function load_and_deploy_network(csv_path::String, operator_net_id::Int, num_upf
     # Map each gNB to nearest UPF (assignments from kmeans)
     gnb_to_upf = R.assignments
 
-    return NetworkTopology(gnb_points, upf_locs, gnb_to_upf, final_municipalities, municipality_bins, muni_probs)
+    # --- Build Graph ---
+    # We use MetaGraph with Tuple labels: (:gNB, id), (:UPF, id), (:Agent, id)
+    # Vertex Data: GeoPoint
+    # Edge Data: Distance/Latency (Float64) in Kilometers
+    # Topology Rules:
+    # 1. Agents -> Nearest gNB (Dynamic, added in Simulation)
+    # 2. gNBs -> Closest UPF (Static, K-Means Centroid)
+    # 3. UPFs are disjoint (No edges between UPFs)
+    
+    mg = MetaGraph(
+        Graph(), # Underlying graph
+        label_type = Tuple{Symbol, Int}, # Vertex Label Type
+        vertex_data_type = GeoPoint, # Vertex Data Type
+        edge_data_type = Float64 # Edge Data Type (Distance in km)
+    )
+
+    # Add UPFs
+    for (i, loc) in enumerate(upf_locs)
+        add_vertex!(mg, (:UPF, i), loc)
+    end
+
+    # Add gNBs and connect to UPFs
+    for (i, loc) in enumerate(gnb_points)
+        add_vertex!(mg, (:gNB, i), loc)
+        
+        # Connect to assigned UPF
+        upf_idx = gnb_to_upf[i]
+        
+        # Calculate distance
+        upf_loc = upf_locs[upf_idx]
+        dist_km = haversine_distance(loc, upf_loc)
+        
+        add_edge!(mg, (:gNB, i), (:UPF, upf_idx), dist_km)
+    end
+
+    return NetworkTopology(gnb_points, upf_locs, gnb_to_upf, final_municipalities, municipality_bins, muni_probs, mg)
 end
 
 # --- Load Data & Cluster (for Plotting) ---
