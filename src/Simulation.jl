@@ -20,16 +20,19 @@ export run_operator_simulation, init_global_state, create_session_context
 const MIN_SESSIONS = 1
 const MAX_SESSIONS = 2
 
-function init_global_state(topology::NetworkTopology)
-    num_upfs = length(topology.upf_locations)
-    upf_sessions = [Vector{SessionContext5G}() for _ in 1:num_upfs] # Number of PDU Sessions per User
+function init_state_5g(num_upfs::Int)
+    # 5G State Initialization
+    # Initialize empty session lists for each UPF.
+    # Sessions are created dynamically as users connect.
+    return [Vector{SessionContext5G}() for _ in 1:num_upfs]
+end
 
+function init_state_6g_rupa(topology::NetworkTopology)
+    num_upfs = length(topology.upf_locations)
     # 6G-RUPA State Initialization
     # Each UPF needs a forwarding entry for each gNB it serves.
     # We populate this based on the topology graph edges (One entry per connected gNB).
-    # That way we avoid implementing all the topological routing logic as well as defining
-    # the proper addressing scheme.
-    forwarding_tables_6g = [Vector{ForwardingEntry6GRUPA}() for _ in 1:num_upfs]
+    forwarding_tables = [Vector{ForwardingEntry6GRUPA}() for _ in 1:num_upfs]
 
     for i in 1:num_upfs
         upf_label = (:UPF, i)
@@ -45,14 +48,19 @@ function init_global_state(topology::NetworkTopology)
                     # Create a route for this gNB
                     # Destination Prefix = gNB ID (simplified representation)
                     entry = ForwardingEntry6GRUPA(UInt32(gnb_id), 0xFFFFFF00, Int32(1))
-                    push!(forwarding_tables_6g[i], entry)
+                    push!(forwarding_tables[i], entry)
                 end
             end
         end
     end
+    return forwarding_tables
+end
 
+function init_global_state(topology::NetworkTopology)
+    num_upfs = length(topology.upf_locations)
+    upf_sessions = init_state_5g(num_upfs)
+    forwarding_tables_6g = init_state_6g_rupa(topology)
     qos = [QoSConfig6GRUPA(Int8(i), Int8(i), 0.5, 1e-6) for i in 1:16]
-
     return SimGlobalState(
         upf_sessions,
         forwarding_tables_6g,
@@ -85,7 +93,6 @@ function find_serving_gnb(topology::NetworkTopology, user_loc::GeoPoint)
     return best_idx
 end
 
-# --- DES Processes ---
 
 @resumable function user_lifecycle(env, user_id, sim_state, topology::NetworkTopology)
     user_loc = select_agent_location(topology) # User Placement (Population Distribution)
