@@ -2,7 +2,7 @@ using ConcurrentSim
 using ..DataLoading
 using ..Types
 
-function run_operator_simulation(operator_name::String, operator_id::Int, num_upfs::Int, scenario_name::String, config::SimConfig)
+function run_operator_simulation(operator_name::String, operator_id::Int, num_upfs::Int, scenario_name::String, config::SimConfig, data_dir::String, mcc::Int)
     println("\n==================================================")
     println("RUNNING SIMULATION: $operator_name ($scenario_name)")
     println("==================================================")
@@ -18,14 +18,14 @@ function run_operator_simulation(operator_name::String, operator_id::Int, num_up
     println("  Scale Factor: 1 Agent represents $(config.scale_factor) real people (Simulation uses $num_agents agents)")
     println("  Assumption: 1 Active UE per Agent")
 
-    csv_path = joinpath(@__DIR__, "../../data/214.csv")
+    csv_path = joinpath(data_dir, "opencellid", "$(mcc).csv")
 
     if !isfile(csv_path)
         error("Data file not found at $csv_path")
     end
 
     # 1. Setup Network
-    topology = load_and_deploy_network(csv_path, operator_id, num_upfs)
+    topology = load_and_deploy_network(csv_path, operator_id, num_upfs, data_dir)
 
     println("Network Deployed:")
     println("  gNBs: $(length(topology.gnb_locations))")

@@ -22,8 +22,24 @@ max_sessions_per_user = 2
 "Edge" = 52 # 52 is the number of provinces in Spain without Canary Islands, but counting ceuta and melilla.
 # "Ultra-Distributed" = 100
 
-[operators]
-# Set to true to run simulation for this operator
-vodafone = true
-orange = true
-movistar = true
+[countries]
+
+    [countries.spain]
+    enabled = true
+    data_dir = "data/spain"
+    mcc = 214
+    
+        [countries.spain.operators]
+        vodafone = { id = 1, enabled = true }
+        orange = { id = 3, enabled = true }
+        movistar = { id = 7, enabled = true }
+
+    [countries.usa]
+    enabled = true
+    data_dir = "data/usa"
+    mcc = 311
+    
+        [countries.usa.operators]
+        # Example IDs - replace with real ones from OpenCellID data
+        verizon = { id = 480, enabled = true } 
+        att = { id = 180, enabled = false }
