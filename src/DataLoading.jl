@@ -10,6 +10,7 @@ using GeoJSON
 using Graphs
 using MetaGraphsNext
 using ..Types
+using Logging
 
 export load_and_deploy_network, load_and_cluster, load_municipalities
 
@@ -17,6 +18,7 @@ export load_and_deploy_network, load_and_cluster, load_municipalities
 const INE_BASE_URL = "https://servicios.ine.es/wstempus/js/es"
 
 function load_municipality_polygons(geojson_path::String)
+    @debug "Loading municipality polygons from $geojson_path"
     json_str = read(geojson_path, String)
     json_obj = JSON3.read(json_str)
 
@@ -42,18 +44,20 @@ function load_municipality_polygons(geojson_path::String)
             end
         end
     end
-
+    @debug "Loaded $(length(polygons)) polygons."
     return polygons
 end
 
 function load_municipalities(csv_path::String, geojson_path::String="")
-
+    @debug "Loading municipalities from CSV: $csv_path"
     df = CSV.read(csv_path, DataFrame)
 
     # Load Polygons if available
     polygons = Dict{String,Any}()
     if !isempty(geojson_path) && isfile(geojson_path)
         polygons = load_municipality_polygons(geojson_path)
+    else
+        @warn "GeoJSON path empty or file not found: $geojson_path"
     end
 
     municipalities = Vector{Municipality}()
@@ -71,7 +75,7 @@ function load_municipalities(csv_path::String, geojson_path::String="")
             push!(municipalities, Municipality(code, name, pop, GeoPoint(lat, lon), area, poly))
         end
     end
-    # println("  Loaded $(length(municipalities)) municipalities.")
+    @info "Loaded $(length(municipalities)) municipalities."
     return municipalities
 end
 
@@ -84,6 +88,7 @@ function build_graph(upf_locs::Vector{GeoPoint}, gnb_points::Vector{GeoPoint}, g
     # 2. gNBs -> Closest UPF (Static, K-Means Centroid)
     # 3. UPFs are disjoint (No edges between UPFs)
 
+    @info "Building Network Graph with $(length(upf_locs)) UPFs and $(length(gnb_points)) gNBs..."
     mg = MetaGraph(
         Graph(), # Underlying graph
         label_type=Tuple{Symbol,Int}, # Vertex Label Type
@@ -109,7 +114,7 @@ function build_graph(upf_locs::Vector{GeoPoint}, gnb_points::Vector{GeoPoint}, g
 
         add_edge!(mg, (:gNB, i), (:UPF, upf_idx), dist_km)
     end
-
+    @debug "Graph built successfully with $(nv(mg)) vertices and $(ne(mg)) edges."
     return mg
 end
 
@@ -118,11 +123,11 @@ function load_and_deploy_network(csv_paths::Vector{String}, operator_net_id::Int
     df = DataFrame()
     for path in csv_paths
         if isfile(path)
-            # println("  Reading $path...")
+            @debug "Reading gNB data from $path..."
             temp_df = CSV.read(path, DataFrame; header=[:radio, :mcc, :net, :area, :cell, :unit, :lon, :lat, :range, :samples, :changeable, :created, :updated, :avg_signal])
             append!(df, temp_df)
         else
-            println("  Warning: File not found: $path")
+            @warn "File not found: $path"
         end
     end
 
@@ -136,7 +141,7 @@ function load_and_deploy_network(csv_paths::Vector{String}, operator_net_id::Int
     if isfile(muni_csv_path)
         municipalities = load_municipalities(muni_csv_path, muni_geojson_path)
     else
-        println("Warning: Municipality data not found at $muni_csv_path. Using empty list.")
+        @warn "Municipality data not found at $muni_csv_path. Using empty list."
     end
     # Determine Bounding Box from Municipalities
     min_lat, max_lat = 90.0, -90.0
@@ -154,13 +159,15 @@ function load_and_deploy_network(csv_paths::Vector{String}, operator_net_id::Int
         min_lon -= 0.5
         max_lon += 0.5
 
+        @debug "Filtering gNBs within bounding box: Lat [$min_lat, $max_lat], Lon [$min_lon, $max_lon]"
         filter!(row -> min_lat <= row.lat <= max_lat && min_lon <= row.lon <= max_lon, df)
     else
-        println("  Warning: No municipalities loaded. Skipping gNB filtering by location.")
+        @warn "No municipalities loaded. Skipping gNB filtering by location."
     end
 
     # Filter for Specific Operator
     filter!(row -> row.net == operator_net_id, df)
+    @info "Filtered $(nrow(df)) gNBs for Operator ID $operator_net_id."
 
     gnb_coords = Matrix{Float64}(undef, 2, nrow(df))
     gnb_coords[1, :] = df.lon
@@ -174,6 +181,7 @@ function load_and_deploy_network(csv_paths::Vector{String}, operator_net_id::Int
 
     # --- Deploy UPFs using K-Means Clustering ---
     actual_k = min(num_upfs, nrow(df))
+    @info "Clustering $(nrow(df)) gNBs into $actual_k UPF regions..."
     R = kmeans(gnb_coords, actual_k; maxiter=100)
 
     upf_locs = Vector{GeoPoint}()
@@ -191,7 +199,7 @@ end
 
 # --- Load Data & Cluster (for Plotting) ---
 function load_and_cluster(csv_path::String, operator_id::Int, num_upfs::Int)
-    println("Loading gNB data from $csv_path for Operator $operator_id...")
+    @info "Loading gNB data from $csv_path for Operator $operator_id..."
     df = CSV.read(csv_path, DataFrame; header=[:radio, :mcc, :net, :area, :cell, :unit, :lon, :lat, :range, :samples, :changeable, :created, :updated, :avg_signal])
 
     # Filter valid coordinates for Spain (Mainland + Ceuta/Melilla, excluding Canary Islands)
@@ -204,11 +212,11 @@ function load_and_cluster(csv_path::String, operator_id::Int, num_upfs::Int)
     gnb_coords[1, :] = df.lon
     gnb_coords[2, :] = df.lat
 
-    println("  Found $(nrow(df)) valid gNBs.")
+    @info "Found $(nrow(df)) valid gNBs."
 
     # K-Means for UPFs
     k = min(num_upfs, nrow(df))
-    println("Clustering into $k UPF regions...")
+    @info "Clustering into $k UPF regions..."
     R = kmeans(gnb_coords, k; maxiter=100)
 
     upf_lons = R.centers[1, :]
