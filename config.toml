@@ -27,7 +27,7 @@ max_sessions_per_user = 2
     [countries.spain]
     enabled = true
     data_dir = "data/spain"
-    mcc = 214
+    mccs = [214]
     
         [countries.spain.operators]
         vodafone = { id = 1, enabled = false }
@@ -37,7 +37,7 @@ max_sessions_per_user = 2
     [countries.usa]
     enabled = true
     data_dir = "data/usa"
-    mcc = 311
+    mccs = [310, 311, 312, 313, 314, 315, 316]
     
         [countries.usa.operators]
         verizon = { id = 480, enabled = true } 
