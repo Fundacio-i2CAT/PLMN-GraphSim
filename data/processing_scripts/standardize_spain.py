@@ -40,6 +40,16 @@ def standardize_municipalities():
     
     # Filter valid coordinates
     df = df[(df['lat'] != 0) & (df['lon'] != 0)]
+
+    # Filter out Canary Islands (Lat < 35)
+    # Canary Islands are approx Lat 27-29. Mainland Spain is > 36.
+    # Ceuta and Melilla are approx 35.3 and 35.9.
+    # If we want to keep Ceuta/Melilla, we might need a slightly lower threshold or specific inclusion.
+    # But user said "remove Canary Islands".
+    # Let's use 35.0 as a safe cutoff for Mainland + Balearic.
+    print(f"Filtering out Canary Islands (Lat < 35.0)... Original count: {len(df)}")
+    df = df[df['lat'] > 35.0]
+    print(f"Count after filtering: {len(df)}")
     
     # Select final columns
     final_df = df[['id', 'name', 'population', 'lat', 'lon']]
