@@ -18,30 +18,30 @@ max_sessions_per_user = 2
 # Define the scenarios to run.
 # Key is the Scenario Name, Value is the Number of UPFs (Centroids).
 # You can add or remove scenarios here.
-# "Legacy Mobile" = 3
-# "Edge" = 52 # 52 is the number of provinces in Spain without Canary Islands, but counting ceuta and melilla.
-"Ultra-Distributed" = 100
+"Spain Legacy" = 3
+"Spain Distributed" = 52 # 52 is the number of provinces in Spain without Canary Islands, but counting ceuta and melilla.
+"USA Legacy" = 48
+"USA Distributed" = 96 # 96 is the number of counties in the USA with more than 100k inhabitants.
 
 [countries]
 
-[countries.spain]
-enabled = true
-data_dir = "data/spain"
-mccs = [214]
+    [countries.spain]
+    enabled = true
+    data_dir = "data/spain"
+    mccs = [214]
 
-[countries.spain.operators]
-vodafone = { id = 1, enabled = false }
-orange = { id = 3, enabled = false }
-movistar = { id = 7, enabled = true }
+        [countries.spain.operators]
+        vodafone = { id = 1, enabled = false }
+        orange = { id = 3, enabled = false }
+        movistar = { id = 7, enabled = true }
 
-[countries.usa]
-enabled = true
-data_dir = "data/usa"
-mccs = [310, 311, 312, 313, 314, 315, 316]
+    [countries.usa]
+    enabled = true
+    data_dir = "data/usa"
+    mccs = [310, 311, 312, 313, 314, 315, 316]
 
-[countries.usa.operators]
-# Major Infrastructure Owners
-verizon = { id = 480, enabled = true }
-att = { id = 410, enabled = false }
-tmobile = { id = 260, enabled = false }
-uscellular = { id = 580, enabled = false }
+        [countries.usa.operators]
+        verizon = { id = 480, enabled = true }
+        att = { id = 410, enabled = false }
+        tmobile = { id = 260, enabled = false }
+        uscellular = { id = 580, enabled = false }
