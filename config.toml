@@ -4,7 +4,7 @@
 # Scale Factor: 1 Agent represents X real users.
 # Higher values = fewer agents = faster simulation but less granular.
 # Lower values = more agents = slower simulation but more realistic distribution.
-scale_factor = 1000
+scale_factor = 1000 # This is tipically a good compromise between speed and realism.
 
 # Duration of the simulation in time units
 duration = 100.0
