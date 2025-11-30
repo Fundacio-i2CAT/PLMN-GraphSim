@@ -24,6 +24,17 @@ def standardize_usa():
     # Municipalities
     # Check columns
     df = pd.read_csv(MUNI_INPUT)
+    
+    # Filter for CONUS (Contiguous US)
+    # Exclude Alaska (Lat > 50 approx) and Hawaii (Lon < -150 approx)
+    # Rough CONUS Box: Lat [24, 50], Lon [-125, -66]
+    print(f"Filtering for CONUS (Lat 24-50, Lon -125 to -66)... Original count: {len(df)}")
+    df = df[
+        (df['lat'] > 24.0) & (df['lat'] < 50.0) & 
+        (df['lon'] > -125.0) & (df['lon'] < -66.0)
+    ]
+    print(f"Count after filtering: {len(df)}")
+
     # Columns are: id,name,population,lat,lon
     # This is already standard. Just copy.
     df.to_csv(MUNI_OUTPUT, index=False)
