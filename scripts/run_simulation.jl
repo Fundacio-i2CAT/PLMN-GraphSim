@@ -3,7 +3,9 @@ Pkg.activate(joinpath(@__DIR__, ".."))
 using DesJulia6gRupa
 using DesJulia6gRupa.Simulation
 using DesJulia6gRupa.Types
+using DesJulia6gRupa.LoggingSetup
 using TOML
+using Logging
 
 function run_all_scenarios()
     # Load Configuration
@@ -14,6 +16,10 @@ function run_all_scenarios()
 
     toml_data = TOML.parsefile(config_path)
 
+    # Setup Logger
+    log_level = get(toml_data["simulation"], "log_level", "info")
+    setup_logger(log_level)
+
     # Create SimConfig
     sim_config = SimConfig(
         toml_data["simulation"]["min_sessions_per_user"],
@@ -22,21 +28,21 @@ function run_all_scenarios()
         toml_data["simulation"]["duration"]
     )
 
-    println("Loaded Configuration from config.toml")
-    println("Scale Factor: $(sim_config.scale_factor)")
-    println("Duration: $(sim_config.duration)")
+    @info "Loaded Configuration from config.toml"
+    @info "Scale Factor: $(sim_config.scale_factor)"
+    @info "Duration: $(sim_config.duration)"
 
     # Run Scenarios
     scenarios = toml_data["scenarios"]
     countries = toml_data["countries"]
 
     for (scenario_name, num_upfs) in scenarios
-        println("\n>>> SCENARIO: $scenario_name ($num_upfs UPFs) <<<")
+        @info ">>> SCENARIO: $scenario_name ($num_upfs UPFs) <<<"
         for (country_key, country_config) in countries
             if !country_config["enabled"]
                 continue
             end
-            println("  Processing Country: $country_key")
+            @info "  Processing Country: $country_key"
             data_dir = joinpath(@__DIR__, "..", country_config["data_dir"])
             mccs = Int[]
             if haskey(country_config, "mccs")
