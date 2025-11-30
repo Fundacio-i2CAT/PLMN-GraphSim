@@ -8,117 +8,72 @@ using Random
 using Graphs
 using MetaGraphsNext
 using ..Types
-using ..DataLoading
-using ..AgentGeneration
 
-export plot_operator_topology_with_cities, plot_network_graph
+export plot_topology_map, plot_network_graph
 
-function plot_operator_topology_with_cities(operator_name::String, operator_id::Int, num_upfs::Int, scenario_name::String; scale_factor::Int=1000, data_dir::String="", csv_path::String="")
-    if isempty(data_dir)
-        # Default to Spain for backward compatibility if not provided
-        data_dir = joinpath(@__DIR__, "../data/spain")
+# Helper for limits
+function calculate_plot_limits(points::Vector{GeoPoint}, buffer_percent::Float64=0.05)
+    if isempty(points)
+        return (35.0, 44.0), (-10.0, 5.0) # Default fallback
     end
-
-    # Resolve CSV Path if not provided
-    if isempty(csv_path)
-        opencellid_dir = joinpath(data_dir, "opencellid")
-        if isdir(opencellid_dir)
-            files = readdir(opencellid_dir)
-            csv_files = filter(f -> endswith(f, ".csv"), files)
-            if !isempty(csv_files)
-                if isfile(joinpath(opencellid_dir, "214.csv"))
-                    csv_path = joinpath(opencellid_dir, "214.csv")
-                elseif isfile(joinpath(opencellid_dir, "311.csv"))
-                    csv_path = joinpath(opencellid_dir, "311.csv")
-                else
-                    csv_path = joinpath(opencellid_dir, csv_files[1])
-                end
-            end
-        end
-    end
-
-    if isempty(csv_path) || !isfile(csv_path)
-        error("OpenCellID data file not found. Please provide valid csv_path or check data_dir.")
-    end
-
-    # 1. Get Data (Using unified topology loader)
-    topology = load_and_deploy_network(csv_path, operator_id, num_upfs, data_dir)
-
-    if isempty(topology.gnb_locations)
-        println("No data for $operator_name. Skipping.")
-        return
-    end
-
-    # 2. Generate Agents (Using unified AgentGeneration)
-    # We need to know the population to scale correctly.
-    # We can sum the population from the loaded municipalities in the topology!
-    total_pop = sum([m.population for m in topology.municipalities])
     
-    # Effective population ratio (using Spain constants as default, or we could put this in config)
-    # Let's use the constants from Types.jl but apply them to the total_pop found.
-    # Assuming demographics are roughly similar or we don't have better data.
-    eff_pop = total_pop * (1 - RATIO_UNDER_15) * PHONE_ADOPTION_OVER_15
-    
-    num_agents = ceil(Int, eff_pop / scale_factor)
-    println("Generating $num_agents agents using population density (Total Pop: $total_pop, Scale: 1:$scale_factor)...")
-    
-    # Limit plotting if too many agents (e.g. > 100k) to avoid crashing plots
-    if num_agents > 100000
-        println("Warning: Too many agents ($num_agents). Capping at 100,000 for plotting.")
-        num_agents = 100000
+    min_lat, max_lat = 90.0, -90.0
+    min_lon, max_lon = 180.0, -180.0
+
+    for p in points
+        min_lat = min(min_lat, p.lat)
+        max_lat = max(max_lat, p.lat)
+        min_lon = min(min_lon, p.lon)
+        max_lon = max(max_lon, p.lon)
     end
 
-    agent_locs = generate_agent_locations(topology, num_agents)
+    lat_buf = (max_lat - min_lat) * buffer_percent
+    lon_buf = (max_lon - min_lon) * buffer_percent
+    
+    return (min_lat - lat_buf, max_lat + lat_buf), (min_lon - lon_buf, max_lon + lon_buf)
+end
 
-    agent_lons = [p.lon for p in agent_locs]
-    agent_lats = [p.lat for p in agent_locs]
-
-    # Extract gNB and UPF coords for plotting
-    gnb_lons = [p.lon for p in topology.gnb_locations]
-    gnb_lats = [p.lat for p in topology.gnb_locations]
-
-    upf_lons = [p.lon for p in topology.upf_locations]
-    upf_lats = [p.lat for p in topology.upf_locations]
-
+function plot_topology_map(
+    topology::NetworkTopology,
+    operator_name::String,
+    scenario_name::String;
+    agent_locations::Vector{GeoPoint} = GeoPoint[],
+    cities::Vector{Tuple{String, GeoPoint}} = Tuple{String, GeoPoint}[],
+    output_dir::String = joinpath(@__DIR__, "../images")
+)
     println("Plotting for $operator_name ($scenario_name)...")
     
     # Determine Plot Limits from Data
     # Use municipalities bounding box if available, else gNBs
-    min_lat, max_lat = 90.0, -90.0
-    min_lon, max_lon = 180.0, -180.0
-    
-    if !isempty(topology.municipalities)
-        for m in topology.municipalities
-            min_lat = min(min_lat, m.location.lat)
-            max_lat = max(max_lat, m.location.lat)
-            min_lon = min(min_lon, m.location.lon)
-            max_lon = max(max_lon, m.location.lon)
-        end
-    elseif !isempty(topology.gnb_locations)
-        for p in topology.gnb_locations
-            min_lat = min(min_lat, p.lat)
-            max_lat = max(max_lat, p.lat)
-            min_lon = min(min_lon, p.lon)
-            max_lon = max(max_lon, p.lon)
-        end
-    end
-    
-    # Add buffer
-    lat_buf = (max_lat - min_lat) * 0.05
-    lon_buf = (max_lon - min_lon) * 0.05
-    ylims_val = (min_lat - lat_buf, max_lat + lat_buf)
-    xlims_val = (min_lon - lon_buf, max_lon + lon_buf)
+    points_for_limits = !isempty(topology.municipalities) ? [m.location for m in topology.municipalities] : topology.gnb_locations
+    ylims_val, xlims_val = calculate_plot_limits(points_for_limits)
+
+    # Custom Ticks (User request: Latitude steps of 2)
+    lat_step = 2.0
+    lat_start = floor(ylims_val[1] / lat_step) * lat_step
+    lat_stop = ceil(ylims_val[2] / lat_step) * lat_step
+    yticks_val = lat_start:lat_step:lat_stop
 
     p = plot(
         title="6G-RUPA Topology: $operator_name - $scenario_name",
         xlabel="Longitude",
         ylabel="Latitude",
         legend=:outertopright,
-        size=(1200, 1000),
+        size=(2400, 2000), # Increased resolution (2x dimensions)
+        dpi=300,           # High DPI for zooming
         aspect_ratio=:equal,
         ylims=ylims_val,
-        xlims=xlims_val
+        xlims=xlims_val,
+        yticks=yticks_val,
+        titlefontsize=24,
+        guidefontsize=18,
+        tickfontsize=14,
+        legendfontsize=16
     )
+    
+    gnb_lons = [p.lon for p in topology.gnb_locations]
+    gnb_lats = [p.lat for p in topology.gnb_locations]
+    
     scatter!(p, gnb_lons, gnb_lats,
         label="gNBs",
         markersize=1.5,
@@ -126,13 +81,23 @@ function plot_operator_topology_with_cities(operator_name::String, operator_id::
         markeralpha=0.3,
         markerstrokewidth=0
     )
-    scatter!(p, agent_lons, agent_lats,
-        label="Users (Agents)",
-        markersize=1.5,
-        markercolor=:blue,
-        markeralpha=0.6,
-        markerstrokewidth=0
-    )
+    
+    if !isempty(agent_locations)
+        agent_lons = [p.lon for p in agent_locations]
+        agent_lats = [p.lat for p in agent_locations]
+        scatter!(p, agent_lons, agent_lats,
+            label="Users (Agents)",
+            markersize=1.5,
+            markercolor=:blue,
+            markeralpha=0.6,
+            markerstrokewidth=0
+        )
+    end
+    
+    num_upfs = length(topology.upf_locations)
+    upf_lons = [p.lon for p in topology.upf_locations]
+    upf_lats = [p.lat for p in topology.upf_locations]
+    
     scatter!(p, upf_lons, upf_lats,
         label="UPFs ($num_upfs Hubs)",
         markersize=7,
@@ -142,19 +107,7 @@ function plot_operator_topology_with_cities(operator_name::String, operator_id::
     )
 
     # Annotate UPFs with their ID
-    annotate!(p, [(upf_lons[i], upf_lats[i], text(string(i), 8, :white, :center)) for i in 1:length(upf_lons)])
-
-    # 3. Plot Reference Cities - Green Stars
-    cities_csv = joinpath(data_dir, "cities.csv")
-    cities = []
-    if isfile(cities_csv)
-        cities_df = CSV.read(cities_csv, DataFrame)
-        cities = [(row.name, GeoPoint(row.lat, row.lon)) for row in eachrow(cities_df)]
-    else
-        # Fallback to hardcoded Spain cities if file missing and we are in Spain context?
-        # Or just warn.
-        println("Warning: Cities file not found at $cities_csv")
-    end
+    annotate!(p, [(upf_lons[i], upf_lats[i], text(string(i), 16, :white, :center)) for i in 1:length(upf_lons)])
 
     if !isempty(cities)
         city_lons = [c[2].lon for c in cities]
@@ -170,11 +123,11 @@ function plot_operator_topology_with_cities(operator_name::String, operator_id::
         )
 
         # Annotate Cities
-        annotate!(p, [(city_lons[i], city_lats[i] + 0.1, text(city_names[i], 8, :black, :bottom)) for i in 1:length(cities)])
+        # Use smaller font (6) and slightly larger offset to reduce overlap
+        annotate!(p, [(city_lons[i], city_lats[i] + 0.15, text(city_names[i], 14, :black, :bottom)) for i in 1:length(cities)])
     end
 
     # Save
-    output_dir = joinpath(@__DIR__, "../images")
     if !isdir(output_dir)
         mkpath(output_dir)
     end
@@ -184,45 +137,30 @@ function plot_operator_topology_with_cities(operator_name::String, operator_id::
     println("Plot saved to $output_path")
 end
 
-"""
-    plot_network_graph(topology::NetworkTopology, operator_name::String, scenario_name::String)
-
-Visualizes the network graph structure.
-- Draws lines between gNBs and their assigned UPFs.
-- Color-codes clusters (each UPF + connected gNBs = one color).
-- Shows the "forest of trees" structure.
-"""
-function plot_network_graph(topology::NetworkTopology, operator_name::String, scenario_name::String)
+function plot_network_graph(
+    topology::NetworkTopology, 
+    operator_name::String, 
+    scenario_name::String;
+    output_dir::String = joinpath(@__DIR__, "../images")
+)
     println("Generating Graph Visualization for $operator_name...")
     
     # Determine Plot Limits from Data
-    min_lat, max_lat = 90.0, -90.0
-    min_lon, max_lon = 180.0, -180.0
-    
-    if !isempty(topology.gnb_locations)
-        for p in topology.gnb_locations
-            min_lat = min(min_lat, p.lat)
-            max_lat = max(max_lat, p.lat)
-            min_lon = min(min_lon, p.lon)
-            max_lon = max(max_lon, p.lon)
-        end
-    end
-    
-    # Add buffer
-    lat_buf = (max_lat - min_lat) * 0.05
-    lon_buf = (max_lon - min_lon) * 0.05
-    ylims_val = (min_lat - lat_buf, max_lat + lat_buf)
-    xlims_val = (min_lon - lon_buf, max_lon + lon_buf)
+    ylims_val, xlims_val = calculate_plot_limits(topology.gnb_locations)
 
     p = plot(
         title="6G-RUPA Network Graph: $operator_name",
         xlabel="Longitude",
         ylabel="Latitude",
         legend=false,
-        size=(1200, 1000),
+        size=(2400, 2000),
+        dpi=300,
         aspect_ratio=:equal,
         ylims=ylims_val,
-        xlims=xlims_val
+        xlims=xlims_val,
+        titlefontsize=24,
+        guidefontsize=18,
+        tickfontsize=14
     )
 
     # 1. Draw Edges (gNB <-> UPF)
@@ -289,7 +227,6 @@ function plot_network_graph(topology::NetworkTopology, operator_name::String, sc
     )
 
     # Save
-    output_dir = joinpath(@__DIR__, "../images")
     if !isdir(output_dir)
         mkpath(output_dir)
     end
