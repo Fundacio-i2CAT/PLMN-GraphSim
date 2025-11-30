@@ -17,7 +17,7 @@ function save_simulation_results(operator_name::String, scenario_name::String, s
     end
     filename = "simulation_results_$(operator_name)_$(scenario_name).csv"
     CSV.write(joinpath(results_dir, filename), df)
-    println("Results saved to $filename")
+    println("  -> Results: results/$filename")
 end
 
 function save_raw_upf_data(operator_name::String, scenario_name::String, state::SimGlobalState, scale_factor::Int)
@@ -34,7 +34,7 @@ function save_raw_upf_data(operator_name::String, scenario_name::String, state::
     end
     filename = "raw_upf_state_$(operator_name)_$(scenario_name).csv"
     CSV.write(joinpath(results_dir, filename), df)
-    println("Raw UPF state data saved to $filename")
+    println("  -> Raw Data: results/$filename")
 end
 
 function print_forwarding_tables(state::SimGlobalState, scale_factor::Int)

@@ -37,7 +37,6 @@ function run_all_scenarios()
                 continue
             end
             println("  Processing Country: $country_key")
-            # Resolve data_dir relative to project root
             data_dir = joinpath(@__DIR__, "..", country_config["data_dir"])
             mccs = Int[]
             if haskey(country_config, "mccs")
