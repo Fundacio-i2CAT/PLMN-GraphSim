@@ -1,0 +1,75 @@
+using ConcurrentSim
+using ..DataLoading
+using ..Types
+
+function run_operator_simulation(operator_name::String, operator_id::Int, num_upfs::Int, scenario_name::String; scale_factor::Int=1)
+    println("\n==================================================")
+    println("RUNNING SIMULATION: $operator_name ($scenario_name)")
+    println("==================================================")
+
+    # Simplification: 1 Agent = 1 UE
+    # We use a smaller population for testing, or the full effective population if scale_factor=1
+    # But to avoid crashing with 40M agents, let's assume the user passes a reasonable scale_factor
+    # that results in a manageable number of agents for the simulation engine.
+    # However, for the "1 UE = 1 Agent" logic requested, we treat the simulated agents as the total universe.
+
+    num_agents = ceil(Int, EFFECTIVE_POPULATION / scale_factor)
+    println("Configuration:")
+    println("  Scale Factor: 1 Agent represents $scale_factor real people (Simulation uses $num_agents agents)")
+    println("  Assumption: 1 Active UE per Agent")
+
+    csv_path = joinpath(@__DIR__, "../../data/214.csv")
+
+    if !isfile(csv_path)
+        error("Data file not found at $csv_path")
+    end
+
+    # 1. Setup Network
+    topology = load_and_deploy_network(csv_path, operator_id, num_upfs)
+
+    println("Network Deployed:")
+    println("  gNBs: $(length(topology.gnb_locations))")
+    println("  UPFs: $(length(topology.upf_locations))")
+    println("  Simulated Users: $num_agents")
+
+    # 2. Setup Simulation
+    sim = ConcurrentSim.Simulation()
+    global_state = init_global_state(topology)
+
+    # Start Monitor Process
+    @process monitor_metrics(sim, global_state)
+
+    # Spawn Agents
+    for i in 1:num_agents
+        @process user_lifecycle(sim, i, global_state, topology)
+    end
+
+    # Run
+    println("Starting Simulation...")
+    run(sim, 100.0) # Run for 100 time units
+
+    println("Simulation Complete.")
+    println("Final Total 5G State: $(last(global_state.history_total_5g_mb)) MB")
+    println("Final Max UPF 5G State: $(last(global_state.history_max_upf_5g_mb)) MB")
+    println("Final Total 6G-RUPA State: $(last(global_state.history_total_6g_mb)) MB")
+    println("Final Max GUPF 6G-RUPA State: $(last(global_state.history_max_upf_6g_mb)) MB")
+
+    # Calculate Scaled Impact
+    # 5G State is per-UE, so we scale it up to represent the full population.
+    real_world_total_5g_mb = last(global_state.history_total_5g_mb) * scale_factor
+    real_world_max_upf_5g_mb = last(global_state.history_max_upf_5g_mb) * scale_factor
+
+    # 6G State is per-gNB (Topology based). Since we use the REAL topology (all gNBs),
+    # we do NOT scale this. It is already at real-world scale.
+    real_world_total_6g_mb = last(global_state.history_total_6g_mb)
+    real_world_max_upf_6g_mb = last(global_state.history_max_upf_6g_mb)
+
+    println("\n--- Real World Extrapolation ($operator_name - $scenario_name) ---")
+    println("Estimated Total 5G Network State: $(real_world_total_5g_mb / 1024) GB")
+    println("Estimated Max UPF Load (Bottleneck): $(real_world_max_upf_5g_mb / 1024) GB")
+    println("Estimated Total 6G-RUPA State: $(real_world_total_6g_mb) MB")
+    println("Estimated Max GUPF Load (Bottleneck): $(real_world_max_upf_6g_mb) MB")
+    print_forwarding_tables(global_state, scale_factor)
+    save_simulation_results(operator_name, scenario_name, global_state)
+    save_raw_upf_data(operator_name, scenario_name, global_state, scale_factor)
+end
