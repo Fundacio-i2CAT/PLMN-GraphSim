@@ -11,9 +11,9 @@ function run_all_scenarios()
     if !isfile(config_path)
         error("Config file not found at $config_path")
     end
-    
+
     toml_data = TOML.parsefile(config_path)
-    
+
     # Create SimConfig
     sim_config = SimConfig(
         toml_data["simulation"]["min_sessions_per_user"],
@@ -32,25 +32,26 @@ function run_all_scenarios()
 
     for (scenario_name, num_upfs) in scenarios
         println("\n>>> SCENARIO: $scenario_name ($num_upfs UPFs) <<<")
-        
         for (country_key, country_config) in countries
             if !country_config["enabled"]
                 continue
             end
-            
             println("  Processing Country: $country_key")
             # Resolve data_dir relative to project root
             data_dir = joinpath(@__DIR__, "..", country_config["data_dir"])
-            mcc = country_config["mcc"]
-            operators = country_config["operators"]
+            mccs = Int[]
+            if haskey(country_config, "mccs")
+                append!(mccs, country_config["mccs"])
+            elseif haskey(country_config, "mcc")
+                push!(mccs, country_config["mcc"])
+            end
 
+            operators = country_config["operators"]
             for (op_key, op_data) in operators
                 if op_data["enabled"]
                     op_id = op_data["id"]
                     op_name = titlecase(op_key)
-                    
-                    # Pass data_dir and mcc to the runner
-                    run_operator_simulation(op_name, op_id, num_upfs, scenario_name, sim_config, data_dir, mcc)
+                    run_operator_simulation(op_name, op_id, num_upfs, scenario_name, sim_config, data_dir, mccs)
                 end
             end
         end
