@@ -20,7 +20,7 @@ max_sessions_per_user = 2
 [scenarios]
 # Define the scenarios to run.
 # Key is the Scenario Name, Value is the Number of UPFs (Centroids).
-# You can add or remove scenarios here.
+# You can add as many scenarios as you want and the simulator will automatically pick them up.
 "Spain Legacy" = 3
 "Spain Distributed" = 52 # 52 is the number of provinces in Spain without Canary Islands, but counting ceuta and melilla.
 "USA Legacy" = 48
