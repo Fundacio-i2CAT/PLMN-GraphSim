@@ -4,6 +4,7 @@ using ..Types
 using Random
 using GeometryBasics
 using PolygonOps
+using Logging
 
 export select_agent_location, generate_agent_locations
 
@@ -22,6 +23,7 @@ function select_agent_location(topology::NetworkTopology)
         # Fallback (should not happen)
         gnb_idx = rand(1:length(topology.gnb_locations))
         gnb = topology.gnb_locations[gnb_idx]
+        @warn "Using fallback agent location selection (random gNB)."
         return GeoPoint(gnb.lat, gnb.lon)
     end
 end
@@ -46,6 +48,7 @@ function select_agent_location_municipality(topology::NetworkTopology)
     end
     
     muni = topology.municipalities[selected_muni_idx]
+    # @debug "Selected municipality for agent: $(muni.name)"
     
     # 2. Generate Point
     if !isnothing(muni.polygon)
@@ -138,12 +141,13 @@ Generates a list of agent locations.
 Returns Vector{GeoPoint}.
 """
 function generate_agent_locations(topology::NetworkTopology, num_agents::Int)
+    @info "Generating locations for $num_agents agents..."
     locations = Vector{GeoPoint}(undef, num_agents)
     
     for i in 1:num_agents
         locations[i] = select_agent_location(topology)
     end
-    
+    @debug "Agent locations generated."
     return locations
 end
 
