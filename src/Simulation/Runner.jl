@@ -6,50 +6,29 @@ function run_operator_simulation(operator_name::String, operator_id::Int, num_up
     println("\n==================================================")
     println("RUNNING SIMULATION: $operator_name ($scenario_name)")
     println("==================================================")
-
-    # Simplification: 1 Agent = 1 UE
-    # We use a smaller population for testing, or the full effective population if scale_factor=1
-    # But to avoid crashing with 40M agents, let's assume the user passes a reasonable scale_factor
-    # that results in a manageable number of agents for the simulation engine.
-    # However, for the "1 UE = 1 Agent" logic requested, we treat the simulated agents as the total universe.
-
     num_agents = ceil(Int, EFFECTIVE_POPULATION / config.scale_factor)
     println("Configuration:")
     println("  Scale Factor: 1 Agent represents $(config.scale_factor) real people (Simulation uses $num_agents agents)")
     println("  Assumption: 1 Active UE per Agent")
-
     csv_paths = [joinpath(data_dir, "opencellid", "$(mcc).csv") for mcc in mccs]
-    
     # Check if at least one file exists
     valid_paths = filter(isfile, csv_paths)
     if isempty(valid_paths)
         error("No valid data files found for MCCs: $mccs in $data_dir")
     end
-
-    # 1. Setup Network
     topology = load_and_deploy_network(valid_paths, operator_id, num_upfs, data_dir)
-
     println("Network Deployed:")
     println("  gNBs: $(length(topology.gnb_locations))")
     println("  UPFs: $(length(topology.upf_locations))")
     println("  Simulated Users: $num_agents")
-
-    # 2. Setup Simulation
     sim = ConcurrentSim.Simulation()
     global_state = init_global_state(topology, config)
-
-    # Start Monitor Process
     @process monitor_metrics(sim, global_state)
-
-    # Spawn Agents
     for i in 1:num_agents
         @process user_lifecycle(sim, i, global_state, topology)
     end
-
-    # Run
     println("Starting Simulation...")
     run(sim, config.duration) # Run for configured duration
-
     println("Simulation Complete.")
     println("Final Total 5G State: $(last(global_state.history_total_5g_mb)) MB")
     println("Final Max UPF 5G State: $(last(global_state.history_max_upf_5g_mb)) MB")
