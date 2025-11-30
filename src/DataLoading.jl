@@ -13,10 +13,6 @@ using ..Types
 using Logging
 
 export load_and_deploy_network, load_and_cluster, load_municipalities
-
-# INE API Base URL
-const INE_BASE_URL = "https://servicios.ine.es/wstempus/js/es"
-
 function load_municipality_polygons(geojson_path::String)
     @debug "Loading municipality polygons from $geojson_path"
     json_str = read(geojson_path, String)
@@ -197,8 +193,7 @@ function load_and_deploy_network(csv_paths::Vector{String}, operator_net_id::Int
     return NetworkTopology(gnb_points, upf_locs, gnb_to_upf, final_municipalities, municipality_bins, muni_probs, mg)
 end
 
-# --- Load Data & Cluster (for Plotting) ---
-function load_and_cluster(csv_path::String, operator_id::Int, num_upfs::Int)
+¡function load_and_cluster(csv_path::String, operator_id::Int, num_upfs::Int)
     @info "Loading gNB data from $csv_path for Operator $operator_id..."
     df = CSV.read(csv_path, DataFrame; header=[:radio, :mcc, :net, :area, :cell, :unit, :lon, :lat, :range, :samples, :changeable, :created, :updated, :avg_signal])
 
