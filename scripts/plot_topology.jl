@@ -2,31 +2,73 @@ using Pkg
 Pkg.activate(joinpath(@__DIR__, ".."))
 using DesJulia6gRupa
 using DesJulia6gRupa.Plotting
+using TOML
 
 function plot_all_operators()
-    # Scale Factor for Plotting
-    # Use a larger scale factor (fewer points) for plotting to keep it clean and fast
-    # 1:1000 is reasonable (~40,000 points)
-    SCALE = 1000
-
-    # Scenario 1: Centralized (3 UPFs)
-    println("\n--- Plotting Centralized Scenario (3 UPFs) ---")
-    # plot_operator_topology_with_cities("Vodafone", 1, 3, "Centralized"; scale_factor=SCALE)
-    # plot_operator_topology_with_cities("Orange", 3, 3, "Centralized"; scale_factor=SCALE)
-    # plot_operator_topology_with_cities("Movistar", 7, 3, "Centralized"; scale_factor=SCALE)
+    # Load Configuration
+    config_path = joinpath(@__DIR__, "../config.toml")
+    if !isfile(config_path)
+        error("Config file not found at $config_path")
+    end
     
-    # New Graph Visualization
-    topology_vodafone = DesJulia6gRupa.DataLoading.load_and_deploy_network(joinpath(@__DIR__, "../data/214.csv"), 1, 3)
-    plot_network_graph(topology_vodafone, "Vodafone", "Centralized")
+    toml_data = TOML.parsefile(config_path)
+    countries = toml_data["countries"]
+    scenarios = toml_data["scenarios"]
 
-    # Scenario 2: Distributed (50 UPFs)
-    println("\n--- Plotting Distributed Scenario (50 UPFs) ---")
-    # plot_operator_topology_with_cities("Vodafone", 1, 50, "Distributed"; scale_factor=SCALE)
-    # plot_operator_topology_with_cities("Orange", 3, 50, "Distributed"; scale_factor=SCALE)
-    # plot_operator_topology_with_cities("Movistar", 7, 50, "Distributed"; scale_factor=SCALE)
+    # We'll just plot one scenario for brevity, or maybe the first one found?
+    # Let's plot "Legacy Mobile" (Centralized) and "Edge" (Distributed) if they exist.
+    
+    target_scenarios = ["Legacy Mobile", "Edge"]
 
-    topology_vodafone_dist = DesJulia6gRupa.DataLoading.load_and_deploy_network(joinpath(@__DIR__, "../data/214.csv"), 1, 50)
-    plot_network_graph(topology_vodafone_dist, "Vodafone", "Distributed")
+    for (country_key, country_config) in countries
+        if !country_config["enabled"]
+            continue
+        end
+        
+        println("\n>>> PLOTTING COUNTRY: $country_key <<<")
+        data_dir = joinpath(@__DIR__, "..", country_config["data_dir"])
+        mcc = country_config["mcc"]
+        operators = country_config["operators"]
+        
+        csv_path = joinpath(data_dir, "opencellid", "$(mcc).csv")
+        if !isfile(csv_path)
+            println("  Warning: Data file not found at $csv_path. Skipping.")
+            continue
+        end
+
+        for (op_key, op_data) in operators
+            if op_data["enabled"]
+                op_id = op_data["id"]
+                op_name = titlecase(op_key)
+                
+                println("  Operator: $op_name (ID: $op_id)")
+                
+                for scenario_name in target_scenarios
+                    if haskey(scenarios, scenario_name)
+                        num_upfs = scenarios[scenario_name]
+                        println("    Scenario: $scenario_name ($num_upfs UPFs)")
+                        
+                        try
+                            topology = DesJulia6gRupa.DataLoading.load_and_deploy_network(csv_path, op_id, num_upfs, data_dir)
+                            plot_network_graph(topology, op_name, scenario_name)
+                            
+                            # Also generate the detailed agent/city plot
+                            plot_operator_topology_with_cities(op_name, op_id, num_upfs, scenario_name; 
+                                data_dir=data_dir, 
+                                csv_path=csv_path
+                            )
+                            
+                            println("    Plots generated.")
+                        catch e
+                            println("    Error plotting $op_name - $scenario_name: $e")
+                            # Print stacktrace for debugging
+                            # Base.showerror(stdout, e, catch_backtrace())
+                        end
+                    end
+                end
+            end
+        end
+    end
 end
 
 plot_all_operators()

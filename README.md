@@ -1,5 +1,29 @@
 # DesJulia6gRupa
 
+## Configuration
+
+The simulation is configured via `config.toml`. You can define simulation parameters (duration, scale factor) and select which countries and operators to simulate.
+
+```toml
+[countries.spain]
+enabled = true
+data_dir = "data/spain"
+mcc = 214
+
+    [countries.spain.operators]
+    vodafone = { id = 1, enabled = true }
+```
+
+## Data Files
+
+Data is organized by country in the `data/` directory (e.g., `data/spain/`, `data/usa/`).
+
+* **`data/<country>/opencellid/<mcc>.csv`**: Cell Tower (gNB) locations.
+* **`data/<country>/municipalities.csv`**: Standardized municipality data (id, name, population, lat, lon).
+* **`data/<country>/regions.geojson`**: Geometric boundaries for municipalities.
+
+Python scripts for downloading and standardizing data are located in the `data/processing_scripts/` directory. See `data/README.md` for details.
+
 ## Run Simulator
 
 Run the main simulation entry point:
@@ -53,13 +77,3 @@ julia --project=. test/runtests.jl
 
    Then open http://localhost:8000
 
-## Data Files
-
-* **`data/214.csv`**: Contains **Cell Tower (gNB) locations** for Spain (MCC 214).
-  * *Source*: [OpenCellID](https://opencellid.org/).
-* **`data/municipalities_coordinates.csv`**: Essential for **population data** (used to distribute agents realistically) and municipality centroids.
-  * *Source*: CNIG (Centro Nacional de Información Geográfica) via [Datos Abiertos del CNIG](https://centrodedescargas.cnig.es/CentroDescargas/nomenclator-geografico-municipios-entidades-poblacion).
-* **`data/esri_municipios.geojson`**: Essential for **geometric boundaries** (polygons), used to verify if agents are located within valid municipality borders.
-  * *Source*: [IGN (Instituto Geográfico Nacional)](https://opendata.esri.es/datasets/municipios-ign).
-
-Both municipality files are required because the GeoJSON lacks population statistics, while the CSV lacks the polygon shapes needed for spatial containment checks.

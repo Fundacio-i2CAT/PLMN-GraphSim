@@ -28,13 +28,11 @@ function load_municipality_polygons(geojson_path::String)
         for feature in json_obj.features
             muni_id = nothing
 
-            # Check properties for CODIGOINE (ESRI format)
-            if haskey(feature, :properties) && haskey(feature.properties, :CODIGOINE)
-                muni_id = string(feature.properties.CODIGOINE)
-            end
-
-            # Fallback: Check top-level id or other properties
-            if isnothing(muni_id) && haskey(feature, :id)
+            # Check properties for 'id' (Standard)
+            if haskey(feature, :properties) && haskey(feature.properties, :id)
+                muni_id = string(feature.properties.id)
+            # Fallback: Check top-level id
+            elseif haskey(feature, :id)
                 muni_id = string(feature.id)
             end
 
@@ -53,7 +51,9 @@ end
 
 function load_municipalities(csv_path::String, geojson_path::String="")
     println("Loading Municipalities from $csv_path...")
-    df = CSV.read(csv_path, DataFrame; delim=';', decimal=',')
+    
+    # Expect Standard CSV: id,name,population,lat,lon
+    df = CSV.read(csv_path, DataFrame)
 
     # Load Polygons if available
     polygons = Dict{String,Any}()
@@ -64,53 +64,70 @@ function load_municipalities(csv_path::String, geojson_path::String="")
     municipalities = Vector{Municipality}()
 
     for row in eachrow(df)
-        # Parse Code (COD_INE)
-        # CSV format: 01001000000 (11 digits)
-        # GeoJSON format: 01001 (5 digits)
-        # We need to extract the first 5 digits from the CSV code to match.
-        full_code = string(row.COD_INE)
-
-        # Ensure we have at least 5 digits
-        if length(full_code) >= 5
-            # Take first 5 digits: Province (2) + Municipality (3)
-            code = full_code[1:5]
-        else
-            code = full_code
+        # Standard Format: id,name,population,lat,lon
+        code = string(row.id)
+        # Ensure 5 digits for Spain/USA FIPS consistency if needed, but let's trust the data
+        # Actually, Spain codes are 5 digits, USA FIPS are 5 digits.
+        # If the CSV has them as numbers, they might lose leading zeros.
+        if length(code) < 5
+            code = lpad(code, 5, '0')
         end
-
-        # Parse Name
-        name = row.NOMBRE_ACTUAL
-
-        # Parse Population
-        pop = ismissing(row.POBLACION_MUNI) ? 0 : Int(row.POBLACION_MUNI)
-
-        # Parse Area (Superficie)
-        area = ismissing(row.SUPERFICIE) ? 0.0 : Float64(row.SUPERFICIE)
-
-        # Parse Coordinates
-        lat = row.LATITUD_ETRS89
-        lon = row.LONGITUD_ETRS89
+        
+        name = ismissing(row.name) ? "Unknown" : string(row.name)
+        pop = ismissing(row.population) ? 0 : Int(row.population)
+        area = 0.0 # Not in standard CSV yet
+        lat = ismissing(row.lat) ? 0.0 : Float64(row.lat)
+        lon = ismissing(row.lon) ? 0.0 : Float64(row.lon)
 
         # Get Polygon
         poly = get(polygons, code, nothing)
 
         # Filter invalid coordinates
-        if !ismissing(lat) && !ismissing(lon) && lat != 0.0 && lon != 0.0
-            if lat > 35.0
-                push!(municipalities, Municipality(code, name, pop, GeoPoint(lat, lon), area, poly))
-            end
+        if lat != 0.0 && lon != 0.0
+            push!(municipalities, Municipality(code, name, pop, GeoPoint(lat, lon), area, poly))
         end
     end
     println("  Loaded $(length(municipalities)) municipalities.")
     return municipalities
 end
 
-function load_and_deploy_network(csv_path::String, operator_net_id::Int, num_upfs::Int)
+function load_and_deploy_network(csv_path::String, operator_net_id::Int, num_upfs::Int, data_dir::String)
     println("Loading gNB data from $csv_path for Operator ID: $operator_net_id...")
     df = CSV.read(csv_path, DataFrame; header=[:radio, :mcc, :net, :area, :cell, :unit, :lon, :lat, :range, :samples, :changeable, :created, :updated, :avg_signal])
 
-    # Filter valid coordinates for Spain (approx bounding box)
-    filter!(row -> 35.0 <= row.lat <= 45.0 && -19.0 <= row.lon <= 5.0, df)
+    # --- Load Municipality Data First (to determine bounding box) ---
+    muni_csv_path = joinpath(data_dir, "municipalities.csv")
+    muni_geojson_path = joinpath(data_dir, "regions.geojson")
+
+    municipalities = Vector{Municipality}()
+    if isfile(muni_csv_path)
+        municipalities = load_municipalities(muni_csv_path, muni_geojson_path)
+    else
+        println("Warning: Municipality data not found at $muni_csv_path. Using empty list.")
+    end
+    
+    # Determine Bounding Box from Municipalities
+    min_lat, max_lat = 90.0, -90.0
+    min_lon, max_lon = 180.0, -180.0
+    
+    if !isempty(municipalities)
+        for m in municipalities
+            min_lat = min(min_lat, m.location.lat)
+            max_lat = max(max_lat, m.location.lat)
+            min_lon = min(min_lon, m.location.lon)
+            max_lon = max(max_lon, m.location.lon)
+        end
+        # Add a small buffer
+        min_lat -= 0.5; max_lat += 0.5
+        min_lon -= 0.5; max_lon += 0.5
+        
+        println("  Filtering gNBs within Bounding Box: Lat [$min_lat, $max_lat], Lon [$min_lon, $max_lon]")
+        
+        # Filter gNBs
+        filter!(row -> min_lat <= row.lat <= max_lat && min_lon <= row.lon <= max_lon, df)
+    else
+        println("  Warning: No municipalities loaded. Skipping gNB filtering by location.")
+    end
 
     # Filter for Specific Operator
     filter!(row -> row.net == operator_net_id, df)
@@ -121,17 +138,6 @@ function load_and_deploy_network(csv_path::String, operator_net_id::Int, num_upf
 
     println("  Found $(nrow(df)) valid gNBs for Operator $operator_net_id.")
 
-    # --- Load Municipality Data ---
-    data_dir = dirname(csv_path)
-    muni_csv_path = joinpath(data_dir, "municipalities_coordinates.csv")
-    muni_geojson_path = joinpath(data_dir, "esri_municipios.geojson")
-
-    municipalities = Vector{Municipality}()
-    if isfile(muni_csv_path)
-        municipalities = load_municipalities(muni_csv_path, muni_geojson_path)
-    else
-        println("Warning: Municipality data not found at $muni_csv_path. Using empty list.")
-    end
     municipality_bins = Dict{String,Vector{Int}}()
     gnb_points = [GeoPoint(r.lat, r.lon) for r in eachrow(df)]
     final_municipalities = municipalities
