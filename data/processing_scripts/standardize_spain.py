@@ -2,82 +2,64 @@ import pandas as pd
 import os
 import json
 
-# Paths
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-# Go up one level to 'data'
 DATA_DIR = os.path.dirname(CURRENT_DIR)
-SPAIN_DIR = os.path.join(DATA_DIR, 'spain')
-AGENTS_DIR = os.path.join(SPAIN_DIR, 'agent-unprocessed-raw-datasets')
+SPAIN_DIR = os.path.join(DATA_DIR, "spain")
+AGENTS_DIR = os.path.join(SPAIN_DIR, "agent-unprocessed-raw-datasets")
+MUNI_INPUT = os.path.join(AGENTS_DIR, "municipalities_coordinates.csv")
+GEOJSON_INPUT = os.path.join(AGENTS_DIR, "esri_municipios.geojson")
+MUNI_OUTPUT = os.path.join(SPAIN_DIR, "municipalities.csv")
+GEOJSON_OUTPUT = os.path.join(SPAIN_DIR, "regions.geojson")
+CITIES_OUTPUT = os.path.join(SPAIN_DIR, "cities.csv")
 
-# Input Files
-MUNI_INPUT = os.path.join(AGENTS_DIR, 'municipalities_coordinates.csv')
-GEOJSON_INPUT = os.path.join(AGENTS_DIR, 'esri_municipios.geojson')
-
-# Output Files
-MUNI_OUTPUT = os.path.join(SPAIN_DIR, 'municipalities.csv')
-GEOJSON_OUTPUT = os.path.join(SPAIN_DIR, 'regions.geojson')
-CITIES_OUTPUT = os.path.join(SPAIN_DIR, 'cities.csv')
 
 def standardize_municipalities():
     print("Standardizing Spain Municipalities...")
-    # Read with semicolon delimiter and comma decimal
-    df = pd.read_csv(MUNI_INPUT, sep=';', decimal=',', encoding='latin-1')
-    
-    # Process Columns
+    df = pd.read_csv(MUNI_INPUT, sep=";", decimal=",", encoding="latin-1")
     # COD_INE is 11 digits, we need first 5
-    df['id'] = df['COD_INE'].astype(str).str.zfill(11).str[:5]
-    
-    # Rename and Select
-    df = df.rename(columns={
-        'NOMBRE_ACTUAL': 'name',
-        'POBLACION_MUNI': 'population',
-        'LATITUD_ETRS89': 'lat',
-        'LONGITUD_ETRS89': 'lon'
-    })
-    
+    df["id"] = df["COD_INE"].astype(str).str.zfill(11).str[:5]
+    df = df.rename(
+        columns={
+            "NOMBRE_ACTUAL": "name",
+            "POBLACION_MUNI": "population",
+            "LATITUD_ETRS89": "lat",
+            "LONGITUD_ETRS89": "lon",
+        }
+    )
     # Handle missing population
-    df['population'] = df['population'].fillna(0).astype(int)
-    
+    df["population"] = df["population"].fillna(0).astype(int)
     # Filter valid coordinates
-    df = df[(df['lat'] != 0) & (df['lon'] != 0)]
+    df = df[(df["lat"] != 0) & (df["lon"] != 0)]
 
     # Filter out Canary Islands (Lat < 35)
     # Canary Islands are approx Lat 27-29. Mainland Spain is > 36.
     # Ceuta and Melilla are approx 35.3 and 35.9.
-    # If we want to keep Ceuta/Melilla, we might need a slightly lower threshold or specific inclusion.
-    # But user said "remove Canary Islands".
-    # Let's use 35.0 as a safe cutoff for Mainland + Balearic.
     print(f"Filtering out Canary Islands (Lat < 35.0)... Original count: {len(df)}")
-    df = df[df['lat'] > 35.0]
+    df = df[df["lat"] > 35.0]
     print(f"Count after filtering: {len(df)}")
-    
-    # Select final columns
-    final_df = df[['id', 'name', 'population', 'lat', 'lon']]
-    
+    final_df = df[["id", "name", "population", "lat", "lon"]]
     final_df.to_csv(MUNI_OUTPUT, index=False)
     print(f"Saved {len(final_df)} municipalities to {MUNI_OUTPUT}")
 
+
 def standardize_geojson():
     print("Standardizing Spain GeoJSON...")
-    # Just copy/rename, but maybe ensure ID property is standard?
-    # The current loader looks for CODIGOINE. Let's standardize to 'id'.
-    
-    with open(GEOJSON_INPUT, 'r') as f:
+    with open(GEOJSON_INPUT, "r") as f:
         data = json.load(f)
-    
-    for feature in data['features']:
-        props = feature['properties']
-        if 'CODIGOINE' in props:
-            props['id'] = props['CODIGOINE']
+
+    for feature in data["features"]:
+        props = feature["properties"]
+        if "CODIGOINE" in props:
+            props["id"] = props["CODIGOINE"]
             # Optional: Clean up other props to save space
-    
-    with open(GEOJSON_OUTPUT, 'w') as f:
+
+    with open(GEOJSON_OUTPUT, "w") as f:
         json.dump(data, f)
     print(f"Saved GeoJSON to {GEOJSON_OUTPUT}")
 
+
 def create_cities_csv():
     print("Creating Spain Cities CSV...")
-    # Hardcoded list from Types.jl to CSV
     cities = [
         ("Madrid", 40.4168, -3.7038),
         ("Barcelona", 41.3851, 2.1734),
@@ -130,12 +112,12 @@ def create_cities_csv():
         ("Huesca", 42.1361, -0.4087),
         ("Ávila", 40.6565, -4.6813),
         ("Ceuta", 35.8894, -5.3213),
-        ("Melilla", 35.2923, -2.9381)
+        ("Melilla", 35.2923, -2.9381),
     ]
-    
-    df = pd.DataFrame(cities, columns=['name', 'lat', 'lon'])
+    df = pd.DataFrame(cities, columns=["name", "lat", "lon"])
     df.to_csv(CITIES_OUTPUT, index=False)
     print(f"Saved {len(df)} cities to {CITIES_OUTPUT}")
+
 
 if __name__ == "__main__":
     standardize_municipalities()
