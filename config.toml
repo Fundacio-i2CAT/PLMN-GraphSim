@@ -18,9 +18,9 @@ max_sessions_per_user = 2
 # Define the scenarios to run.
 # Key is the Scenario Name, Value is the Number of UPFs (Centroids).
 # You can add or remove scenarios here.
-"Legacy Mobile" = 3
-"Edge" = 52 # 52 is the number of provinces in Spain without Canary Islands, but counting ceuta and melilla.
-# "Ultra-Distributed" = 100
+# "Legacy Mobile" = 3
+# "Edge" = 52 # 52 is the number of provinces in Spain without Canary Islands, but counting ceuta and melilla.
+"Ultra-Distributed" = 100
 
 [countries]
 
@@ -30,8 +30,8 @@ max_sessions_per_user = 2
     mcc = 214
     
         [countries.spain.operators]
-        vodafone = { id = 1, enabled = true }
-        orange = { id = 3, enabled = true }
+        vodafone = { id = 1, enabled = false }
+        orange = { id = 3, enabled = false }
         movistar = { id = 7, enabled = true }
 
     [countries.usa]
@@ -40,6 +40,9 @@ max_sessions_per_user = 2
     mcc = 311
     
         [countries.usa.operators]
-        # Example IDs - replace with real ones from OpenCellID data
         verizon = { id = 480, enabled = true } 
         att = { id = 180, enabled = false }
+
+[plotting]
+# Scenarios to generate plots for. Must match keys in [scenarios]
+scenarios_to_plot = ["Legacy Mobile", "Edge"]
