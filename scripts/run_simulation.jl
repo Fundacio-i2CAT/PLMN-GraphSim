@@ -26,29 +26,31 @@ function run_all_scenarios()
     println("Scale Factor: $(sim_config.scale_factor)")
     println("Duration: $(sim_config.duration)")
 
-    # Operator Mapping (Name -> ID)
-    operator_ids = Dict(
-        "vodafone" => 1,
-        "orange" => 3,
-        "movistar" => 7
-    )
-
     # Run Scenarios
     scenarios = toml_data["scenarios"]
-    operators = toml_data["operators"]
+    countries = toml_data["countries"]
 
     for (scenario_name, num_upfs) in scenarios
         println("\n>>> SCENARIO: $scenario_name ($num_upfs UPFs) <<<")
         
-        for (op_key, enabled) in operators
-            if enabled
-                # Capitalize for display/file naming
-                op_name = titlecase(op_key)
-                if haskey(operator_ids, op_key)
-                    op_id = operator_ids[op_key]
-                    run_operator_simulation(op_name, op_id, num_upfs, scenario_name, sim_config)
-                else
-                    println("Warning: Unknown operator ID for $op_key")
+        for (country_key, country_config) in countries
+            if !country_config["enabled"]
+                continue
+            end
+            
+            println("  Processing Country: $country_key")
+            # Resolve data_dir relative to project root
+            data_dir = joinpath(@__DIR__, "..", country_config["data_dir"])
+            mcc = country_config["mcc"]
+            operators = country_config["operators"]
+
+            for (op_key, op_data) in operators
+                if op_data["enabled"]
+                    op_id = op_data["id"]
+                    op_name = titlecase(op_key)
+                    
+                    # Pass data_dir and mcc to the runner
+                    run_operator_simulation(op_name, op_id, num_upfs, scenario_name, sim_config, data_dir, mcc)
                 end
             end
         end
