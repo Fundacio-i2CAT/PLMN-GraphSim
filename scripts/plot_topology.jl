@@ -23,9 +23,8 @@ function plot_all_operators()
     sim_config = get(toml_data, "simulation", Dict())
     scale_factor = get(sim_config, "scale_factor", 1000)
 
-    # Get plotting configuration
-    plotting_config = toml_data["plotting"]
-    target_scenarios = plotting_config["scenarios_to_plot"]
+    # Use all defined scenarios
+    target_scenarios = keys(scenarios)
 
     for (country_key, country_config) in countries
         if !country_config["enabled"]
