@@ -5,6 +5,7 @@ using Random
 using MetaGraphsNext
 using ..Types
 using ..AgentGeneration
+using Logging
 
 function find_serving_gnb(topology::NetworkTopology, user_loc::GeoPoint)
     min_dist = Inf
@@ -45,6 +46,7 @@ end
 
     # Connect
     # TODO In a full simulation, we would calculate latency based on distance: user -> gnb -> upf
+    @debug "User $user_id connected to gNB $gnb_idx (UPF $assigned_upf_idx) at time $(now(env))"
 
     # Create 5G Forwarding State (Allocation)
     # Simulate multiple sessions per user (e.g. Internet, VoLTE, IoT device...)
@@ -67,6 +69,7 @@ end
             end
         end
     end
+    @debug "User $user_id disconnected from gNB $gnb_idx at time $(now(env))"
 
     # Remove Agent from Graph (Cleanup)
     # MetaGraphsNext uses delete! for removing vertices by label

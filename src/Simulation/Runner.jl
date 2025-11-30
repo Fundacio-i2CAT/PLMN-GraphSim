@@ -1,9 +1,10 @@
 using ConcurrentSim
 using ..DataLoading
 using ..Types
+using Logging
 
 function run_operator_simulation(operator_name::String, operator_id::Int, num_upfs::Int, scenario_name::String, config::SimConfig, data_dir::String, mccs::Vector{Int})
-    println("Running Simulation: $operator_name ($scenario_name)...")
+    @info "Running Simulation: $operator_name ($scenario_name)..."
     num_agents = ceil(Int, EFFECTIVE_POPULATION / config.scale_factor)
     
     csv_paths = [joinpath(data_dir, "opencellid", "$(mcc).csv") for mcc in mccs]
