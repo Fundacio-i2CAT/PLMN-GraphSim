@@ -24,23 +24,24 @@ max_sessions_per_user = 2
 
 [countries]
 
-    [countries.spain]
-    enabled = true
-    data_dir = "data/spain"
-    mccs = [214]
-    
-        [countries.spain.operators]
-        vodafone = { id = 1, enabled = false }
-        orange = { id = 3, enabled = false }
-        movistar = { id = 7, enabled = true }
+[countries.spain]
+enabled = true
+data_dir = "data/spain"
+mccs = [214]
 
-    [countries.usa]
-    enabled = true
-    data_dir = "data/usa"
-    mccs = [310, 311, 312, 313, 314, 315, 316]
-    
-        [countries.usa.operators]
-        verizon = { id = 480, enabled = true } 
-        att = { id = 180, enabled = false }
+[countries.spain.operators]
+vodafone = { id = 1, enabled = false }
+orange = { id = 3, enabled = false }
+movistar = { id = 7, enabled = true }
 
+[countries.usa]
+enabled = true
+data_dir = "data/usa"
+mccs = [310, 311, 312, 313, 314, 315, 316]
 
+[countries.usa.operators]
+# Major Infrastructure Owners
+verizon = { id = 480, enabled = true }
+att = { id = 410, enabled = false }
+tmobile = { id = 260, enabled = false }
+uscellular = { id = 580, enabled = false }
