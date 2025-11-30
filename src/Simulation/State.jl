@@ -3,10 +3,6 @@ using Graphs
 using MetaGraphsNext
 using ..Types
 
-# Number of PDU Sessions per User. Tipycal eMBB UE: Internet + IMS for VoNR)
-const MIN_SESSIONS = 1
-const MAX_SESSIONS = 2
-
 function init_state_5g(num_upfs::Int)
     # 5G State Initialization
     # Initialize empty session lists for each UPF.
@@ -43,12 +39,13 @@ function init_state_6g_rupa(topology::NetworkTopology)
     return forwarding_tables
 end
 
-function init_global_state(topology::NetworkTopology)
+function init_global_state(topology::NetworkTopology, config::SimConfig)
     num_upfs = length(topology.upf_locations)
     upf_sessions = init_state_5g(num_upfs)
     forwarding_tables_6g = init_state_6g_rupa(topology)
     qos = [QoSConfig6GRUPA(Int8(i), Int8(i), 0.5, 1e-6) for i in 1:16]
     return SimGlobalState(
+        config,
         upf_sessions,
         forwarding_tables_6g,
         qos,
