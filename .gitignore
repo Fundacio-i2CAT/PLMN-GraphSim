@@ -5,3 +5,5 @@ coverage_html/
 *.cov
 *.log
 lcov.info
+.venv
+.mypy_cache/
