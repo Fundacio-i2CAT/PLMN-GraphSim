@@ -43,6 +43,4 @@ max_sessions_per_user = 2
         verizon = { id = 480, enabled = true } 
         att = { id = 180, enabled = false }
 
-[plotting]
-# Scenarios to generate plots for. Must match keys in [scenarios]
-scenarios_to_plot = ["Legacy Mobile", "Edge"]
+
