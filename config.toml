@@ -9,6 +9,9 @@ scale_factor = 1000
 # Duration of the simulation in time units
 duration = 100.0
 
+# Log Level: "debug", "info", "warn", "error"
+log_level = "info"
+
 # Number of PDU Sessions per User (e.g., Internet + IMS/VoNR)
 # This changes depending on the use case. Since we only are measuring eMBB for now, we only have two.
 min_sessions_per_user = 1
