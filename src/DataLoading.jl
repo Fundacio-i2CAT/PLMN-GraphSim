@@ -91,9 +91,23 @@ function load_municipalities(csv_path::String, geojson_path::String="")
     return municipalities
 end
 
-function load_and_deploy_network(csv_path::String, operator_net_id::Int, num_upfs::Int, data_dir::String)
-    println("Loading gNB data from $csv_path for Operator ID: $operator_net_id...")
-    df = CSV.read(csv_path, DataFrame; header=[:radio, :mcc, :net, :area, :cell, :unit, :lon, :lat, :range, :samples, :changeable, :created, :updated, :avg_signal])
+function load_and_deploy_network(csv_paths::Vector{String}, operator_net_id::Int, num_upfs::Int, data_dir::String)
+    println("Loading gNB data from $(length(csv_paths)) files for Operator ID: $operator_net_id...")
+    
+    df = DataFrame()
+    for path in csv_paths
+        if isfile(path)
+            println("  Reading $path...")
+            temp_df = CSV.read(path, DataFrame; header=[:radio, :mcc, :net, :area, :cell, :unit, :lon, :lat, :range, :samples, :changeable, :created, :updated, :avg_signal])
+            append!(df, temp_df)
+        else
+            println("  Warning: File not found: $path")
+        end
+    end
+
+    if nrow(df) == 0
+        error("No data loaded from provided CSV paths.")
+    end
 
     # --- Load Municipality Data First (to determine bounding box) ---
     muni_csv_path = joinpath(data_dir, "municipalities.csv")
