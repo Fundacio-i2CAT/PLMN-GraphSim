@@ -2,23 +2,59 @@ using Pkg
 Pkg.activate(joinpath(@__DIR__, ".."))
 using DesJulia6gRupa
 using DesJulia6gRupa.Simulation
+using DesJulia6gRupa.Types
+using TOML
 
 function run_all_scenarios()
-    # Scale Factor: 1 Agent represents X real users
-    # Options: 100, 1000, 10000
-    SCALE = 1000 
+    # Load Configuration
+    config_path = joinpath(@__DIR__, "../config.toml")
+    if !isfile(config_path)
+        error("Config file not found at $config_path")
+    end
 
-    # Scenario 1: Centralized (Legacy 4G-like) - 3 UPFs (e.g., Madrid, Barcelona, Seville)
-    println("\n>>> SCENARIO 1: CENTRALIZED (Legacy 4G-like) - 3 UPFs <<<")
-    run_operator_simulation("Vodafone", 1, 3, "Centralized"; scale_factor=SCALE)
-    run_operator_simulation("Orange", 3, 3, "Centralized"; scale_factor=SCALE)
-    run_operator_simulation("Movistar", 7, 3, "Centralized"; scale_factor=SCALE)
+    toml_data = TOML.parsefile(config_path)
 
-    # Scenario 2: Distributed (5G Edge) - 52 UPFs (Provincial)
-    println("\n>>> SCENARIO 2: DISTRIBUTED (5G Edge) - 52 UPFs <<<")
-    run_operator_simulation("Vodafone", 1, 52, "Distributed"; scale_factor=SCALE)
-    run_operator_simulation("Orange", 3, 52, "Distributed"; scale_factor=SCALE)
-    run_operator_simulation("Movistar", 7, 52, "Distributed"; scale_factor=SCALE)
+    # Create SimConfig
+    sim_config = SimConfig(
+        toml_data["simulation"]["min_sessions_per_user"],
+        toml_data["simulation"]["max_sessions_per_user"],
+        toml_data["simulation"]["scale_factor"],
+        toml_data["simulation"]["duration"]
+    )
+
+    println("Loaded Configuration from config.toml")
+    println("Scale Factor: $(sim_config.scale_factor)")
+    println("Duration: $(sim_config.duration)")
+
+    # Run Scenarios
+    scenarios = toml_data["scenarios"]
+    countries = toml_data["countries"]
+
+    for (scenario_name, num_upfs) in scenarios
+        println("\n>>> SCENARIO: $scenario_name ($num_upfs UPFs) <<<")
+        for (country_key, country_config) in countries
+            if !country_config["enabled"]
+                continue
+            end
+            println("  Processing Country: $country_key")
+            data_dir = joinpath(@__DIR__, "..", country_config["data_dir"])
+            mccs = Int[]
+            if haskey(country_config, "mccs")
+                append!(mccs, country_config["mccs"])
+            elseif haskey(country_config, "mcc")
+                push!(mccs, country_config["mcc"])
+            end
+
+            operators = country_config["operators"]
+            for (op_key, op_data) in operators
+                if op_data["enabled"]
+                    op_id = op_data["id"]
+                    op_name = titlecase(op_key)
+                    run_operator_simulation(op_name, op_id, num_upfs, scenario_name, sim_config, data_dir, mccs)
+                end
+            end
+        end
+    end
 end
 
 run_all_scenarios()

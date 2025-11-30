@@ -1,0 +1,47 @@
+# Simulation Configuration
+
+[simulation]
+# Scale Factor: 1 Agent represents X real users.
+# Higher values = fewer agents = faster simulation but less granular.
+# Lower values = more agents = slower simulation but more realistic distribution.
+scale_factor = 1000
+
+# Duration of the simulation in time units
+duration = 100.0
+
+# Number of PDU Sessions per User (e.g., Internet + IMS/VoNR)
+# This changes depending on the use case. Since we only are measuring eMBB for now, we only have two.
+min_sessions_per_user = 1
+max_sessions_per_user = 2
+
+[scenarios]
+# Define the scenarios to run.
+# Key is the Scenario Name, Value is the Number of UPFs (Centroids).
+# You can add or remove scenarios here.
+"Spain Legacy" = 3
+"Spain Distributed" = 52 # 52 is the number of provinces in Spain without Canary Islands, but counting ceuta and melilla.
+"USA Legacy" = 48
+"USA Distributed" = 96 # 96 is the number of counties in the USA with more than 100k inhabitants.
+
+[countries]
+
+    [countries.spain]
+    enabled = true
+    data_dir = "data/spain"
+    mccs = [214]
+
+        [countries.spain.operators]
+        vodafone = { id = 1, enabled = false }
+        orange = { id = 3, enabled = false }
+        movistar = { id = 7, enabled = true }
+
+    [countries.usa]
+    enabled = true
+    data_dir = "data/usa"
+    mccs = [310, 311, 312, 313, 314, 315, 316]
+
+        [countries.usa.operators]
+        verizon = { id = 480, enabled = true }
+        att = { id = 410, enabled = false }
+        tmobile = { id = 260, enabled = false }
+        uscellular = { id = 580, enabled = false }
