@@ -1,0 +1,29 @@
+# Simulation Configuration
+
+[simulation]
+# Scale Factor: 1 Agent represents X real users.
+# Higher values = fewer agents = faster simulation but less granular.
+# Lower values = more agents = slower simulation but more realistic distribution.
+scale_factor = 1000
+
+# Duration of the simulation in time units
+duration = 100.0
+
+# Number of PDU Sessions per User (e.g., Internet + IMS/VoNR)
+# This changes depending on the use case. Since we only are measuring eMBB for now, we only have two.
+min_sessions_per_user = 1
+max_sessions_per_user = 2
+
+[scenarios]
+# Define the scenarios to run.
+# Key is the Scenario Name, Value is the Number of UPFs (Centroids).
+# You can add or remove scenarios here.
+"Legacy Mobile" = 3
+"Edge" = 52 # 52 is the number of provinces in Spain without Canary Islands, but counting ceuta and melilla.
+# "Ultra-Distributed" = 100
+
+[operators]
+# Set to true to run simulation for this operator
+vodafone = true
+orange = true
+movistar = true

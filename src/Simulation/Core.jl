@@ -48,7 +48,7 @@ end
 
     # Create 5G Forwarding State (Allocation)
     # Simulate multiple sessions per user (e.g. Internet, VoLTE, IoT device...)
-    num_sessions = rand(MIN_SESSIONS:MAX_SESSIONS)
+    num_sessions = rand(sim_state.config.min_sessions:sim_state.config.max_sessions)
     for _ in 1:num_sessions
         ctx = create_session_context()
         push!(sim_state.upf_sessions_5g[assigned_upf_idx], ctx)

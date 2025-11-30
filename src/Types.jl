@@ -8,7 +8,7 @@ using Random
 using GeometryBasics
 
 export FAR, SessionContext5G, ForwardingEntry6GRUPA, QoSConfig6GRUPA
-export SimGlobalState, GeoPoint, NetworkTopology, GUPFState6GRUPA, Municipality
+export SimGlobalState, GeoPoint, NetworkTopology, GUPFState6GRUPA, Municipality, SimConfig
 export REFERENCE_CITIES
 export SPAIN_POPULATION, RATIO_UNDER_15, PHONE_ADOPTION_OVER_15, EFFECTIVE_POPULATION
 export haversine_distance
@@ -79,8 +79,18 @@ struct QoSConfig6GRUPA
     packet_error_rate::Float64
 end
 
+struct SimConfig
+    min_sessions::Int
+    max_sessions::Int
+    scale_factor::Int
+    duration::Float64
+end
+
 # --- Simulation State ---
 mutable struct SimGlobalState
+    # Config
+    config::SimConfig
+
     # 5G State: Per UPF (Vector of Vectors)
     # Dynamic: Grows with number of sessions
     upf_sessions_5g::Vector{Vector{SessionContext5G}}
