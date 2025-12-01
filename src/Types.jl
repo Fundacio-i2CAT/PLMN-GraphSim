@@ -86,6 +86,8 @@ struct SimConfig
     max_sessions::Int
     scale_factor::Int
     duration::Float64
+    mean_session_duration::Float64
+    mean_offline_duration::Float64
 end
 
 # --- Simulation State ---
@@ -106,8 +108,13 @@ mutable struct SimGlobalState
     history_time::Vector{Float64}
     history_total_5g_mb::Vector{Float64}
     history_max_upf_5g_mb::Vector{Float64} # The bottleneck UPF
+    history_mean_upf_5g_mb::Vector{Float64}
+    history_median_upf_5g_mb::Vector{Float64}
+    
     history_total_6g_mb::Vector{Float64}
     history_max_upf_6g_mb::Vector{Float64}
+    history_mean_upf_6g_mb::Vector{Float64}
+    history_median_upf_6g_mb::Vector{Float64}
 end
 
 struct GUPFState6GRUPA

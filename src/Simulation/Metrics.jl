@@ -2,53 +2,52 @@ using ConcurrentSim
 using ResumableFunctions
 using Dates
 using DataFrames
+using Statistics
 using ..Types
 
 @resumable function monitor_metrics(env, sim_state::SimGlobalState)
     while true
         current_time = now(env)
-        # Calculate 5G State
-        # By now, total Network State AND Max State on a single UPF (Bottleneck)
-        total_5g_size = 0.0
-        max_upf_size = 0.0
-
+        
+        upf_sizes_5g = Float64[]
         for sessions in sim_state.upf_sessions_5g
             # Calculate size of this UPF's session list
-            # XXX: summarysize is accurate but can be slow. 
-            # For simulation speed, we can estimate: count * sizeof(SessionContext5G)
-            # But let's stick to summarysize for accuracy unless it's too slow.
             upf_size = Base.summarysize(sessions) / (1024^2)
-            total_5g_size += upf_size
-            if upf_size > max_upf_size
-                max_upf_size = upf_size
-            end
+            push!(upf_sizes_5g, upf_size)
         end
 
-        # Calculate 6G-RUPA State (Static per GUPF, but we track it for consistency)
-        total_6g_size = 0.0
-        max_upf_6g_size = 0.0
+        total_5g_size = sum(upf_sizes_5g)
+        max_upf_size = isempty(upf_sizes_5g) ? 0.0 : maximum(upf_sizes_5g)
+        mean_upf_size = isempty(upf_sizes_5g) ? 0.0 : mean(upf_sizes_5g)
+        median_upf_size = isempty(upf_sizes_5g) ? 0.0 : median(upf_sizes_5g)
 
-        # QoS Profiles are shared/global usually, or per UPF. Let's assume per UPF copy.
+        # --- 6G-RUPA Metrics ---
+        upf_sizes_6g = Float64[]
         qos_size = Base.summarysize(sim_state.qos_profiles_6g) / (1024^2)
 
         for table in sim_state.forwarding_tables_6g
-            # Size of the forwarding table for this UPF
             table_size = Base.summarysize(table) / (1024^2)
-
-            # Total state for this UPF = Table + QoS
             upf_total = table_size + qos_size
-
-            total_6g_size += upf_total
-            if upf_total > max_upf_6g_size
-                max_upf_6g_size = upf_total
-            end
+            push!(upf_sizes_6g, upf_total)
         end
 
+        total_6g_size = sum(upf_sizes_6g)
+        max_upf_6g_size = isempty(upf_sizes_6g) ? 0.0 : maximum(upf_sizes_6g)
+        mean_upf_6g_size = isempty(upf_sizes_6g) ? 0.0 : mean(upf_sizes_6g)
+        median_upf_6g_size = isempty(upf_sizes_6g) ? 0.0 : median(upf_sizes_6g)
+
+        # --- Record History ---
         push!(sim_state.history_time, current_time)
+        
         push!(sim_state.history_total_5g_mb, total_5g_size)
         push!(sim_state.history_max_upf_5g_mb, max_upf_size)
+        push!(sim_state.history_mean_upf_5g_mb, mean_upf_size)
+        push!(sim_state.history_median_upf_5g_mb, median_upf_size)
+
         push!(sim_state.history_total_6g_mb, total_6g_size)
         push!(sim_state.history_max_upf_6g_mb, max_upf_6g_size)
+        push!(sim_state.history_mean_upf_6g_mb, mean_upf_6g_size)
+        push!(sim_state.history_median_upf_6g_mb, median_upf_6g_size)
 
         @yield timeout(env, 1.0) # Sample every 1.0 time unit
     end
