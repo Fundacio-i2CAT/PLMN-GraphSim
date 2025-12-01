@@ -66,11 +66,18 @@ function plot_single_scenario(op_name, op_id, scenario_name, num_upfs, valid_pat
     end
 end
 
-function process_country(country_key, country_config, scenarios, scale_factor)
+function process_country(country_key, country_config, scale_factor)
     if !country_config["enabled"]
         return
     end
     println("\n>>> PLOTTING COUNTRY: $country_key <<<")
+
+    scenarios = get(country_config, "scenarios", Dict())
+    if isempty(scenarios)
+        println("  Warning: No scenarios defined for country: $country_key")
+        return
+    end
+
     data_dir = joinpath(@__DIR__, "..", country_config["data_dir"])
 
     mccs = Int[]
@@ -109,11 +116,10 @@ function main()
     end
     toml_data = TOML.parsefile(config_path)
     countries = toml_data["countries"]
-    scenarios = toml_data["scenarios"]
     sim_config = get(toml_data, "simulation", Dict())
     scale_factor = get(sim_config, "scale_factor", 1000)
     for (country_key, country_config) in countries
-        process_country(country_key, country_config, scenarios, scale_factor)
+        process_country(country_key, country_config, scale_factor)
     end
 end
 

@@ -35,23 +35,27 @@ function run_all_scenarios()
     @info "Duration: $(sim_config.duration)"
 
     # Run Scenarios
-    scenarios = toml_data["scenarios"]
     countries = toml_data["countries"]
 
-    for (scenario_name, num_upfs) in scenarios
-        @info ">>> SCENARIO: $scenario_name ($num_upfs UPFs) <<<"
-        for (country_key, country_config) in countries
-            if !country_config["enabled"]
-                continue
-            end
-            @info "  Processing Country: $country_key"
-            data_dir = joinpath(@__DIR__, "..", country_config["data_dir"])
-            mccs = Int[]
-            if haskey(country_config, "mccs")
-                append!(mccs, country_config["mccs"])
-            elseif haskey(country_config, "mcc")
-                push!(mccs, country_config["mcc"])
-            end
+    for (country_key, country_config) in countries
+        if !country_config["enabled"]
+            continue
+        end
+        @info "  Processing Country: $country_key"
+        scenarios = get(country_config, "scenarios", Dict())
+        if isempty(scenarios)
+            @warn "No scenarios defined for country: $country_key"
+            continue
+        end
+        data_dir = joinpath(@__DIR__, "..", country_config["data_dir"])
+        mccs = Int[]
+        if haskey(country_config, "mccs")
+            append!(mccs, country_config["mccs"])
+        elseif haskey(country_config, "mcc")
+            push!(mccs, country_config["mcc"])
+        end
+        for (scenario_name, num_upfs) in scenarios
+            @info ">>> SCENARIO: $scenario_name ($num_upfs UPFs) <<<"
 
             operators = country_config["operators"]
             for (op_key, op_data) in operators
