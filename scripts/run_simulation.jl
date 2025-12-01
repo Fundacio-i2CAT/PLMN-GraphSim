@@ -56,6 +56,10 @@ function process_country(country_key, country_config, sim_config)
         push!(mccs, country_config["mcc"])
     end
 
+    population = get(country_config, "population", 0)
+    mobile_adoption_rate = get(country_config, "mobile_adoption_rate", 0.82)
+    effective_population = population * mobile_adoption_rate
+
     for (scenario_name, num_upfs) in scenarios
         if !is_scenario_valid_for_country(scenario_name, country_key)
             continue
@@ -68,7 +72,7 @@ function process_country(country_key, country_config, sim_config)
             if op_data["enabled"]
                 op_id = op_data["id"]
                 op_name = titlecase(op_key)
-                run_operator_simulation(op_name, op_id, num_upfs, scenario_name, sim_config, data_dir, mccs)
+                run_operator_simulation(op_name, op_id, num_upfs, scenario_name, sim_config, data_dir, mccs, effective_population)
             end
         end
     end
