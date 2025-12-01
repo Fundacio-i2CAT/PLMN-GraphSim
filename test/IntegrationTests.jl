@@ -15,7 +15,7 @@ using ConcurrentSim
     data_dir_usa = joinpath(project_root, "data", "usa")
 
     # Config for short simulation
-    sim_config = SimConfig(1, 2, 10000, 1.0) # High scale factor = few agents, Short duration
+    sim_config = SimConfig(1, 2, 10000, 1.0, 20.0, 5.0) # High scale factor = few agents, Short duration
 
     @testset "Spain Simulation (Movistar)" begin
         csv_path = joinpath(data_dir_spain, "opencellid", "214.csv")
