@@ -21,7 +21,7 @@ using ConcurrentSim
         csv_path = joinpath(data_dir_spain, "opencellid", "214.csv")
         if isfile(csv_path)
             # 1. Load Network
-            topology = load_and_deploy_network(csv_path, 7, 3, data_dir_spain)
+            topology = load_and_deploy_network([csv_path], 7, 3, data_dir_spain)
             @test length(topology.gnb_locations) > 0
             @test length(topology.upf_locations) == 3
             @test length(topology.municipalities) > 0
@@ -43,7 +43,7 @@ using ConcurrentSim
         if isfile(csv_path)
             # 1. Load Network
             # Verizon ID is 480
-            topology = load_and_deploy_network(csv_path, 480, 3, data_dir_usa)
+            topology = load_and_deploy_network([csv_path], 480, 3, data_dir_usa)
             @test length(topology.gnb_locations) > 0
             @test length(topology.upf_locations) == 3
             @test length(topology.municipalities) > 0

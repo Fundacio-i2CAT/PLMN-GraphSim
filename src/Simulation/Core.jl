@@ -57,8 +57,8 @@ end
     end
 
     # Active duration
-    duration = rand(Exponential(20.0))
-    @yield timeout(env, duration)
+    session_duration = rand(Exponential(20.0))
+    @yield timeout(env, session_duration)
 
     # Disconnect
     # Remove the same number of sessions we added from the specific UPF
