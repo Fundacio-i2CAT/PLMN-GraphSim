@@ -8,7 +8,7 @@ using TOML
 using CSV
 using DataFrames
 
-function plot_single_scenario(op_name, op_id, scenario_name, num_upfs, valid_paths, data_dir, scale_factor)
+function plot_single_scenario(op_name, op_id, scenario_name, num_upfs, valid_paths, data_dir, scale_factor, mobile_adoption_rate)
     println("    Scenario: $scenario_name ($num_upfs UPFs)")
 
     try
@@ -17,17 +17,7 @@ function plot_single_scenario(op_name, op_id, scenario_name, num_upfs, valid_pat
         # 2. Generate Agents
         total_pop = sum([m.population for m in topology.municipalities])
 
-        # Use constants from Types if available, or hardcode defaults
-        ratio_under_15 = 0.15
-        phone_adoption = 0.95
-        try
-            ratio_under_15 = DesJulia6gRupa.Types.RATIO_UNDER_15
-            phone_adoption = DesJulia6gRupa.Types.PHONE_ADOPTION_OVER_15
-        catch
-            # Constants might not be exported or available
-        end
-
-        eff_pop = total_pop * (1 - ratio_under_15) * phone_adoption
+        eff_pop = total_pop * mobile_adoption_rate
         num_agents = ceil(Int, eff_pop / scale_factor)
 
         if num_agents > 100000
@@ -105,6 +95,8 @@ function process_country(country_key, country_config, scale_factor)
         return
     end
 
+    mobile_adoption_rate = get(country_config, "mobile_adoption_rate", 0.82)
+
     operators = country_config["operators"]
     for (op_key, op_data) in operators
         if op_data["enabled"]
@@ -117,7 +109,7 @@ function process_country(country_key, country_config, scale_factor)
                     continue
                 end
 
-                plot_single_scenario(op_name, op_id, scenario_name, num_upfs, valid_paths, data_dir, scale_factor)
+                plot_single_scenario(op_name, op_id, scenario_name, num_upfs, valid_paths, data_dir, scale_factor, mobile_adoption_rate)
             end
         end
     end
