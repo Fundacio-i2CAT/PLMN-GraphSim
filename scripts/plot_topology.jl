@@ -66,6 +66,16 @@ function plot_single_scenario(op_name, op_id, scenario_name, num_upfs, valid_pat
     end
 end
 
+function is_scenario_valid_for_country(scenario_name, country_key)
+    if occursin("Spain", scenario_name) && country_key != "spain"
+        return false
+    end
+    if occursin("USA", scenario_name) && country_key != "usa"
+        return false
+    end
+    return true
+end
+
 function process_country(country_key, country_config, scale_factor)
     if !country_config["enabled"]
         return
@@ -103,6 +113,10 @@ function process_country(country_key, country_config, scale_factor)
             println("  Operator: $op_name (ID: $op_id)")
 
             for (scenario_name, num_upfs) in scenarios
+                if !is_scenario_valid_for_country(scenario_name, country_key)
+                    continue
+                end
+
                 plot_single_scenario(op_name, op_id, scenario_name, num_upfs, valid_paths, data_dir, scale_factor)
             end
         end
