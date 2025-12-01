@@ -18,13 +18,12 @@ mean_session_duration = 20.0
 mean_offline_duration = 5.0
 
 # Log Level: "debug", "info", "warn", "error"
-log_level = "debug"
+log_level = "info"
 
 # Number of PDU Sessions per User (e.g., Internet + IMS/VoNR)
 # This changes depending on the use case. Since we only are measuring eMBB for now, we only have two.
 min_sessions_per_user = 1
 max_sessions_per_user = 2
-
 
 
 [countries]
@@ -33,12 +32,14 @@ max_sessions_per_user = 2
 enabled = true
 data_dir = "data/spain"
 mccs = [214]
+population = 49_442_844
+mobile_adoption_rate = 0.82
 
 [countries.spain.scenarios]
 # Define the scenarios to run.
 # Key is the Scenario Name, Value is the Number of UPFs (Centroids).
 # You can add as many scenarios as you want and the simulator will automatically pick them up.
-# "Quick Testing" = 2
+# "Quick Testing ESP" = 1
 # "Spain Legacy" = 3
 "Spain Distributed" = 52 # 52 is the number of provinces in Spain without Canary Islands, but counting ceuta and melilla.
 
@@ -51,9 +52,11 @@ movistar = { id = 7, enabled = true }
 enabled = true
 data_dir = "data/usa"
 mccs = [310, 311, 312, 313, 314, 315, 316]
+population = 335_000_000
+mobile_adoption_rate = 0.82
 
 [countries.usa.scenarios]
-# "Quick Testing" = 2
+# "Quick Testing USA" = 1
 # "USA Legacy" = 48
 "USA Distributed" = 96 # 96 is the number of counties in the USA with more than 100k inhabitants.
 
