@@ -76,3 +76,13 @@ To ensure reproducibility, use a dedicated Python virtual environment for these 
     # Step 3: Standardize for Simulation
     python3 data/processing_scripts/standardize_usa.py
     ```
+
+## Visualizations
+
+Here are some visualizations of the generated topology for the USA (Verizon).
+
+### Topology Map
+![Topology Map USA](../../images/topology_map_cities_verizon_usa%20distributed.png)
+
+### Network Graph
+![Network Graph USA](../../images/graph_viz_verizon_usa%20distributed.png)

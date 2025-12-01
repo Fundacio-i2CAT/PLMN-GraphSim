@@ -50,3 +50,13 @@ source data/processing_scripts/.venv/bin/activate
 python3 data/processing_scripts/standardize_spain.py
 ```
 
+## Visualizations
+
+Here are some visualizations of the generated topology for Spain (Movistar).
+
+### Topology Map
+![Topology Map Spain](../../images/topology_map_cities_movistar_spain%20distributed.png)
+
+### Network Graph
+![Network Graph Spain](../../images/graph_viz_movistar_spain%20distributed.png)
+

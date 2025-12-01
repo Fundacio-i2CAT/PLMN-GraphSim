@@ -17,45 +17,49 @@ data/my_country/
 
 ## Country-Specific Files
 
-Every country have their own data sources, for example in spain tipically is the INE (Instituto Nacional de Estadística) and in the USA is the Census Bureau. But this is specific to every counttry. So the goal is to somehow convert the raw country-specific data into this custom standard format we defined in the simulator.
+Every country has its own data sources. For example, in Spain it is typically the INE (Instituto Nacional de Estadística) and in the USA it is the Census Bureau. The goal is to convert the raw country-specific data into this custom standard format defined in the simulator.
 
 ### 1. `municipalities.csv`
+
 Contains the list of administrative regions (municipalities, counties, etc.) where agents will be distributed.
 
-**Format:** CSV with headers.
-**Columns:**
+!!! info "Format Specification"
+    **Format:** CSV with headers.
+    
+    **Columns:**
 
-* `id`: Unique identifier (String). Must match the `id` property in the GeoJSON.
-
-* `name`: Name of the municipality.
-
-* `population`: Integer population count.
-
-* `lat`: Latitude of the centroid.
-
-* `lon`: Longitude of the centroid.
+    * `id`: Unique identifier (String). **Must match the `id` property in the GeoJSON.**
+    * `name`: Name of the municipality.
+    * `population`: Integer population count.
+    * `lat`: Latitude of the centroid.
+    * `lon`: Longitude of the centroid.
 
 ### 2. `regions.geojson`
+
 Contains the geometric boundaries of the municipalities. Used for accurate agent placement within borders.
 
+!!! info "Format Specification"
+    * **Format:** Standard GeoJSON FeatureCollection.
+    * **Properties:** Each feature must have an `id` property that corresponds to the `id` in `municipalities.csv`.
 
-* **Format:** Standard GeoJSON FeatureCollection.
-
-* **Properties:** Each feature must have an `id` property that corresponds to the `id` in `municipalities.csv`.
+!!! warning "Important"
+    The `id` in `regions.geojson` must strictly match the `id` in `municipalities.csv` to ensure agents are correctly placed in their respective regions.
 
 ### 3. `cities.csv`
+
 Contains a list of major cities to be plotted as "stars" on the topology map for reference.
 
-**Format:** CSV with headers.
-**Columns:**
+!!! info "Format Specification"
+    **Format:** CSV with headers.
+    
+    **Columns:**
 
-* `name`: Name of the city.
-
-* `lat`: Latitude.
-
-* `lon`: Longitude.
+    * `name`: Name of the city.
+    * `lat`: Latitude.
+    * `lon`: Longitude.
 
 ### 4. OpenCellID Data
+
 Download the cell tower data for your country (MCC) from [OpenCellID](https://opencellid.org/). Place the CSV file inside the `opencellid/` folder.
 
 ## Helper Scripts
