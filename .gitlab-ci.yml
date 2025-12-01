@@ -3,7 +3,7 @@ image: python:3.9-alpine
 pages:
   stage: deploy
   script:
-    - pip install mkdocs-material
+    - pip install -r docs/requirements.txt
     - mkdocs build
   artifacts:
     paths:
