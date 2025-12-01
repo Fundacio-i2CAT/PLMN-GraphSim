@@ -1,7 +1,20 @@
-site_name: Julia-based Discrete Eveent Simulator for evaluating scalability of 5G Networks and beyond
+site_name: DES Julia 6G
+site_description: Julia-based Discrete Event Simulator for evaluating scalability of 5G Networks and beyond
 site_url: https://software-networks.org/des_julia_6g_rupa/
 site_dir: public
 copyright: Copyright &copy; 2025 Fundacio i2CAT
+
+nav:
+  - Home: index.md
+  - Simulation Details: simulation-details.md
+  - Agents:
+    - Getting Data Ready: agents/getting-data-ready.md
+    - Countries:
+      - Spain: agents/countries/spain.md
+      - USA: agents/countries/usa.md
+  - Analysis:
+    - Post Analysis: post-analysis.md
+    - Memory Calculation: memory_calculation.md
 
 theme:
   name: material
@@ -9,6 +22,7 @@ theme:
     - navigation.tabs
     - navigation.sections
     - toc.integrate
+    - content.code.copy
   palette:
     - media: "(prefers-color-scheme)"
       primary: teal
@@ -43,6 +57,12 @@ markdown_extensions:
       anchor_linenums: true
   - pymdownx.inlinehilite
   - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - attr_list
   - tables
 
 plugins:
