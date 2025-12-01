@@ -9,18 +9,9 @@ using GeometryBasics
 
 export FAR, SessionContext5G, ForwardingEntry6GRUPA, QoSConfig6GRUPA
 export SimGlobalState, GeoPoint, NetworkTopology, GUPFState6GRUPA, Municipality, SimConfig
-export SPAIN_POPULATION, USA_POPULATION, RATIO_UNDER_15, PHONE_ADOPTION_OVER_15, EFFECTIVE_POPULATION, EFFECTIVE_POPULATION_USA
 export haversine_distance
 
 # --- Constants ---
-const SPAIN_POPULATION = 49_442_844 # INE, 2025
-const USA_POPULATION = 335_000_000 # Approx 2023
-
-# Demographics: ~14.5% under 15 (no phone), 96% of >15 have phone, source INE 2023
-const RATIO_UNDER_15 = 0.145
-const PHONE_ADOPTION_OVER_15 = 0.96
-const EFFECTIVE_POPULATION = SPAIN_POPULATION * (1 - RATIO_UNDER_15) * PHONE_ADOPTION_OVER_15
-const EFFECTIVE_POPULATION_USA = USA_POPULATION * (1 - RATIO_UNDER_15) * PHONE_ADOPTION_OVER_15
 
 # --- Simulation Constants ---
 # Estimated memory footprint per 5G Session (PDR + FAR + QER + URR + Context overhead)
