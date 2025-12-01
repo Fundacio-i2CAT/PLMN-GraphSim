@@ -7,8 +7,13 @@ function save_simulation_results(operator_name::String, scenario_name::String, s
         Time=state.history_time,
         Total_5G_MB=state.history_total_5g_mb,
         Max_UPF_5G_MB=state.history_max_upf_5g_mb,
+        Mean_UPF_5G_MB=state.history_mean_upf_5g_mb,
+        Median_UPF_5G_MB=state.history_median_upf_5g_mb,
+        
         Total_6G_MB=state.history_total_6g_mb,
-        Max_UPF_6G_MB=state.history_max_upf_6g_mb
+        Max_UPF_6G_MB=state.history_max_upf_6g_mb,
+        Mean_UPF_6G_MB=state.history_mean_upf_6g_mb,
+        Median_UPF_6G_MB=state.history_median_upf_6g_mb
     )
     # Create results directory if it doesn't exist
     results_dir = joinpath(@__DIR__, "../../results")

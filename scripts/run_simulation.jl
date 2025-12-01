@@ -25,7 +25,9 @@ function run_all_scenarios()
         toml_data["simulation"]["min_sessions_per_user"],
         toml_data["simulation"]["max_sessions_per_user"],
         toml_data["simulation"]["scale_factor"],
-        toml_data["simulation"]["duration"]
+        toml_data["simulation"]["duration"],
+        get(toml_data["simulation"], "mean_session_duration", 20.0),
+        get(toml_data["simulation"], "mean_offline_duration", 5.0)
     )
 
     @info "Loaded Configuration from config.toml"
