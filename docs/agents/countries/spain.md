@@ -55,8 +55,8 @@ python3 data/processing_scripts/standardize_spain.py
 Here are some visualizations of the generated topology for Spain (Movistar).
 
 ### Topology Map
-![Topology Map Spain](../../images/topology_map_cities_movistar_spain%20distributed.png)
+![Topology Map Spain](../../images/single_tier_scenario/topology_map_cities_movistar_spain%20distributed.png)
 
 ### Network Graph
-![Network Graph Spain](../../images/graph_viz_movistar_spain%20distributed.png)
+![Network Graph Spain](../../images/single_tier_scenario/graph_viz_movistar_spain%20distributed.png)
 
