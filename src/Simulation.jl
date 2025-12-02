@@ -14,7 +14,7 @@ using ..Types
 using ..DataLoading
 using ..AgentGeneration
 
-export run_operator_simulation, init_global_state, create_session_context
+export run_operator_simulation, init_global_state_for_simulation, create_session_context
 
 include("Simulation/State.jl")
 include("Simulation/Core.jl")

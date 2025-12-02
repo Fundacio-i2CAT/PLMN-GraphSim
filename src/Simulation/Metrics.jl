@@ -24,11 +24,10 @@ using ..Types
         # --- 6G-RUPA Metrics ---
         upf_sizes_6g = Float64[]
         upf_entries_6g = Int[]
-        qos_size = Base.summarysize(sim_state.qos_profiles_6g) / (1024^2)
 
         for table in sim_state.forwarding_tables_6g
             table_size = Base.summarysize(table) / (1024^2)
-            upf_total = table_size + qos_size
+            upf_total = table_size
             push!(upf_sizes_6g, upf_total)
             push!(upf_entries_6g, length(table))
         end
@@ -56,6 +55,15 @@ using ..Types
 
         push!(sim_state.history_mean_entries_6g, mean_entries_6g)
         push!(sim_state.history_median_entries_6g, median_entries_6g)
+
+        # --- Detailed History ---
+        push!(sim_state.history_per_upf_5g_mb, copy(upf_sizes_5g))
+        # We need to calculate entries for 5G as well
+        upf_entries_5g = [length(s) for s in sim_state.upf_sessions_5g]
+        push!(sim_state.history_per_upf_entries_5g, upf_entries_5g)
+        
+        push!(sim_state.history_per_upf_6g_mb, copy(upf_sizes_6g))
+        push!(sim_state.history_per_upf_entries_6g, copy(upf_entries_6g))
 
         @yield timeout(env, 1.0) # Sample every 1.0 time unit
     end

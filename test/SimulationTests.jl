@@ -108,10 +108,10 @@ using MetaGraphsNext
             config,
             [[SessionContext5G(1, 1, FAR(1, 1), FAR(1, 1))]], # 1 UPF, 1 Session
             [[ForwardingEntry6GRUPA(10, 0xFFFFFF00, 1)]],     # 1 UPF, 1 Entry
-            QoSConfig6GRUPA[],
             Float64[], Float64[], Float64[], Float64[], Float64[],
             Float64[], Float64[], Float64[], Float64[],
-            Float64[], Float64[]
+            Float64[], Float64[],
+            Vector{Float64}[], Vector{Int}[], Vector{Float64}[], Vector{Int}[]
         )
         # Mock Scale Factor
         scale_factor = 1000

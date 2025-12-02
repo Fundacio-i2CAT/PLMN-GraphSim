@@ -26,6 +26,43 @@ function save_simulation_results(operator_name::String, scenario_name::String, s
     filename = "simulation_results_$(operator_name)_$(scenario_name).csv"
     CSV.write(joinpath(results_dir, filename), df)
     println("  -> Results: results/$filename")
+
+    # Save Detailed Evolution
+    save_detailed_evolution(operator_name, scenario_name, state, results_dir)
+end
+
+function save_detailed_evolution(operator_name::String, scenario_name::String, state::SimGlobalState, results_dir::String)
+    # Helper to save a matrix (Time x UPF)
+    function save_matrix(data::Vector{Vector{T}}, metric_name::String) where T
+        if isempty(data)
+            return
+        end
+        
+        # Convert Vector of Vectors to Matrix
+        # Rows: Time steps
+        # Cols: UPFs
+        num_rows = length(data)
+        num_cols = length(data[1])
+        
+        # Create DataFrame
+        # Time column
+        df_detailed = DataFrame(Time=state.history_time)
+        
+        # UPF columns
+        for i in 1:num_cols
+            col_name = "UPF_$(i)"
+            df_detailed[!, col_name] = [row[i] for row in data]
+        end
+        
+        filename = "evolution_$(metric_name)_$(operator_name)_$(scenario_name).csv"
+        CSV.write(joinpath(results_dir, filename), df_detailed)
+        println("  -> Detailed Evolution ($metric_name): results/$filename")
+    end
+
+    save_matrix(state.history_per_upf_5g_mb, "5g_mb")
+    save_matrix(state.history_per_upf_entries_5g, "5g_entries")
+    save_matrix(state.history_per_upf_6g_mb, "6g_mb")
+    save_matrix(state.history_per_upf_entries_6g, "6g_entries")
 end
 
 function save_raw_upf_data(operator_name::String, scenario_name::String, state::SimGlobalState, scale_factor::Int)
