@@ -8,3 +8,4 @@ coverage_html/
 lcov.info
 .venv
 .mypy_cache/
+public
