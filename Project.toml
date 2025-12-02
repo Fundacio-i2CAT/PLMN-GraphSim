@@ -29,9 +29,11 @@ StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
 TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 
 [compat]
+Aqua = "0.8.14"
 Dates = "1.11.0"
 GeoJSON = "0.8.4"
 GeometryBasics = "0.5.10"
+JET = "0.9.20"
 JSON3 = "1.14.3"
 Logging = "1.11.0"
 PolygonOps = "0.1.2"
@@ -42,9 +44,9 @@ StatsPlots = "0.15.8"
 TOML = "1.0.3"
 
 [extras]
+Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
+JET = "c3a54625-cd67-489e-a8e7-0a5a0ff4e31b"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-Aqua = "4c88cf16-eb10-579e-856d-860c331a5a8d"
-JET = "c3a5462d-16ad-4030-9807-31f9c22b6750"
 
 [targets]
 test = ["Test", "Aqua", "JET"]
