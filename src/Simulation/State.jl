@@ -81,5 +81,9 @@ function init_global_state_for_simulation(topology::NetworkTopology, config::Sim
 end
 
 function create_session_context()
-    return SessionContext5G(rand(UInt32), rand(UInt32), FAR(0x01, rand(UInt32)), FAR(0x01, rand(UInt32)))
+    ul_teid = rand(UInt32)
+    dl_teid = rand(UInt32)
+    far_ul = FAR(0x01, rand(UInt32))
+    far_dl = FAR(0x01, rand(UInt32))
+    return SessionContext5G(ul_teid, dl_teid, far_ul, far_dl)
 end
