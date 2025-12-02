@@ -15,13 +15,13 @@ import ConcurrentSim
     data_dir_usa = joinpath(project_root, "data", "usa")
 
     # Config for short simulation
-    sim_config = SimConfig(1, 2, 10000, 1.0, 20.0, 5.0) # High scale factor = few agents, Short duration
+    sim_config = SimConfig(1, 2, 10000, 1.0, 20.0, 5.0, :single_tier, 0) # High scale factor = few agents, Short duration
 
     @testset "Spain Simulation (Movistar)" begin
         csv_path = joinpath(data_dir_spain, "opencellid", "214.csv")
         if isfile(csv_path)
             # 1. Load Network
-            topology = load_and_deploy_network([csv_path], 7, 3, data_dir_spain)
+            topology = load_and_deploy_network([csv_path], 7, 3, data_dir_spain, sim_config)
             @test length(topology.gnb_locations) > 0
             @test length(topology.upf_locations) == 3
             @test length(topology.municipalities) > 0
@@ -43,7 +43,7 @@ import ConcurrentSim
         if isfile(csv_path)
             # 1. Load Network
             # Verizon ID is 480
-            topology = load_and_deploy_network([csv_path], 480, 3, data_dir_usa)
+            topology = load_and_deploy_network([csv_path], 480, 3, data_dir_usa, sim_config)
             @test length(topology.gnb_locations) > 0
             @test length(topology.upf_locations) == 3
             @test length(topology.municipalities) > 0

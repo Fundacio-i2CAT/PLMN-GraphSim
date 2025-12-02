@@ -82,8 +82,34 @@ function calculate_municipality_probs(municipalities::Vector{Municipality})
     return [Float64(m.population) / total_muni_pop for m in municipalities]
 end
 
+function perform_hierarchical_clustering(edge_upf_locs::Vector{GeoPoint}, num_centralized_upfs::Int)
+    if isempty(edge_upf_locs)
+        return Vector{GeoPoint}(), Vector{Int}()
+    end
+    
+    # Convert GeoPoints to Matrix for K-means
+    coords = Matrix{Float64}(undef, 2, length(edge_upf_locs))
+    for (i, p) in enumerate(edge_upf_locs)
+        coords[1, i] = p.lon
+        coords[2, i] = p.lat
+    end
+
+    actual_k = min(num_centralized_upfs, length(edge_upf_locs))
+    @info "Clustering $(length(edge_upf_locs)) Edge UPFs into $actual_k Centralized UPF regions..."
+
+    R = kmeans(coords, actual_k; maxiter=100)
+
+    centralized_locs = Vector{GeoPoint}()
+    for i in 1:actual_k
+        push!(centralized_locs, GeoPoint(R.centers[2, i], R.centers[1, i]))
+    end
+
+    edge_to_centralized = R.assignments
+    return centralized_locs, edge_to_centralized
+end
+
 # Main Functions
-function load_and_deploy_network(csv_paths::Vector{String}, operator_net_id::Int, num_upfs::Int, data_dir::String)
+function load_and_deploy_network(csv_paths::Vector{String}, operator_net_id::Int, num_upfs::Int, data_dir::String, config::SimConfig)
     df = load_raw_gnb_data(csv_paths)
     muni_csv_path = joinpath(data_dir, "municipalities.csv")
     muni_geojson_path = joinpath(data_dir, "regions.geojson")
@@ -98,10 +124,37 @@ function load_and_deploy_network(csv_paths::Vector{String}, operator_net_id::Int
     filter_gnbs_by_operator!(df, operator_net_id)
     gnb_points = [GeoPoint(r.lat, r.lon) for r in eachrow(df)]
     upf_locs, gnb_to_upf = perform_clustering(df, num_upfs)
-    mg = build_graph(upf_locs, gnb_points, gnb_to_upf)
+    
+    # Initialize empty fields for two-tier architecture
+    centralized_upf_locs = Vector{GeoPoint}()
+    edge_upf_parent_map = Vector{Int}()
+
+    # Handle Two-Tier Scenario
+    if config.scenario == :two_tier
+        if config.num_centralized_upfs > 0
+            centralized_upf_locs, edge_upf_parent_map = perform_hierarchical_clustering(upf_locs, config.num_centralized_upfs)
+        else
+            @warn "Scenario is :two_tier but num_centralized_upfs is 0. Falling back to single tier."
+        end
+    end
+
+    # Build Graph (Pass centralized UPFs if they exist)
+    mg = build_graph(upf_locs, gnb_points, gnb_to_upf, centralized_upf_locs, edge_upf_parent_map)
+    
     muni_probs = calculate_municipality_probs(municipalities)
     municipality_bins = Dict{String,Vector{Int}}()
-    return NetworkTopology(gnb_points, upf_locs, gnb_to_upf, municipalities, municipality_bins, muni_probs, mg)
+    
+    return NetworkTopology(
+        gnb_points, 
+        upf_locs, 
+        gnb_to_upf, 
+        centralized_upf_locs,
+        edge_upf_parent_map,
+        municipalities, 
+        municipality_bins, 
+        muni_probs, 
+        mg
+    )
 end
 
 function load_and_cluster(csv_path::String, operator_id::Int, num_upfs::Int;

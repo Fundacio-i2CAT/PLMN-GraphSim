@@ -99,15 +99,33 @@ function DesJulia6gRupa.Plotting.plot_topology_map(
     upf_lats = [p.lat for p in topology.upf_locations]
     
     scatter!(p, upf_lons, upf_lats,
-        label="UPFs ($num_upfs Hubs)",
+        label="Edge UPFs ($num_upfs)",
         markersize=7,
         markercolor=:red,
         markershape=:square,
         markerstrokewidth=1
     )
 
-    # Annotate UPFs with their ID
-    annotate!(p, [(upf_lons[i], upf_lats[i], text(string(i), 16, :white, :center)) for i in 1:length(upf_lons)])
+    # Annotate Edge UPFs with their ID
+    annotate!(p, [(upf_lons[i], upf_lats[i], text(string(i), 10, :white, :center)) for i in 1:length(upf_lons)])
+
+    # Plot Centralized UPFs if they exist
+    if !isempty(topology.centralized_upf_locations)
+        num_centralized = length(topology.centralized_upf_locations)
+        cen_lons = [p.lon for p in topology.centralized_upf_locations]
+        cen_lats = [p.lat for p in topology.centralized_upf_locations]
+        
+        scatter!(p, cen_lons, cen_lats,
+            label="Centralized UPFs ($num_centralized)",
+            markersize=12,
+            markercolor=:purple,
+            markershape=:diamond,
+            markerstrokewidth=2
+        )
+        
+        # Annotate Centralized UPFs
+        annotate!(p, [(cen_lons[i], cen_lats[i], text("C$i", 10, :white, :center)) for i in 1:length(cen_lons)])
+    end
 
     if !isempty(cities)
         city_lons = [c[2].lon for c in cities]
@@ -204,7 +222,31 @@ function DesJulia6gRupa.Plotting.plot_network_graph(
         )
     end
 
-    # 2. Plot Nodes
+    # 2. Draw Edges (Edge UPF <-> Centralized UPF)
+    if !isempty(topology.centralized_upf_locations) && !isempty(topology.edge_upf_parent_map)
+        println("  Drawing N9 interfaces (Edge -> Centralized)...")
+        n9_lons = Float64[]
+        n9_lats = Float64[]
+        
+        for (edge_idx, parent_idx) in enumerate(topology.edge_upf_parent_map)
+            if parent_idx > 0 && parent_idx <= length(topology.centralized_upf_locations)
+                edge_loc = topology.upf_locations[edge_idx]
+                cen_loc = topology.centralized_upf_locations[parent_idx]
+                push!(n9_lons, edge_loc.lon, cen_loc.lon, NaN)
+                push!(n9_lats, edge_loc.lat, cen_loc.lat, NaN)
+            end
+        end
+        
+        plot!(p, n9_lons, n9_lats,
+            label="N9 Interface",
+            linecolor=:purple,
+            linewidth=2.0,
+            linestyle=:dash,
+            alpha=0.8
+        )
+    end
+
+    # 3. Plot Nodes
     gnb_lons = [p.lon for p in topology.gnb_locations]
     gnb_lats = [p.lat for p in topology.gnb_locations]
     upf_lons = [p.lon for p in topology.upf_locations]
@@ -219,12 +261,25 @@ function DesJulia6gRupa.Plotting.plot_network_graph(
     )
 
     scatter!(p, upf_lons, upf_lats,
-        label="UPFs",
+        label="Edge UPFs",
         markersize=6,
         markercolor=:black,
         markershape=:rect,
         markerstrokewidth=1
     )
+
+    if !isempty(topology.centralized_upf_locations)
+        cen_lons = [p.lon for p in topology.centralized_upf_locations]
+        cen_lats = [p.lat for p in topology.centralized_upf_locations]
+        
+        scatter!(p, cen_lons, cen_lats,
+            label="Centralized UPFs",
+            markersize=10,
+            markercolor=:purple,
+            markershape=:diamond,
+            markerstrokewidth=2
+        )
+    end
 
     # Save
     if !isdir(output_dir)

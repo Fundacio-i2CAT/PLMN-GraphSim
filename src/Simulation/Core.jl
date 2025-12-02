@@ -37,10 +37,10 @@ function connect_agent_to_gnb_and_upf(env, topology::NetworkTopology, user_id::I
     return assigned_upf_index
 end
 
-function create_random_ue_connections(sim_state, assigned_upf_index::Int)
+function create_random_ue_connections(sim_state, assigned_upf_index::Int, topology::NetworkTopology)
     num_sessions = rand(sim_state.config.min_sessions:sim_state.config.max_sessions)
     for _ in 1:num_sessions
-        ctx = create_session_context()
+        ctx = create_session_context(assigned_upf_index, topology)
         push!(sim_state.upf_sessions_5g[assigned_upf_index], ctx)
     end
     return num_sessions
@@ -66,7 +66,7 @@ end
 end
 
 @resumable function user_lifecycle(env, user_id, sim_state, topology::NetworkTopology)
-    @yield await_user_offline(env, sim_state) # Random start delay to avoid thundering herd at t=0
+    @yield @process await_user_offline(env, sim_state) # Random start delay to avoid thundering herd at t=0
     while true
         if is_simulation_time_over(env, sim_state)
             break
@@ -75,14 +75,14 @@ end
         gnb_index = find_serving_gnb(topology, agent_location)
         if gnb_index != 0
             assigned_upf_index = connect_agent_to_gnb_and_upf(env, topology, user_id, agent_location, gnb_index)
-            num_sessions = create_random_ue_connections(sim_state, assigned_upf_index)
+            num_sessions = create_random_ue_connections(sim_state, assigned_upf_index, topology)
             session_duration = rand(Exponential(sim_state.config.mean_session_duration))
             @yield timeout(env, session_duration)
             release_ue_connections(sim_state, assigned_upf_index, num_sessions)
             @debug "User $user_id disconnected from gNB $gnb_index at time $(now(env))"
             disconnect_ue_from_gnb_and_upf(topology, user_id, gnb_index)
         end
-        @yield await_user_offline(env, sim_state) # Offline / Inter-session wait
+        @yield @process await_user_offline(env, sim_state) # Offline / Inter-session wait
     end
 end
 

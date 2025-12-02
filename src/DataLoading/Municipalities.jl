@@ -6,9 +6,12 @@ function load_municipality_polygons(geojson_path::String)
 
     polygons = Dict{String,Any}()
 
-    if haskey(json_obj, :features)
-        for feature in json_obj.features
-            process_geojson_feature!(polygons, feature)
+    if json_obj isa JSON3.Object && haskey(json_obj, :features)
+        features = json_obj.features
+        if !isnothing(features)
+            for feature in features
+                process_geojson_feature!(polygons, feature)
+            end
         end
     end
     @debug "Loaded $(length(polygons)) polygons."
@@ -16,11 +19,16 @@ function load_municipality_polygons(geojson_path::String)
 end
 
 function process_geojson_feature!(polygons::Dict{String,Any}, feature)
+    if isnothing(feature)
+        return
+    end
+    
     muni_id = nothing
 
     # Check properties for 'id' (Standard)
-    if haskey(feature, :properties) && haskey(feature.properties, :id)
-        muni_id = string(feature.properties.id)
+    properties = get(feature, :properties, nothing)
+    if !isnothing(properties) && haskey(properties, :id)
+        muni_id = string(properties.id)
     # Fallback: Check top-level id
     elseif haskey(feature, :id)
         muni_id = string(feature.id)
@@ -28,9 +36,12 @@ function process_geojson_feature!(polygons::Dict{String,Any}, feature)
 
     if !isnothing(muni_id) && haskey(feature, :geometry)
         # Convert JSON3 geometry object to GeoJSON wrapper/GeometryBasics
-        geom_str = JSON3.write(feature.geometry)
-        geom_obj = GeoJSON.read(geom_str)
-        polygons[muni_id] = geom_obj
+        geometry = feature.geometry
+        if !isnothing(geometry)
+            geom_str = JSON3.write(geometry)
+            geom_obj = GeoJSON.read(geom_str)
+            polygons[muni_id] = geom_obj
+        end
     end
 end
 
