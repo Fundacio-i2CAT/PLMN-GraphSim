@@ -3,7 +3,7 @@ using DesJulia6gRupa
 using DesJulia6gRupa.Simulation
 using DesJulia6gRupa.DataLoading
 using DesJulia6gRupa.Types
-using ConcurrentSim
+import ConcurrentSim
 
 @testset "Integration Tests (End-to-End)" begin
 
@@ -32,7 +32,7 @@ using ConcurrentSim
             
             # Just check initialization
             @test length(global_state.upf_sessions_5g) == 3
-            @test length(global_state.forwarding_tables_6g) == 3
+            @test length(global_state.forwarding_tables_6grupa) == 3
         else
             @warn "Spain data not found, skipping integration test."
         end
@@ -54,7 +54,7 @@ using ConcurrentSim
             
             # Just check initialization
             @test length(global_state.upf_sessions_5g) == 3
-            @test length(global_state.forwarding_tables_6g) == 3
+            @test length(global_state.forwarding_tables_6grupa) == 3
         else
             @warn "USA data not found, skipping integration test."
         end

@@ -81,7 +81,7 @@ mutable struct SimGlobalState
 
     # 6G-RUPA State: Per GUPF (Vector of Vectors)
     # Static/Topology-based: Depends on number of gNBs/subnets served
-    forwarding_tables_6g::Vector{Vector{ForwardingEntry6GRUPA}}
+    forwarding_tables_6grupa::Vector{Vector{ForwardingEntry6GRUPA}}
 
     # Metrics History
     history_time::Vector{Float64}
@@ -90,19 +90,19 @@ mutable struct SimGlobalState
     history_mean_upf_5g_mb::Vector{Float64}
     history_median_upf_5g_mb::Vector{Float64}
     
-    history_total_6g_mb::Vector{Float64}
-    history_max_upf_6g_mb::Vector{Float64}
-    history_mean_upf_6g_mb::Vector{Float64}
-    history_median_upf_6g_mb::Vector{Float64}
+    history_total_6grupa_mb::Vector{Float64}
+    history_max_upf_6grupa_mb::Vector{Float64}
+    history_mean_upf_6grupa_mb::Vector{Float64}
+    history_median_upf_6grupa_mb::Vector{Float64}
 
-    history_mean_entries_6g::Vector{Float64}
-    history_median_entries_6g::Vector{Float64}
+    history_mean_entries_6grupa::Vector{Float64}
+    history_median_entries_6grupa::Vector{Float64}
 
     # Detailed History (Per UPF over time)
     history_per_upf_5g_mb::Vector{Vector{Float64}}
     history_per_upf_entries_5g::Vector{Vector{Int}}
-    history_per_upf_6g_mb::Vector{Vector{Float64}}
-    history_per_upf_entries_6g::Vector{Vector{Int}}
+    history_per_upf_6grupa_mb::Vector{Vector{Float64}}
+    history_per_upf_entries_6grupa::Vector{Vector{Int}}
 end
 
 struct GUPFState6GRUPA

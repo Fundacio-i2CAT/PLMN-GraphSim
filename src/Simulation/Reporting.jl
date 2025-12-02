@@ -10,13 +10,13 @@ function save_simulation_results(operator_name::String, scenario_name::String, s
         Mean_UPF_5G_MB=state.history_mean_upf_5g_mb,
         Median_UPF_5G_MB=state.history_median_upf_5g_mb,
         
-        Total_6G_MB=state.history_total_6g_mb,
-        Max_UPF_6G_MB=state.history_max_upf_6g_mb,
-        Mean_UPF_6G_MB=state.history_mean_upf_6g_mb,
-        Median_UPF_6G_MB=state.history_median_upf_6g_mb,
+        Total_6GRUPA_MB=state.history_total_6grupa_mb,
+        Max_UPF_6GRUPA_MB=state.history_max_upf_6grupa_mb,
+        Mean_UPF_6GRUPA_MB=state.history_mean_upf_6grupa_mb,
+        Median_UPF_6GRUPA_MB=state.history_median_upf_6grupa_mb,
 
-        Mean_Entries_6G=state.history_mean_entries_6g,
-        Median_Entries_6G=state.history_median_entries_6g
+        Mean_Entries_6GRUPA=state.history_mean_entries_6grupa,
+        Median_Entries_6GRUPA=state.history_median_entries_6grupa
     )
     # Create results directory if it doesn't exist
     results_dir = joinpath(@__DIR__, "../../results")
@@ -61,17 +61,17 @@ function save_detailed_evolution(operator_name::String, scenario_name::String, s
 
     save_matrix(state.history_per_upf_5g_mb, "5g_mb")
     save_matrix(state.history_per_upf_entries_5g, "5g_entries")
-    save_matrix(state.history_per_upf_6g_mb, "6g_mb")
-    save_matrix(state.history_per_upf_entries_6g, "6g_entries")
+    save_matrix(state.history_per_upf_6grupa_mb, "6grupa_mb")
+    save_matrix(state.history_per_upf_entries_6grupa, "6grupa_entries")
 end
 
 function save_raw_upf_data(operator_name::String, scenario_name::String, state::SimGlobalState, scale_factor::Int)
     # Calculate metrics separately
     df_5g = calculate_5g_metrics(state, scale_factor)
-    df_6g = calculate_6g_metrics(state)
+    df_6grupa = calculate_6grupa_metrics(state)
     
     # Combine DataFrames (assuming row alignment which is guaranteed by initialization)
-    df = hcat(df_5g, df_6g)
+    df = hcat(df_5g, df_6grupa)
     
     results_dir = joinpath(@__DIR__, "../../results")
     if !isdir(results_dir)
@@ -97,7 +97,7 @@ function print_forwarding_tables(state::SimGlobalState, scale_factor::Int)
     end
 
     println("\n[6G-RUPA Architecture] GUPF Forwarding Tables (Static/Topological State):")
-    for (i, table) in enumerate(state.forwarding_tables_6g)
+    for (i, table) in enumerate(state.forwarding_tables_6grupa)
         mem_mb = Base.summarysize(table) / (1024^2)
         num_entries = length(table)
         println("  GUPF #$i:")
