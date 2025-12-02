@@ -5,20 +5,28 @@ site_dir: public
 copyright: Copyright &copy; 2025 Fundacio i2CAT
 
 nav:
-  - Home: index.md
+  - Summary: index.md
   - Quickstart: quickstart.md
-  - Datasets:
+  - Country-Specific Datasets:
       - Getting Data Ready: agents/getting-data-ready.md
       - Countries:
           - Spain: agents/countries/spain.md
           - USA: agents/countries/usa.md
-  - Simulation Details:
+  - The Simulator:
       - How Simulator Works: simulation-details/how-simulator-works.md
       - Simulation Configuration: simulation-details/simulation-configuration.md
+      - UPF Placement Strategy: simulation-details/k-means.md
       - Mobility Models: simulation-details/mobility-models.md
-  - Analysis:
-      - Post Analysis: post-analysis.md
-      - Memory Calculation: memory_calculation.md
+  - Scenarios to Simulate:
+      - Single-Tier Architecture:
+          - scenarios/single_tier_architecture/setup.md
+          - scenarios/single_tier_architecture/analysis.md
+      - Two-Tier Architecture:
+          - scenarios/two_tier_architecture/setup.md
+          - scenarios/two_tier_architecture/analysis.md
+      - Mobility:
+          - scenarios/mobility/setup.md
+          - scenarios/mobility/analysis.md
 
 theme:
   name: material
@@ -72,7 +80,6 @@ markdown_extensions:
   - attr_list
   - tables
   - md_in_html
-  - pymdownx.superfences
 
 plugins:
   - search

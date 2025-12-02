@@ -82,7 +82,7 @@ To ensure reproducibility, use a dedicated Python virtual environment for these 
 Here are some visualizations of the generated topology for the USA (Verizon).
 
 ### Topology Map
-![Topology Map USA](../../images/topology_map_cities_verizon_usa%20distributed.png)
+![Topology Map USA](../../images/single_tier_scenario/topology_map_cities_verizon_usa%20distributed.png)
 
 ### Network Graph
-![Network Graph USA](../../images/graph_viz_verizon_usa%20distributed.png)
+![Network Graph USA](../../images/single_tier_scenario/graph_viz_verizon_usa%20distributed.png)
