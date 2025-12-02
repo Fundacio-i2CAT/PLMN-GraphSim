@@ -9,12 +9,10 @@ function save_simulation_results(operator_name::String, scenario_name::String, s
         Max_UPF_5G_MB=state.history_max_upf_5g_mb,
         Mean_UPF_5G_MB=state.history_mean_upf_5g_mb,
         Median_UPF_5G_MB=state.history_median_upf_5g_mb,
-        
         Total_6GRUPA_MB=state.history_total_6grupa_mb,
-        Max_UPF_6GRUPA_MB=state.history_max_upf_6grupa_mb,
-        Mean_UPF_6GRUPA_MB=state.history_mean_upf_6grupa_mb,
-        Median_UPF_6GRUPA_MB=state.history_median_upf_6grupa_mb,
-
+        Max_GUPF_6GRUPA_MB=state.history_max_gupf_6grupa_mb,
+        Mean_GUPF_6GRUPA_MB=state.history_mean_gupf_6grupa_mb,
+        Median_GUPF_6GRUPA_MB=state.history_median_gupf_6grupa_mb,
         Mean_Entries_6GRUPA=state.history_mean_entries_6grupa,
         Median_Entries_6GRUPA=state.history_median_entries_6grupa
     )
@@ -26,8 +24,6 @@ function save_simulation_results(operator_name::String, scenario_name::String, s
     filename = "simulation_results_$(operator_name)_$(scenario_name).csv"
     CSV.write(joinpath(results_dir, filename), df)
     println("  -> Results: results/$filename")
-
-    # Save Detailed Evolution
     save_detailed_evolution(operator_name, scenario_name, state, results_dir)
 end
 
@@ -61,8 +57,8 @@ function save_detailed_evolution(operator_name::String, scenario_name::String, s
 
     save_matrix(state.history_per_upf_5g_mb, "5g_mb")
     save_matrix(state.history_per_upf_entries_5g, "5g_entries")
-    save_matrix(state.history_per_upf_6grupa_mb, "6grupa_mb")
-    save_matrix(state.history_per_upf_entries_6grupa, "6grupa_entries")
+    save_matrix(state.history_per_gupf_6grupa_mb, "6grupa_mb")
+    save_matrix(state.history_per_gupf_entries_6grupa, "6grupa_entries")
 end
 
 function save_raw_upf_data(operator_name::String, scenario_name::String, state::SimGlobalState, scale_factor::Int)
