@@ -1,5 +1,6 @@
 using Pkg
 Pkg.activate(joinpath(@__DIR__, ".."))
+using Plots # Added to enable plotting extension
 using DesJulia6gRupa
 using DesJulia6gRupa.Plotting
 using DesJulia6gRupa.Types
