@@ -91,9 +91,9 @@ mutable struct SimGlobalState
     history_median_upf_5g_mb::Vector{Float64}
     
     history_total_6grupa_mb::Vector{Float64}
-    history_max_upf_6grupa_mb::Vector{Float64}
-    history_mean_upf_6grupa_mb::Vector{Float64}
-    history_median_upf_6grupa_mb::Vector{Float64}
+    history_max_gupf_6grupa_mb::Vector{Float64}
+    history_mean_gupf_6grupa_mb::Vector{Float64}
+    history_median_gupf_6grupa_mb::Vector{Float64}
 
     history_mean_entries_6grupa::Vector{Float64}
     history_median_entries_6grupa::Vector{Float64}
@@ -101,8 +101,8 @@ mutable struct SimGlobalState
     # Detailed History (Per UPF over time)
     history_per_upf_5g_mb::Vector{Vector{Float64}}
     history_per_upf_entries_5g::Vector{Vector{Int}}
-    history_per_upf_6grupa_mb::Vector{Vector{Float64}}
-    history_per_upf_entries_6grupa::Vector{Vector{Int}}
+    history_per_gupf_6grupa_mb::Vector{Vector{Float64}}
+    history_per_gupf_entries_6grupa::Vector{Vector{Int}}
 end
 
 struct GUPFState6GRUPA
