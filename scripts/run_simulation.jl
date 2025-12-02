@@ -55,18 +55,14 @@ function process_country(country_key, country_config, sim_config)
     elseif haskey(country_config, "mcc")
         push!(mccs, country_config["mcc"])
     end
-
     population = get(country_config, "population", 0)
     mobile_adoption_rate = get(country_config, "mobile_adoption_rate", 0.82)
     effective_population = population * mobile_adoption_rate
-
     for (scenario_name, num_upfs) in scenarios
         if !is_scenario_valid_for_country(scenario_name, country_key)
             continue
         end
-
         @info ">>> SCENARIO: $scenario_name ($num_upfs UPFs) <<<"
-
         operators = country_config["operators"]
         for (op_key, op_data) in operators
             if op_data["enabled"]

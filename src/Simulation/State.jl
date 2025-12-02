@@ -39,27 +39,44 @@ function init_state_6g_rupa(topology::NetworkTopology)
     return forwarding_tables
 end
 
-function init_global_state(topology::NetworkTopology, config::SimConfig)
-    num_upfs = length(topology.upf_locations)
-    upf_sessions = init_state_5g(num_upfs)
-    forwarding_tables_6g = init_state_6g_rupa(topology)
-    qos = [QoSConfig6GRUPA(Int8(i), Int8(i), 0.5, 1e-6) for i in 1:16]
+function init_global_state_for_simulation(topology::NetworkTopology, config::SimConfig)
+    total_number_of_upfs = length(topology.upf_locations)
+    forwarding_tables5g = init_state_5g(total_number_of_upfs)
+    forwarding_tables_6grupa = init_state_6g_rupa(topology)
+    time = Float64[]
+    total_5g_mb = Float64[]
+    max_upf_5g_mb = Float64[]
+    mean_upf_5g_mb = Float64[]
+    median_upf_5g_mb = Float64[]
+    total_6g_mb = Float64[]
+    max_upf_6g_mb = Float64[]
+    mean_upf_6g_mb = Float64[]
+    median_upf_6g_mb = Float64[]
+    mean_entries_6g = Float64[]
+    median_entries_6g = Float64[]
+    history_per_upf_5g_mb = Vector{Float64}[]
+    history_per_upf_entries_5g = Vector{Int}[]
+    history_per_upf_6g_mb = Vector{Float64}[]
+    history_per_upf_entries_6g = Vector{Int}[]
     return SimGlobalState(
         config,
-        upf_sessions,
-        forwarding_tables_6g,
-        qos,
-        Float64[], # time
-        Float64[], # total 5g mb
-        Float64[], # max upf 5g mb
-        Float64[], # mean upf 5g mb
-        Float64[], # median upf 5g mb
-        Float64[], # total 6g mb
-        Float64[], # max upf 6g mb
-        Float64[], # mean upf 6g mb
-        Float64[], # median upf 6g mb
-        Float64[], # mean entries 6g
-        Float64[]  # median entries 6g
+        forwarding_tables5g,
+        forwarding_tables_6grupa,
+        time,
+        total_5g_mb,
+        max_upf_5g_mb,
+        mean_upf_5g_mb,
+        median_upf_5g_mb,
+        total_6g_mb,
+        max_upf_6g_mb,
+        mean_upf_6g_mb,
+        median_upf_6g_mb,
+        mean_entries_6g,
+        median_entries_6g,
+        history_per_upf_5g_mb,
+        history_per_upf_entries_5g,
+        history_per_upf_6g_mb,
+        history_per_upf_entries_6g
     )
 end
 

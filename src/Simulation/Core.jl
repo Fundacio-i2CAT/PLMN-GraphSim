@@ -11,7 +11,7 @@ function find_serving_gnb(topology::NetworkTopology, user_location::GeoPoint)
     min_dist = Inf
     best_idx = 0
     # Optimization: We could use a spatial index, but for 40k points and 2k agents, 
-    # brute force is ~80M ops. In Julia this is < 1s.
+    # brute force is ~80M ops. In Julia this is < 1s :D.
     for (i, gnb) in enumerate(topology.gnb_locations)
         # Euclidean distance approximation is fine for finding nearest neighbor locally
         d2 = (gnb.lat - user_location.lat)^2 + (gnb.lon - user_location.lon)^2
