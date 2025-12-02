@@ -49,15 +49,15 @@ function init_global_state_for_simulation(topology::NetworkTopology, config::Sim
     mean_upf_5g_mb = Float64[]
     median_upf_5g_mb = Float64[]
     total_6grupa_mb = Float64[]
-    max_upf_6grupa_mb = Float64[]
-    mean_upf_6grupa_mb = Float64[]
-    median_upf_6grupa_mb = Float64[]
+    max_gupf_6grupa_mb = Float64[]
+    mean_gupf_6grupa_mb = Float64[]
+    median_gupf_6grupa_mb = Float64[]
     mean_entries_6grupa = Float64[]
     median_entries_6grupa = Float64[]
     history_per_upf_5g_mb = Vector{Float64}[]
     history_per_upf_entries_5g = Vector{Int}[]
-    history_per_upf_6grupa_mb = Vector{Float64}[]
-    history_per_upf_entries_6grupa = Vector{Int}[]
+    history_per_gupf_6grupa_mb = Vector{Float64}[]
+    history_per_gupf_entries_6grupa = Vector{Int}[]
     return SimGlobalState(
         config,
         forwarding_tables5g,
@@ -68,15 +68,15 @@ function init_global_state_for_simulation(topology::NetworkTopology, config::Sim
         mean_upf_5g_mb,
         median_upf_5g_mb,
         total_6grupa_mb,
-        max_upf_6grupa_mb,
-        mean_upf_6grupa_mb,
-        median_upf_6grupa_mb,
+        max_gupf_6grupa_mb,
+        mean_gupf_6grupa_mb,
+        median_gupf_6grupa_mb,
         mean_entries_6grupa,
         median_entries_6grupa,
         history_per_upf_5g_mb,
         history_per_upf_entries_5g,
-        history_per_upf_6grupa_mb,
-        history_per_upf_entries_6grupa
+        history_per_gupf_6grupa_mb,
+        history_per_gupf_entries_6grupa
     )
 end
 

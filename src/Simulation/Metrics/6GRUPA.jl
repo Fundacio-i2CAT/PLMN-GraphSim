@@ -1,31 +1,31 @@
 function collect_6grupa_metrics(sim_state::SimGlobalState)
-    upf_sizes_6grupa = Float64[]
-    upf_entries_6grupa = Int[]
+    gupf_sizes_6grupa = Float64[]
+    gupf_entries_6grupa = Int[]
 
     for table in sim_state.forwarding_tables_6grupa
         table_size = Base.summarysize(table) / (1024^2)
-        upf_total = table_size
-        push!(upf_sizes_6grupa, upf_total)
-        push!(upf_entries_6grupa, length(table))
+        gupf_total = table_size
+        push!(gupf_sizes_6grupa, gupf_total)
+        push!(gupf_entries_6grupa, length(table))
     end
 
-    total_6grupa_size = sum(upf_sizes_6grupa)
-    max_upf_6grupa_size = isempty(upf_sizes_6grupa) ? 0.0 : maximum(upf_sizes_6grupa)
-    mean_upf_6grupa_size = isempty(upf_sizes_6grupa) ? 0.0 : mean(upf_sizes_6grupa)
-    median_upf_6grupa_size = isempty(upf_sizes_6grupa) ? 0.0 : median(upf_sizes_6grupa)
+    total_6grupa_size = sum(gupf_sizes_6grupa)
+    max_gupf_6grupa_size = isempty(gupf_sizes_6grupa) ? 0.0 : maximum(gupf_sizes_6grupa)
+    mean_gupf_6grupa_size = isempty(gupf_sizes_6grupa) ? 0.0 : mean(gupf_sizes_6grupa)
+    median_gupf_6grupa_size = isempty(gupf_sizes_6grupa) ? 0.0 : median(gupf_sizes_6grupa)
 
-    mean_entries_6grupa = isempty(upf_entries_6grupa) ? 0.0 : mean(upf_entries_6grupa)
-    median_entries_6grupa = isempty(upf_entries_6grupa) ? 0.0 : median(upf_entries_6grupa)
+    mean_entries_6grupa = isempty(gupf_entries_6grupa) ? 0.0 : mean(gupf_entries_6grupa)
+    median_entries_6grupa = isempty(gupf_entries_6grupa) ? 0.0 : median(gupf_entries_6grupa)
 
     return (
         total=total_6grupa_size, 
-        max=max_upf_6grupa_size, 
-        mean=mean_upf_6grupa_size, 
-        median=median_upf_6grupa_size, 
+        max=max_gupf_6grupa_size, 
+        mean=mean_gupf_6grupa_size, 
+        median=median_gupf_6grupa_size, 
         mean_entries=mean_entries_6grupa, 
         median_entries=median_entries_6grupa,
-        per_upf_mb=upf_sizes_6grupa, 
-        per_upf_entries=upf_entries_6grupa
+        per_gupf_mb=gupf_sizes_6grupa, 
+        per_gupf_entries=gupf_entries_6grupa
     )
 end
 
