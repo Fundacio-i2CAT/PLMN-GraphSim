@@ -14,10 +14,6 @@ export haversine_distance
 # --- Constants ---
 
 # --- Simulation Constants ---
-# Estimated memory footprint per 5G Session (PDR + FAR + QER + URR + Context overhead)
-# This is a theoretical value for a C/C++ data plane implementation, not the Julia struct size.
-const BYTES_PER_SESSION_5G = 512 
-
 # --- Shared Structures ---
 struct GeoPoint
     lat::Float64
