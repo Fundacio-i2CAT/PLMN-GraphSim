@@ -6,7 +6,8 @@ copyright: Copyright &copy; 2025 Fundacio i2CAT
 
 nav:
   - Home: index.md
-  - Agents:
+  - Quickstart: quickstart.md
+  - Datasets:
       - Getting Data Ready: agents/getting-data-ready.md
       - Countries:
           - Spain: agents/countries/spain.md
