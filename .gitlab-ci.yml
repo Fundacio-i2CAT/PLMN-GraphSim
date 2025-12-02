@@ -1,5 +1,15 @@
 image: python:3.9-alpine
 
+stages:
+  - test
+  - deploy
+
+test:
+  stage: test
+  image: julia:1.11
+  script:
+    - julia --project=. -e 'using Pkg; Pkg.instantiate(); Pkg.test()'
+
 pages:
   stage: deploy
   script:
