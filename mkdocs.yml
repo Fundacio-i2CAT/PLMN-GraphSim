@@ -6,15 +6,18 @@ copyright: Copyright &copy; 2025 Fundacio i2CAT
 
 nav:
   - Home: index.md
-  - Simulation Details: simulation-details.md
   - Agents:
-    - Getting Data Ready: agents/getting-data-ready.md
-    - Countries:
-      - Spain: agents/countries/spain.md
-      - USA: agents/countries/usa.md
+      - Getting Data Ready: agents/getting-data-ready.md
+      - Countries:
+          - Spain: agents/countries/spain.md
+          - USA: agents/countries/usa.md
+  - Simulation Details:
+      - How Simulator Works: simulation-details/how-simulator-works.md
+      - Simulation Configuration: simulation-details/simulation-configuration.md
+      - Mobility Models: simulation-details/mobility-models.md
   - Analysis:
-    - Post Analysis: post-analysis.md
-    - Memory Calculation: memory_calculation.md
+      - Post Analysis: post-analysis.md
+      - Memory Calculation: memory_calculation.md
 
 theme:
   name: material
@@ -23,6 +26,7 @@ theme:
     - navigation.sections
     - toc.integrate
     - content.code.copy
+    - content.code.annotate
   palette:
     - media: "(prefers-color-scheme)"
       primary: teal
@@ -55,15 +59,19 @@ markdown_extensions:
   - pymdownx.details
   - pymdownx.highlight:
       anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
   - pymdownx.inlinehilite
   - pymdownx.snippets
   - pymdownx.tabbed:
       alternate_style: true
   - pymdownx.emoji:
-      emoji_index: !!python/name:materialx.emoji.twemoji
-      emoji_generator: !!python/name:materialx.emoji.to_svg
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - attr_list
   - tables
+  - md_in_html
+  - pymdownx.superfences
 
 plugins:
   - search

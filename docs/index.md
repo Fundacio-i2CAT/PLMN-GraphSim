@@ -4,50 +4,33 @@ This is the documentation for the Julia-based Discrete Event Simulator designed 
 
 The simulator allows researchers and network engineers to model, simulate, and analyze various network scenarios, focusing on the deployment and performance of User Plane Functions (UPFs) across different geographic regions.
 
-## How it Works in a Nutshell
+## Key Components
 
-The simulator constructs a network graph using three main elements: **UEs** (Agents), **gNBs** (Base Stations), and **UPFs**.
+The simulator is built around three main elements:
 
-1.  **Distribute UEs**. We distribute User Equipment based on real population density using data from sources like **INE** (Spain) or **Census Bureau** (USA).
-2.  **Place gNBs**. We use [OpenCellID](https://opencellid.org/) data to place Base Stations for specific operators.
-3.  **Optimize UPF Placement**. We use the **K-means algorithm** to find optimal UPF locations based on user density.
-4.  **Connect the Graph**: Elements are connected based on proximity:
-
-```mermaid
-graph LR
-    UE([UE]) -- closest --> gNB[gNB]
-    gNB -- closest --> UPF[UPF]
-```
-
+* :busts_in_silhouette: **Agents**: Representing users or devices distributed across municipalities within a country.
+* :satellite_antenna: **Base Stations**: Using OpenCellID data to simulate real-world cellular network coverage.
+* :gear: **UPFs**: UPFs get automatically distributed based on K-Means clustering, depending on agent locations. In other words, UPFs are placed in optimal locations to minimize latency and maximize performance for the distributed agents.
 
 !!! tip "Data Sources"
-    You just need to worry about providing enough data for the agents using a trustable source.
+    You just need to worry about providing enough data for the agents using a trustable source. For example:
+    
+    * In **Spain** :flag_es:, you can use the INE (Instituto Nacional de Estadística).
+    * In the **USA** :flag_us:, you can use the Census Bureau.
+    
     More information about how to prepare the data can be found in the [Agents documentation](agents/getting-data-ready.md).
 
 It supports multiple countries and operators, enabling comprehensive testing of network configurations and strategies. So far it has support for Spain and the USA, but more countries can be easily added by following the [Agents documentation](agents/getting-data-ready.md).
 
-## Visualizations
+!!! info "Current Focus: eMBB"
+    Currently the simulator is focused on evaluating the performance of **enhanced Mobile Broadband (eMBB)** services. Future updates may include support for other 5G service types such as Ultra-Reliable Low Latency Communications (URLLC) and Massive Machine Type Communications (mMTC).
 
-Explore the generated network topologies and agent distributions for our supported scenarios.
+    That's why the simulator assumes that each user has two PDU sessions: one for Internet and another one for IMS/VoNR. You can play a bit with that in the `config.toml` file:
 
-=== "Spain (Movistar) :flag_es:"
-
-    **Topology Map**
-    
-    ![Topology Map Spain](images/topology_map_cities_movistar_spain%20distributed.png)
-
-    **Network Graph**
-    
-    ![Network Graph Spain](images/graph_viz_movistar_spain%20distributed.png)
-
-=== "USA (Verizon) :flag_us:"
-
-    **Topology Map**
-    
-    ![Topology Map USA](images/topology_map_cities_verizon_usa%20distributed.png)
-
-    **Network Graph**
-
-    
-    ![Network Graph USA](images/graph_viz_verizon_usa%20distributed.png)
+    ```toml
+    # Number of PDU Sessions per User (e.g., Internet + IMS/VoNR)
+    # This changes depending on the use case. Since we only are measuring eMBB for now, we only have two.
+    min_sessions_per_user = 1
+    max_sessions_per_user = 2
+    ```
 

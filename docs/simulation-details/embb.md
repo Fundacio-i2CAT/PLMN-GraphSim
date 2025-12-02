@@ -1,6 +1,4 @@
-# Simulation Details
-
-## eMBB Focus
+# eMBB Focus
 
 Currently the simulator is focused on evaluating the performance of **enhanced Mobile Broadband (eMBB)** services. Future updates may probably include support for Massive Machine Type Communications (mMTC).
 
