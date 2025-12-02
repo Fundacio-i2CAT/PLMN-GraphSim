@@ -4,6 +4,7 @@ using DesJulia6gRupa
 @testset "DesJulia6gRupa.jl" begin
     include("AgentGenerationTests.jl")
     include("SimulationTests.jl")
+    include("TwoTierTests.jl")
     include("IntegrationTests.jl")
     
     if Base.find_package("Aqua") !== nothing && Base.find_package("JET") !== nothing

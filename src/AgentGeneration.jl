@@ -116,15 +116,11 @@ function is_point_inside(pt, poly)
     if isa(poly, GeometryBasics.Polygon)
         # Check exterior
         # coordinates(poly) returns the exterior ring points (or LineString)
-        # We assume coordinates(poly) gives us something iterable of points
-        coords = coordinates(poly)
-        
-        # PolygonOps.inpolygon returns 1 (inside), 0 (boundary), -1 (outside) by default?
-        # We force explicit return values to be safe: in=1, on=1, out=0
-        return PolygonOps.inpolygon(pt, coords, in=1, on=1, out=0) == 1
+        return is_point_inside_coords(pt, coordinates(poly))
         
     elseif isa(poly, GeometryBasics.MultiPolygon)
-        for p in poly
+        # Iterate over the polygons in the multipolygon
+        for p in poly.polygons
             if is_point_inside(pt, p)
                 return true
             end
@@ -132,6 +128,12 @@ function is_point_inside(pt, poly)
         return false
     end
     return false
+end
+
+function is_point_inside_coords(pt, coords)
+    # PolygonOps.inpolygon returns 1 (inside), 0 (boundary), -1 (outside) by default?
+    # We force explicit return values to be safe: in=1, on=1, out=0
+    return PolygonOps.inpolygon(pt, coords, in=1, on=1, out=0) == 1
 end
 
 """

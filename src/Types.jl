@@ -7,7 +7,7 @@ using Distributions
 using Random
 using GeometryBasics
 
-export FAR, SessionContext5G, ForwardingEntry6GRUPA
+export FAR, SessionContext5G, ForwardingEntry6GRUPA, ForwardingState5G, SessionSimMetadata
 export SimGlobalState, GeoPoint, NetworkTopology, GUPFState6GRUPA, Municipality, SimConfig
 export haversine_distance
 
@@ -48,11 +48,21 @@ struct FAR
     destination_ip::UInt32
 end
 
-struct SessionContext5G
+struct ForwardingState5G
     ul_teid::UInt32
     dl_teid::UInt32
     ul_far::FAR
     dl_far::FAR
+end
+
+struct SessionSimMetadata
+    serving_upf_index::Int # The UPF currently serving the gNB (UL-CL)
+    anchor_upf_index::Int  # The UPF acting as PDU Session Anchor (PSA)
+end
+
+struct SessionContext5G
+    forwarding::ForwardingState5G
+    metadata::SessionSimMetadata
 end
 
 struct ForwardingEntry6GRUPA
@@ -68,6 +78,9 @@ struct SimConfig
     duration::Float64
     mean_session_duration::Float64
     mean_offline_duration::Float64
+    # Architecture Configuration
+    scenario::Symbol # :basic, :two_tier, :roaming
+    num_centralized_upfs::Int # For :two_tier scenario
 end
 
 # --- Simulation State ---
@@ -77,11 +90,13 @@ mutable struct SimGlobalState
 
     # 5G State: Per UPF (Vector of Vectors)
     # Dynamic: Grows with number of sessions
+    # Note: In two-tier mode, this stores sessions for the UL-CL (Edge UPF)
     upf_sessions_5g::Vector{Vector{SessionContext5G}}
 
     # 6G-RUPA State: Per GUPF (Vector of Vectors)
     # Static/Topology-based: Depends on number of gNBs/subnets served
     forwarding_tables_6grupa::Vector{Vector{ForwardingEntry6GRUPA}}
+    centralized_forwarding_tables_6grupa::Vector{Vector{ForwardingEntry6GRUPA}} # For PSA UPFs
 
     # Metrics History
     history_time::Vector{Float64}
@@ -113,8 +128,12 @@ end
 
 struct NetworkTopology
     gnb_locations::Vector{GeoPoint}
-    upf_locations::Vector{GeoPoint}
+    upf_locations::Vector{GeoPoint} # These are Edge UPFs (UL-CL) in two-tier mode
     gnb_to_upf_map::Vector{Int} # Index of UPF for each gNB
+
+    # Two-Tier Architecture Extensions
+    centralized_upf_locations::Vector{GeoPoint} # PSA UPFs
+    edge_upf_parent_map::Vector{Int} # Index of Centralized UPF for each Edge UPF
 
     # Municipality Distribution (More granular)
     municipalities::Vector{Municipality}
@@ -124,7 +143,8 @@ struct NetworkTopology
     # Graph Representation
     # Nodes: 
     #   1..N_gNB (gNBs)
-    #   N_gNB+1..N_gNB+N_UPF (UPFs)
+    #   N_gNB+1..N_gNB+N_UPF (Edge UPFs)
+    #   ... (Centralized UPFs if present)
     #   Dynamic: Agents
     graph::AbstractGraph 
 end

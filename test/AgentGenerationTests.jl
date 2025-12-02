@@ -77,6 +77,8 @@ using DesJulia6gRupa.AgentGeneration
             Vector{GeoPoint}(), 
             Vector{GeoPoint}(), 
             Vector{Int}(), 
+            Vector{GeoPoint}(), # centralized_upf_locations
+            Vector{Int}(),      # edge_upf_parent_map
             [m1, m2], 
             Dict{String,Vector{Int}}(), 
             probs, 

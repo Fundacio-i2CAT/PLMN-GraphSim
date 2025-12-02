@@ -20,6 +20,8 @@ using MetaGraphsNext
             gnb_locs,
             GeoPoint[], # upf_locations
             Int[],      # gnb_to_upf_map
+            GeoPoint[], # centralized_upf_locations
+            Int[],      # edge_upf_parent_map
             Municipality[], # municipalities
             Dict{String,Vector{Int}}(), # municipality_bins
             Float64[], # municipality_probs
@@ -74,6 +76,8 @@ using MetaGraphsNext
             GeoPoint[], 
             [GeoPoint(0.0, 0.0)], # 1 UPF
             Int[], 
+            GeoPoint[], # centralized_upf_locations
+            Int[],      # edge_upf_parent_map
             Municipality[], 
             Dict{String,Vector{Int}}(), 
             Float64[], 
@@ -101,13 +105,14 @@ using MetaGraphsNext
 
     @testset "save_raw_upf_data" begin
         # Mock Config
-        config = SimConfig(1, 2, 1000, 10.0, 5.0, 5.0)
+        config = SimConfig(1, 2, 1000, 10.0, 5.0, 5.0, :single_tier, 0)
 
         # Mock State
         state = SimGlobalState(
             config,
-            [[SessionContext5G(1, 1, FAR(1, 1), FAR(1, 1))]], # 1 UPF, 1 Session
+            [[SessionContext5G(ForwardingState5G(1, 1, FAR(1, 1), FAR(1, 1)), SessionSimMetadata(1, 1))]], # 1 UPF, 1 Session
             [[ForwardingEntry6GRUPA(10, 0xFFFFFF00, 1)]],     # 1 UPF, 1 Entry
+            Vector{ForwardingEntry6GRUPA}[], # centralized_forwarding_tables_6grupa
             Float64[], Float64[], Float64[], Float64[], Float64[],
             Float64[], Float64[], Float64[], Float64[],
             Float64[], Float64[],

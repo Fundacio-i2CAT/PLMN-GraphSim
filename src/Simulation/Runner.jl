@@ -16,7 +16,7 @@ function run_operator_simulation(operator_name::String, operator_id::Int, num_up
     @info "Running Simulation: $operator_name - ($scenario_name)..."
     number_of_agents = ceil(Int, effective_population / config.scale_factor)
     valid_paths = get_valid_data_paths(data_dir, mccs)
-    topology = load_and_deploy_network(valid_paths, operator_id, num_upfs, data_dir)
+    topology = load_and_deploy_network(valid_paths, operator_id, num_upfs, data_dir, config)
     simulation = ConcurrentSim.Simulation()
     global_state = init_global_state_for_simulation(topology, config)
     @process monitor_metrics(simulation, global_state)
