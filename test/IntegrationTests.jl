@@ -28,7 +28,7 @@ using ConcurrentSim
 
             # 2. Run Simulation (Manual steps to avoid full runner overhead)
             sim = ConcurrentSim.Simulation()
-            global_state = init_global_state(topology, sim_config)
+            global_state = init_global_state_for_simulation(topology, sim_config)
             
             # Just check initialization
             @test length(global_state.upf_sessions_5g) == 3
@@ -50,7 +50,7 @@ using ConcurrentSim
 
             # 2. Run Simulation
             sim = ConcurrentSim.Simulation()
-            global_state = init_global_state(topology, sim_config)
+            global_state = init_global_state_for_simulation(topology, sim_config)
             
             # Just check initialization
             @test length(global_state.upf_sessions_5g) == 3

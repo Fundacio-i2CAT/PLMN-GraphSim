@@ -7,7 +7,7 @@ using Distributions
 using Random
 using GeometryBasics
 
-export FAR, SessionContext5G, ForwardingEntry6GRUPA, QoSConfig6GRUPA
+export FAR, SessionContext5G, ForwardingEntry6GRUPA
 export SimGlobalState, GeoPoint, NetworkTopology, GUPFState6GRUPA, Municipality, SimConfig
 export haversine_distance
 
@@ -61,13 +61,6 @@ struct ForwardingEntry6GRUPA
     output_interface::Int32
 end
 
-struct QoSConfig6GRUPA
-    qfi::Int8
-    priority::Int8
-    packet_delay_budget::Float64
-    packet_error_rate::Float64
-end
-
 struct SimConfig
     min_sessions::Int
     max_sessions::Int
@@ -89,7 +82,6 @@ mutable struct SimGlobalState
     # 6G-RUPA State: Per GUPF (Vector of Vectors)
     # Static/Topology-based: Depends on number of gNBs/subnets served
     forwarding_tables_6g::Vector{Vector{ForwardingEntry6GRUPA}}
-    qos_profiles_6g::Vector{QoSConfig6GRUPA}
 
     # Metrics History
     history_time::Vector{Float64}
@@ -105,11 +97,16 @@ mutable struct SimGlobalState
 
     history_mean_entries_6g::Vector{Float64}
     history_median_entries_6g::Vector{Float64}
+
+    # Detailed History (Per UPF over time)
+    history_per_upf_5g_mb::Vector{Vector{Float64}}
+    history_per_upf_entries_5g::Vector{Vector{Int}}
+    history_per_upf_6g_mb::Vector{Vector{Float64}}
+    history_per_upf_entries_6g::Vector{Vector{Int}}
 end
 
 struct GUPFState6GRUPA
     forwarding_table::Vector{ForwardingEntry6GRUPA}
-    qos_profiles::Vector{QoSConfig6GRUPA}
 end
 
 # --- Network Topology ---
