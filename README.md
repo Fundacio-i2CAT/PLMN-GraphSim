@@ -47,6 +47,29 @@ Enter choice:
 
 Select option `1` to run the full simulation, or option `2` to plot the network topology graphs.
 
+### Plotting Functionality
+
+To keep the core simulation lightweight, plotting functionality is provided via a **Package Extension**. 
+
+*   The core simulation does **not** require `Plots.jl`.
+*   To enable plotting (e.g., for Option 2 in the menu or `scripts/plot_topology.jl`), you must have `Plots` installed in your environment.
+
+**1. Add the Plots package:**
+
+```bash
+julia --project=. -e 'using Pkg; Pkg.add("Plots")'
+```
+
+**2. Run the plotting script:**
+
+```bash
+julia --project=. scripts/plot_topology.jl
+```
+
+Or select Option 2 in the main menu.
+
+If you try to plot without `Plots` installed, you will see a warning message.
+
 ## Run Tests
 
 Execute the test suite:
