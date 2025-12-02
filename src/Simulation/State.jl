@@ -57,7 +57,9 @@ function init_global_state(topology::NetworkTopology, config::SimConfig)
         Float64[], # total 6g mb
         Float64[], # max upf 6g mb
         Float64[], # mean upf 6g mb
-        Float64[]  # median upf 6g mb
+        Float64[], # median upf 6g mb
+        Float64[], # mean entries 6g
+        Float64[]  # median entries 6g
     )
 end
 

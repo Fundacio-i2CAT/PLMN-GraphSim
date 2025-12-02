@@ -102,6 +102,9 @@ mutable struct SimGlobalState
     history_max_upf_6g_mb::Vector{Float64}
     history_mean_upf_6g_mb::Vector{Float64}
     history_median_upf_6g_mb::Vector{Float64}
+
+    history_mean_entries_6g::Vector{Float64}
+    history_median_entries_6g::Vector{Float64}
 end
 
 struct GUPFState6GRUPA
