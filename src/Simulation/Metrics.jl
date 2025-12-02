@@ -23,18 +23,23 @@ using ..Types
 
         # --- 6G-RUPA Metrics ---
         upf_sizes_6g = Float64[]
+        upf_entries_6g = Int[]
         qos_size = Base.summarysize(sim_state.qos_profiles_6g) / (1024^2)
 
         for table in sim_state.forwarding_tables_6g
             table_size = Base.summarysize(table) / (1024^2)
             upf_total = table_size + qos_size
             push!(upf_sizes_6g, upf_total)
+            push!(upf_entries_6g, length(table))
         end
 
         total_6g_size = sum(upf_sizes_6g)
         max_upf_6g_size = isempty(upf_sizes_6g) ? 0.0 : maximum(upf_sizes_6g)
         mean_upf_6g_size = isempty(upf_sizes_6g) ? 0.0 : mean(upf_sizes_6g)
         median_upf_6g_size = isempty(upf_sizes_6g) ? 0.0 : median(upf_sizes_6g)
+
+        mean_entries_6g = isempty(upf_entries_6g) ? 0.0 : mean(upf_entries_6g)
+        median_entries_6g = isempty(upf_entries_6g) ? 0.0 : median(upf_entries_6g)
 
         # --- Record History ---
         push!(sim_state.history_time, current_time)
@@ -48,6 +53,9 @@ using ..Types
         push!(sim_state.history_max_upf_6g_mb, max_upf_6g_size)
         push!(sim_state.history_mean_upf_6g_mb, mean_upf_6g_size)
         push!(sim_state.history_median_upf_6g_mb, median_upf_6g_size)
+
+        push!(sim_state.history_mean_entries_6g, mean_entries_6g)
+        push!(sim_state.history_median_entries_6g, median_entries_6g)
 
         @yield timeout(env, 1.0) # Sample every 1.0 time unit
     end
@@ -74,7 +82,7 @@ function calculate_5g_metrics(state::SimGlobalState, scale_factor::Int)
         UPF_ID=upf_ids,
         Entries_5G=entries_5g,
         Total_Mem_5G_MB=mem_5g_allocated_mb, # Allocated/Capacity
-        Raw_Mem_5G_MB=mem_5g_raw_mb,         # Theoretical minimum
+        Raw_Mem_5G_MB=mem_5g_raw_mb,         # Theoretical minimum (Julia struct)
         Bytes_Per_Entry_5G=mem_per_entry_5g
     )
 end

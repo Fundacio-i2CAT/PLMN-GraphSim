@@ -21,9 +21,7 @@ function run_operator_simulation(operator_name::String, operator_id::Int, num_up
     for i in 1:num_agents
         @process user_lifecycle(sim, i, global_state, topology)
     end
-    
     run(sim, config.duration) # Run for configured duration
-    
     save_simulation_results(operator_name, scenario_name, global_state)
     save_raw_upf_data(operator_name, scenario_name, global_state, config.scale_factor)
 end

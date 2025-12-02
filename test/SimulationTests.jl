@@ -101,7 +101,7 @@ using MetaGraphsNext
 
     @testset "save_raw_upf_data" begin
         # Mock Config
-        config = SimConfig(1, 2, 1000, 10.0)
+        config = SimConfig(1, 2, 1000, 10.0, 5.0, 5.0)
 
         # Mock State
         state = SimGlobalState(
@@ -109,7 +109,9 @@ using MetaGraphsNext
             [[SessionContext5G(1, 1, FAR(1, 1), FAR(1, 1))]], # 1 UPF, 1 Session
             [[ForwardingEntry6GRUPA(10, 0xFFFFFF00, 1)]],     # 1 UPF, 1 Entry
             QoSConfig6GRUPA[],
-            Float64[], Float64[], Float64[], Float64[], Float64[]
+            Float64[], Float64[], Float64[], Float64[], Float64[],
+            Float64[], Float64[], Float64[], Float64[],
+            Float64[], Float64[]
         )
         # Mock Scale Factor
         scale_factor = 1000
