@@ -9,17 +9,31 @@ using TOML
 using CSV
 using DataFrames
 
-function plot_single_scenario(op_name, op_id, scenario_name, num_upfs, valid_paths, data_dir, scale_factor, mobile_adoption_rate)
+function create_sim_config(toml_data)
+    sim_data = toml_data["simulation"]
+    return SimConfig(
+        sim_data["min_sessions_per_user"],
+        sim_data["max_sessions_per_user"],
+        sim_data["scale_factor"],
+        sim_data["duration"],
+        get(sim_data, "mean_session_duration", 20.0),
+        get(sim_data, "mean_offline_duration", 5.0),
+        Symbol(get(sim_data, "scenario_mode", "single_tier")),
+        get(sim_data, "num_centralized_upfs", 0)
+    )
+end
+
+function plot_single_scenario(op_name, op_id, scenario_name, num_upfs, valid_paths, data_dir, sim_config, mobile_adoption_rate)
     println("    Scenario: $scenario_name ($num_upfs UPFs)")
 
     try
         # 1. Load Topology
-        topology = DesJulia6gRupa.DataLoading.load_and_deploy_network(valid_paths, op_id, num_upfs, data_dir)
+        topology = DesJulia6gRupa.DataLoading.load_and_deploy_network(valid_paths, op_id, num_upfs, data_dir, sim_config)
         # 2. Generate Agents
         total_pop = sum([m.population for m in topology.municipalities])
 
         eff_pop = total_pop * mobile_adoption_rate
-        num_agents = ceil(Int, eff_pop / scale_factor)
+        num_agents = ceil(Int, eff_pop / sim_config.scale_factor)
 
         if num_agents > 100000
             println("    Warning: Too many agents ($num_agents). Capping at 100,000 for plotting.")
@@ -67,7 +81,7 @@ function is_scenario_valid_for_country(scenario_name, country_key)
     return true
 end
 
-function process_country(country_key, country_config, scale_factor)
+function process_country(country_key, country_config, sim_config)
     if !country_config["enabled"]
         return
     end
@@ -110,7 +124,7 @@ function process_country(country_key, country_config, scale_factor)
                     continue
                 end
 
-                plot_single_scenario(op_name, op_id, scenario_name, num_upfs, valid_paths, data_dir, scale_factor, mobile_adoption_rate)
+                plot_single_scenario(op_name, op_id, scenario_name, num_upfs, valid_paths, data_dir, sim_config, mobile_adoption_rate)
             end
         end
     end
@@ -123,10 +137,10 @@ function main()
     end
     toml_data = TOML.parsefile(config_path)
     countries = toml_data["countries"]
-    sim_config = get(toml_data, "simulation", Dict())
-    scale_factor = get(sim_config, "scale_factor", 1000)
+    sim_config = create_sim_config(toml_data)
+    
     for (country_key, country_config) in countries
-        process_country(country_key, country_config, scale_factor)
+        process_country(country_key, country_config, sim_config)
     end
 end
 

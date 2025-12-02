@@ -25,6 +25,10 @@ log_level = "info"
 min_sessions_per_user = 1
 max_sessions_per_user = 2
 
+# Architecture Configuration
+scenario_mode = "two_tier" # Options: "single_tier", "two_tier"
+num_centralized_upfs = 5 # Only used if scenario_mode = "two_tier"
+
 
 [countries]
 
