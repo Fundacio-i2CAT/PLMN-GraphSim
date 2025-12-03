@@ -1,4 +1,4 @@
-# Two-Tier Architecture Setup
+# Topology Setup
 
 The **Two-Tier Architecture** introduces a hierarchical User Plane structure, distinguishing between two kinds of UPFs:
 
