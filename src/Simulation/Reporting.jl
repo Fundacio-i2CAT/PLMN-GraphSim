@@ -5,14 +5,14 @@ using ..Types
 function save_simulation_results(operator_name::String, scenario_name::String, state::SimGlobalState)
     df = DataFrame(
         Time=state.history_time,
-        Total_5G_MB=state.history_total_5g_mb,
-        Max_UPF_5G_MB=state.history_max_upf_5g_mb,
-        Mean_UPF_5G_MB=state.history_mean_upf_5g_mb,
-        Median_UPF_5G_MB=state.history_median_upf_5g_mb,
-        Total_6GRUPA_MB=state.history_total_6grupa_mb,
-        Max_GUPF_6GRUPA_MB=state.history_max_gupf_6grupa_mb,
-        Mean_GUPF_6GRUPA_MB=state.history_mean_gupf_6grupa_mb,
-        Median_GUPF_6GRUPA_MB=state.history_median_gupf_6grupa_mb,
+        Total_5G_FwdStateInfoSize_MB=state.history_total_5g_fwd_state_info_size_mb,
+        Max_UPF_5G_FwdStateInfoSize_MB=state.history_max_upf_5g_fwd_state_info_size_mb,
+        Mean_UPF_5G_FwdStateInfoSize_MB=state.history_mean_upf_5g_fwd_state_info_size_mb,
+        Median_UPF_5G_FwdStateInfoSize_MB=state.history_median_upf_5g_fwd_state_info_size_mb,
+        Total_6GRUPA_FwdStateInfoSize_MB=state.history_total_6grupa_fwd_state_info_size_mb,
+        Max_GUPF_6GRUPA_FwdStateInfoSize_MB=state.history_max_gupf_6grupa_fwd_state_info_size_mb,
+        Mean_GUPF_6GRUPA_FwdStateInfoSize_MB=state.history_mean_gupf_6grupa_fwd_state_info_size_mb,
+        Median_GUPF_6GRUPA_FwdStateInfoSize_MB=state.history_median_gupf_6grupa_fwd_state_info_size_mb,
         Mean_Entries_6GRUPA=state.history_mean_entries_6grupa,
         Median_Entries_6GRUPA=state.history_median_entries_6grupa
     )
@@ -55,9 +55,9 @@ function save_detailed_evolution(operator_name::String, scenario_name::String, s
         println("  -> Detailed Evolution ($metric_name): results/$filename")
     end
 
-    save_matrix(state.history_per_upf_5g_mb, "5g_mb")
+    save_matrix(state.history_per_upf_5g_fwd_state_info_size_mb, "5g_fwd_state_info_size_mb")
     save_matrix(state.history_per_upf_entries_5g, "5g_entries")
-    save_matrix(state.history_per_gupf_6grupa_mb, "6grupa_mb")
+    save_matrix(state.history_per_gupf_6grupa_fwd_state_info_size_mb, "6grupa_fwd_state_info_size_mb")
     save_matrix(state.history_per_gupf_entries_6grupa, "6grupa_entries")
 end
 

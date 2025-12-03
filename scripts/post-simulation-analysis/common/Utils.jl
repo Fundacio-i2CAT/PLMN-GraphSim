@@ -28,9 +28,9 @@ end
 function parse_filename(filename::String)
     # Known prefixes for metrics
     prefixes = [
-        ("evolution_5g_mb_", "5G Memory (MB)"),
+        ("evolution_5g_fwd_state_info_size_mb_", "5G Fwd State Info Size (MB)"),
         ("evolution_5g_entries_", "5G Entries"),
-        ("evolution_6grupa_mb_", "6G Memory (MB)"),
+        ("evolution_6grupa_fwd_state_info_size_mb_", "6G Fwd State Info Size (MB)"),
         ("evolution_6grupa_entries_", "6G Entries")
     ]
     
