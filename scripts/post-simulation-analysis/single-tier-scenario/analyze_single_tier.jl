@@ -17,22 +17,21 @@ SCENARIO_FILTER = "Distributed"
 
 # --- Analysis Functions ---
 
-function plot_combined_evolution(config_name::String, file_5g::String, file_6g::String, metric_type::String, output_dir::String; skip_comparison=false)
-    df_5g = CSV.read(file_5g, DataFrame)
-    df_6g = CSV.read(file_6g, DataFrame)
+function plot_combined_evolution(config_name::String, detailed_file::String, metric_type::String, output_dir::String; skip_comparison=false)
+    df = CSV.read(detailed_file, DataFrame)
     
-    # Ensure we use the common time range
-    # In case one simulation ended earlier, we should probably truncate to the shorter one
-    # or just plot what we have.
+    # Metric mapping
+    col_5g = Symbol("Entries_5G")
+    col_6g = Symbol("Entries_6G")
     
-    # Calculate Totals (Sum across UPFs)
-    cols_5g = filter(n -> n != "Time", names(df_5g))
-    cols_6g = filter(n -> n != "Time", names(df_6g))
+    if metric_type == "Fwd State Info Size (MB)"
+        col_5g = Symbol("Memory_5G_MB")
+        col_6g = Symbol("Memory_6G_MB")
+    end
     
-    # Data is already scaled in the simulation output
-    
-    total_5g = sum(Matrix(df_5g[:, cols_5g]), dims=2)
-    total_6g = sum(Matrix(df_6g[:, cols_6g]), dims=2)
+    # Calculate Totals per Time step
+    total_5g = combine(groupby(df, :Time), col_5g => sum => :Total)
+    total_6g = combine(groupby(df, :Time), col_6g => sum => :Total)
     
     generated_files = String[]
 
@@ -53,8 +52,8 @@ function plot_combined_evolution(config_name::String, file_5g::String, file_6g::
             titlefontsize=16
         )
         
-        plot!(p_comp, df_5g.Time, total_5g, label="5G (Total)", lw=4, color=:red)
-        plot!(p_comp, df_6g.Time, total_6g, label="6G-RUPA (Total)", lw=4, color=:blue)
+        plot!(p_comp, total_5g.Time, total_5g.Total, label="5G (Total)", lw=4, color=:red)
+        plot!(p_comp, total_6g.Time, total_6g.Total, label="6G-RUPA (Total)", lw=4, color=:blue)
         
         safe_config = replace(config_name, " " => "_")
         safe_metric = replace(metric_type, " " => "_", "(" => "", ")" => "")
@@ -82,10 +81,15 @@ function plot_combined_evolution(config_name::String, file_5g::String, file_6g::
         guidefontsize=14,
         titlefontsize=16
     )
-    for col in cols_5g
-        plot!(p_5g, df_5g.Time, df_5g[!, col], alpha=0.5, lw=2, label=nothing)
+    
+    upf_ids = unique(df.UPF_ID)
+    for upf in upf_ids
+        sub_df = filter(row -> row.UPF_ID == upf, df)
+        plot!(p_5g, sub_df.Time, sub_df[!, col_5g], alpha=0.5, lw=2, label=nothing)
     end
-    plot!(p_5g, df_5g.Time, total_5g ./ length(cols_5g), label="Mean", color=:black, lw=4, linestyle=:dash, legend=:topleft, legendfontsize=12)
+    
+    mean_5g = combine(groupby(df, :Time), col_5g => mean => :Mean)
+    plot!(p_5g, mean_5g.Time, mean_5g.Mean, label="Mean", color=:black, lw=4, linestyle=:dash, legend=:topleft, legendfontsize=12)
     
     outfile_5g = joinpath(output_dir, "evolution_5g_$(safe_metric)_$(safe_config).png")
     savefig(p_5g, outfile_5g)
@@ -104,10 +108,14 @@ function plot_combined_evolution(config_name::String, file_5g::String, file_6g::
         guidefontsize=14,
         titlefontsize=16
     )
-    for col in cols_6g
-        plot!(p_6g, df_6g.Time, df_6g[!, col], alpha=0.5, lw=2, label=nothing)
+    
+    for upf in upf_ids
+        sub_df = filter(row -> row.UPF_ID == upf, df)
+        plot!(p_6g, sub_df.Time, sub_df[!, col_6g], alpha=0.5, lw=2, label=nothing)
     end
-    plot!(p_6g, df_6g.Time, total_6g ./ length(cols_6g), label="Mean", color=:black, lw=4, linestyle=:dash, legend=:topleft, legendfontsize=12)
+    
+    mean_6g = combine(groupby(df, :Time), col_6g => mean => :Mean)
+    plot!(p_6g, mean_6g.Time, mean_6g.Mean, label="Mean", color=:black, lw=4, linestyle=:dash, legend=:topleft, legendfontsize=12)
     
     outfile_6g = joinpath(output_dir, "evolution_6grupa_$(safe_metric)_$(safe_config).png")
     savefig(p_6g, outfile_6g)
@@ -123,8 +131,8 @@ function run_evolution_analysis(results_dir::String, images_dir::String)
     # Find configurations that match our scenario filter
     configs = Set{String}()
     for f in files
-        if startswith(f, "evolution_5g_entries_") && occursin(SCENARIO_FILTER, f)
-            config = replace(f, "evolution_5g_entries_" => "")
+        if startswith(f, "evolution_detailed_") && occursin(SCENARIO_FILTER, f)
+            config = replace(f, "evolution_detailed_" => "")
             config = replace(config, ".csv" => "")
             push!(configs, config)
         end
@@ -137,22 +145,15 @@ function run_evolution_analysis(results_dir::String, images_dir::String)
     for config in configs
         # Data is already scaled in the simulation output, so we don't need to calculate or apply scale factor here.
 
-        # Entries Comparison
-        f5g_entries = joinpath(results_dir, "evolution_5g_entries_$(config).csv")
-        f6g_entries = joinpath(results_dir, "evolution_6grupa_entries_$(config).csv")
+        f_detailed = joinpath(results_dir, "evolution_detailed_$(config).csv")
         
-        if isfile(f5g_entries) && isfile(f6g_entries)
-            # Skip comparison plot for Entries as requested
-            plots = plot_combined_evolution(config, f5g_entries, f6g_entries, "Entries", images_dir, skip_comparison=true)
+        if isfile(f_detailed)
+            # Entries
+            plots = plot_combined_evolution(config, f_detailed, "Entries", images_dir, skip_comparison=true)
             append!(generated_plots, plots)
-        end
-        
-        # Memory Comparison
-        f5g_mb = joinpath(results_dir, "evolution_5g_fwd_state_info_size_mb_$(config).csv")
-        f6g_mb = joinpath(results_dir, "evolution_6grupa_fwd_state_info_size_mb_$(config).csv")
-        
-        if isfile(f5g_mb) && isfile(f6g_mb)
-            plots = plot_combined_evolution(config, f5g_mb, f6g_mb, "Fwd State Info Size (MB)", images_dir, skip_comparison=true)
+            
+            # Memory
+            plots = plot_combined_evolution(config, f_detailed, "Fwd State Info Size (MB)", images_dir, skip_comparison=true)
             append!(generated_plots, plots)
         end
     end
