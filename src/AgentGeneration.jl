@@ -5,6 +5,7 @@ using Random
 using GeometryBasics
 using PolygonOps
 using Logging
+using GeoJSON
 
 export select_agent_location, generate_agent_locations
 
@@ -80,20 +81,43 @@ function select_point_in_circle(muni::Municipality)
     return GeoPoint(new_lat, new_lon)
 end
 
+function get_bbox(poly)
+    min_lon, max_lon = 180.0, -180.0
+    min_lat, max_lat = 90.0, -90.0
+    
+    function update_bounds!(pts)
+        for pt in pts
+            lon = pt[1]
+            lat = pt[2]
+            min_lon = min(min_lon, lon)
+            max_lon = max(max_lon, lon)
+            min_lat = min(min_lat, lat)
+            max_lat = max(max_lat, lat)
+        end
+    end
+
+    if isa(poly, GeometryBasics.Polygon)
+        update_bounds!(coordinates(poly))
+    elseif isa(poly, GeometryBasics.MultiPolygon)
+        for p in poly.polygons
+            update_bounds!(coordinates(p))
+        end
+    elseif isa(poly, GeoJSON.Polygon)
+        coords = GeoJSON.coordinates(poly)
+        update_bounds!(coords[1])
+    elseif isa(poly, GeoJSON.MultiPolygon)
+        for p_coords in GeoJSON.coordinates(poly)
+            update_bounds!(p_coords[1])
+        end
+    end
+    
+    return min_lon, max_lon, min_lat, max_lat
+end
+
 function select_point_in_polygon(muni::Municipality)
     # Rejection Sampling
-    # Define search box based on area approximation (expanded)
-    area_m2 = muni.area * 10000.0
-    radius_meters = max(sqrt(area_m2 / pi), 500.0)
-    radius_deg = radius_meters / 111000.0
-    
-    # Expand box significantly (4x radius) to cover irregular shapes
-    search_radius = 4.0 * radius_deg
-    
-    min_lon = muni.location.lon - search_radius
-    max_lon = muni.location.lon + search_radius
-    min_lat = muni.location.lat - search_radius
-    max_lat = muni.location.lat + search_radius
+    # Use bounding box of the polygon
+    min_lon, max_lon, min_lat, max_lat = get_bbox(muni.polygon)
     
     # Try up to 100 times to find a point inside
     for _ in 1:100
@@ -122,6 +146,16 @@ function is_point_inside(pt, poly)
         # Iterate over the polygons in the multipolygon
         for p in poly.polygons
             if is_point_inside(pt, p)
+                return true
+            end
+        end
+        return false
+    elseif isa(poly, GeoJSON.Polygon)
+        coords = GeoJSON.coordinates(poly)
+        return is_point_inside_coords(pt, coords[1])
+    elseif isa(poly, GeoJSON.MultiPolygon)
+        for p_coords in GeoJSON.coordinates(poly)
+            if is_point_inside_coords(pt, p_coords[1])
                 return true
             end
         end
