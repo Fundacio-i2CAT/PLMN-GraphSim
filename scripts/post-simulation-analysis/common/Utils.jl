@@ -48,9 +48,11 @@ function load_raw_data()
     results_dir = get_results_dir()
     files = readdir(results_dir)
     configs = Set{String}()
+    
+    prefix = "evolution_detailed_"
     for f in files
-        if startswith(f, "evolution_5g_entries_")
-            config = replace(f, "evolution_5g_entries_" => "")
+        if startswith(f, prefix)
+            config = replace(f, prefix => "")
             config = replace(config, ".csv" => "")
             push!(configs, config)
         end
@@ -62,40 +64,34 @@ function load_raw_data()
         # Filename format: Operator_Scenario
         # Example: Vodafone_Centralized
         
-        parts = split(config, " ")
+        parts = split(config, "_")
         operator = length(parts) > 0 ? parts[1] : "Unknown"
-        scenario = length(parts) > 1 ? join(parts[2:end], " ") : "Unknown"
+        scenario = length(parts) > 1 ? join(parts[2:end], "_") : "Unknown"
         
-        # Load the 4 evolution files
-        f_5g_entries = joinpath(results_dir, "evolution_5g_entries_$(config).csv")
-        f_5g_mb = joinpath(results_dir, "evolution_5g_fwd_state_info_size_mb_$(config).csv")
-        f_6g_entries = joinpath(results_dir, "evolution_6grupa_entries_$(config).csv")
-        f_6g_mb = joinpath(results_dir, "evolution_6grupa_fwd_state_info_size_mb_$(config).csv")
+        f_path = joinpath(results_dir, "evolution_detailed_$(config).csv")
         
-        if isfile(f_5g_entries) && isfile(f_5g_mb) && isfile(f_6g_entries) && isfile(f_6g_mb)
-            df_5g_entries = CSV.read(f_5g_entries, DataFrame)
-            df_5g_mb = CSV.read(f_5g_mb, DataFrame)
-            df_6g_entries = CSV.read(f_6g_entries, DataFrame)
-            df_6g_mb = CSV.read(f_6g_mb, DataFrame)
-            cols = filter(n -> n != "Time", names(df_5g_entries))
-            num_upfs = length(cols)
-            # Extract values from last row
-            vals_5g_entries = Vector(df_5g_entries[end, cols])
-            vals_5g_mb = Vector(df_5g_mb[end, cols])
-            vals_6g_entries = Vector(df_6g_entries[end, cols])
-            vals_6g_mb = Vector(df_6g_mb[end, cols])
-            # Construct the DataFrame
-            df = DataFrame(
-                UPF_ID = 1:num_upfs,
-                Entries_5G = vals_5g_entries,
-                Total_5G_FwdStateInfoSize_MB = vals_5g_mb,
-                Entries_6GRUPA = vals_6g_entries,
-                Total_6GRUPA_FwdStateInfoSize_MB = vals_6g_mb
-            )
-            df.Configuration .= config
-            df.Operator .= operator
-            df.Scenario .= scenario
-            append!(all_data, df)
+        if isfile(f_path)
+            df = CSV.read(f_path, DataFrame)
+            
+            # Helper to get last values
+            function get_last_values(df)
+                max_time = maximum(df.Time)
+                last_df = filter(row -> row.Time == max_time, df)
+                return last_df
+            end
+            
+            last_df = get_last_values(df)
+            
+            # Rename columns to match what analysis scripts expect
+            rename!(last_df, :Memory_5G_MB => :Total_5G_FwdStateInfoSize_MB)
+            rename!(last_df, :Entries_6G => :Entries_6GRUPA)
+            rename!(last_df, :Memory_6G_MB => :Total_6GRUPA_FwdStateInfoSize_MB)
+            
+            last_df.Configuration .= config
+            last_df.Operator .= operator
+            last_df.Scenario .= scenario
+            
+            append!(all_data, last_df)
         end
     end
     return all_data
