@@ -61,23 +61,6 @@ function save_detailed_evolution(operator_name::String, scenario_name::String, s
     save_matrix(state.history_per_gupf_entries_6grupa, "6grupa_entries")
 end
 
-function save_raw_upf_data(operator_name::String, scenario_name::String, state::SimGlobalState, scale_factor::Int)
-    # Calculate metrics separately
-    df_5g = calculate_5g_metrics(state, scale_factor)
-    df_6grupa = calculate_6grupa_metrics(state)
-    
-    # Combine DataFrames (assuming row alignment which is guaranteed by initialization)
-    df = hcat(df_5g, df_6grupa)
-    
-    results_dir = joinpath(@__DIR__, "../../results")
-    if !isdir(results_dir)
-        mkdir(results_dir)
-    end
-    filename = "raw_upf_state_$(operator_name)_$(scenario_name).csv"
-    CSV.write(joinpath(results_dir, filename), df)
-    println("  -> Raw Data: results/$filename")
-end
-
 function print_forwarding_tables(state::SimGlobalState, scale_factor::Int)
     println("\n--- Detailed Forwarding State Dump ---")
     println("\n[5G Architecture] Per-UPF Session Contexts (Dynamic State):")
