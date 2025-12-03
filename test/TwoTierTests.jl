@@ -10,12 +10,12 @@ using MetaGraphsNext
 
     @testset "Configuration" begin
         # Test default values
-        config_default = SimConfig(1, 2, 1000, 10.0, 20.0, 5.0, :single_tier, 0)
+        config_default = SimConfig(1, 2, 1000, 10.0, 20.0, 5.0, :single_tier, 0, 1.0)
         @test config_default.scenario == :single_tier
         @test config_default.num_centralized_upfs == 0
 
         # Test two-tier values
-        config_two_tier = SimConfig(1, 2, 1000, 10.0, 20.0, 5.0, :two_tier, 5)
+        config_two_tier = SimConfig(1, 2, 1000, 10.0, 20.0, 5.0, :two_tier, 5, 1.0)
         @test config_two_tier.scenario == :two_tier
         @test config_two_tier.num_centralized_upfs == 5
     end
@@ -134,5 +134,61 @@ using MetaGraphsNext
         ctx_single = Simulation.create_session_context(1, topology_single)
         @test ctx_single.metadata.serving_upf_index == 1
         @test ctx_single.metadata.anchor_upf_index == 1 # Should match serving
+    end
+
+    @testset "Session Registration (Two-Tier)" begin
+        # Mock Topology
+        topology = NetworkTopology(
+            GeoPoint[], 
+            [GeoPoint(0.0, 0.0)], # 1 Edge UPF
+            Int[], 
+            [GeoPoint(1.0, 1.0)], # 1 Centralized UPF
+            [1],      # Edge 1 -> Centralized 1
+            Municipality[], 
+            Dict{String,Vector{Int}}(), 
+            Float64[], 
+            MetaGraph(Graph(), label_type = Tuple{Symbol, Int}, vertex_data_type = GeoPoint, edge_data_type = Float64)
+        )
+        
+        config = SimConfig(1, 1, 1000, 10.0, 20.0, 5.0, :two_tier, 1, 1.0)
+        
+        # Init State
+        state = Simulation.init_global_state_for_simulation(topology, config)
+        
+        # Check initial size
+        # 1 Edge + 1 Centralized = 2 slots
+        @test length(state.upf_sessions_5g) == 2
+        @test isempty(state.upf_sessions_5g[1])
+        @test isempty(state.upf_sessions_5g[2])
+        
+        # Create Connections
+        # Assigned UPF = 1 (Edge)
+        Simulation.create_random_ue_connections(state, 1, topology)
+        
+        # Should have 1 session in Edge UPF (Index 1)
+        @test length(state.upf_sessions_5g[1]) == 1
+        
+        # Should NOT have session in Centralized UPF (Index 2) - UEs only connect to Tier 1
+        @test isempty(state.upf_sessions_5g[2])
+        
+        # Verify metadata points to correct anchor
+        ctx_edge = state.upf_sessions_5g[1][1]
+        @test ctx_edge.metadata.serving_upf_index == 1
+        @test ctx_edge.metadata.anchor_upf_index == 1
+        
+        # Test Metrics Calculation (to ensure PSA load is derived)
+        metrics = Simulation.collect_5g_metrics(state, topology, 1)
+        
+        # Edge UPF (Index 1) should have 1 entry
+        @test metrics.per_upf_entries[1] == 1
+        
+        # PSA UPF (Index 2) should have 1 entry (derived)
+        @test metrics.per_upf_entries[2] == 1
+        
+        # Release Connections
+        Simulation.release_ue_connections(state, 1, 1)
+        
+        @test isempty(state.upf_sessions_5g[1])
+        @test isempty(state.upf_sessions_5g[2])
     end
 end
