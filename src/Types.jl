@@ -11,31 +11,23 @@ export FAR, SessionContext5G, ForwardingEntry6GRUPA, ForwardingState5G, SessionS
 export SimGlobalState, GeoPoint, NetworkTopology, GUPFState6GRUPA, Municipality, SimConfig
 export haversine_distance, UserType, eMBB, mMTC, URLLC
 
-# --- Constants ---
 @enum UserType begin
     eMBB
     mMTC
     URLLC
 end
 
-# --- Simulation Constants ---
-# --- Shared Structures ---
 struct GeoPoint
     lat::Float64
     lon::Float64
 end
 
-"""
-    haversine_distance(p1::GeoPoint, p2::GeoPoint)
-
-Calculates the Haversine distance between two GeoPoints in kilometers.
-"""
 function haversine_distance(p1::GeoPoint, p2::GeoPoint)
     R = 6371.0 # Earth radius in km
     dlat = deg2rad(p2.lat - p1.lat)
     dlon = deg2rad(p2.lon - p1.lon)
-    a = sin(dlat/2)^2 + cos(deg2rad(p1.lat)) * cos(deg2rad(p2.lat)) * sin(dlon/2)^2
-    c = 2 * atan(sqrt(a), sqrt(1-a))
+    a = sin(dlat / 2)^2 + cos(deg2rad(p1.lat)) * cos(deg2rad(p2.lat)) * sin(dlon / 2)^2
+    c = 2 * atan(sqrt(a), sqrt(1 - a))
     return R * c
 end
 
@@ -83,42 +75,21 @@ struct SimConfig
     duration::Float64
     mean_session_duration::Float64
     mean_offline_duration::Float64
-    # Architecture Configuration
     scenario::Symbol # :basic, :two_tier, :roaming
     num_centralized_upfs::Int # For :two_tier scenario
+    sampling_interval::Float64
 end
 
 # --- Simulation State ---
 mutable struct SimGlobalState
     # Config
     config::SimConfig
-
-    # 5G State: Per UPF (Vector of Vectors)
-    # Dynamic: Grows with number of sessions
-    # Note: In two-tier mode, this stores sessions for the UL-CL (Edge UPF)
     upf_sessions_5g::Vector{Vector{SessionContext5G}}
-
-    # 6G-RUPA State: Per GUPF (Vector of Vectors)
-    # Static/Topology-based: Depends on number of gNBs/subnets served
     forwarding_tables_6grupa::Vector{Vector{ForwardingEntry6GRUPA}}
-    centralized_forwarding_tables_6grupa::Vector{Vector{ForwardingEntry6GRUPA}} # For PSA UPFs
+    centralized_forwarding_tables_6grupa::Vector{Vector{ForwardingEntry6GRUPA}} # TODO Remove
 
     # Metrics History
     history_time::Vector{Float64}
-    history_total_5g_fwd_state_info_size_mb::Vector{Float64}
-    history_max_upf_5g_fwd_state_info_size_mb::Vector{Float64} # The bottleneck UPF
-    history_mean_upf_5g_fwd_state_info_size_mb::Vector{Float64}
-    history_median_upf_5g_fwd_state_info_size_mb::Vector{Float64}
-    
-    history_total_6grupa_fwd_state_info_size_mb::Vector{Float64}
-    history_max_gupf_6grupa_fwd_state_info_size_mb::Vector{Float64}
-    history_mean_gupf_6grupa_fwd_state_info_size_mb::Vector{Float64}
-    history_median_gupf_6grupa_fwd_state_info_size_mb::Vector{Float64}
-
-    history_mean_entries_6grupa::Vector{Float64}
-    history_median_entries_6grupa::Vector{Float64}
-
-    # Detailed History (Per UPF over time)
     history_per_upf_5g_fwd_state_info_size_mb::Vector{Vector{Float64}}
     history_per_upf_entries_5g::Vector{Vector{Int}}
     history_per_gupf_6grupa_fwd_state_info_size_mb::Vector{Vector{Float64}}
@@ -140,18 +111,13 @@ struct NetworkTopology
     centralized_upf_locations::Vector{GeoPoint} # PSA UPFs
     edge_upf_parent_map::Vector{Int} # Index of Centralized UPF for each Edge UPF
 
-    # Municipality Distribution (More granular)
+    # Municipality Distribution
     municipalities::Vector{Municipality}
     municipality_bins::Dict{String,Vector{Int}} # Muni Code -> List of gNB indices
     municipality_probs::Vector{Float64} # Probability of each municipality (aligned with municipalities vector)
-    
+
     # Graph Representation
-    # Nodes: 
-    #   1..N_gNB (gNBs)
-    #   N_gNB+1..N_gNB+N_UPF (Edge UPFs)
-    #   ... (Centralized UPFs if present)
-    #   Dynamic: Agents
-    graph::AbstractGraph 
+    graph::AbstractGraph
 end
 
 end
