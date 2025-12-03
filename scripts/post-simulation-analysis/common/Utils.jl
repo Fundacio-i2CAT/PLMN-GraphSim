@@ -47,32 +47,57 @@ end
 function load_raw_data()
     results_dir = get_results_dir()
     files = readdir(results_dir)
-    raw_files = filter(f -> startswith(f, "raw_upf_state_") && endswith(f, ".csv"), files)
+    configs = Set{String}()
+    for f in files
+        if startswith(f, "evolution_5g_entries_")
+            config = replace(f, "evolution_5g_entries_" => "")
+            config = replace(config, ".csv" => "")
+            push!(configs, config)
+        end
+    end
     
     all_data = DataFrame()
     
-    for file in raw_files
-        # Filename format: raw_upf_state_Operator_Scenario.csv
-        # Example: raw_upf_state_Vodafone_Centralized.csv
-        # We want to filter for specific scenarios later, but for now load everything
+    for config in configs
+        # Filename format: Operator_Scenario
+        # Example: Vodafone_Centralized
         
-        # Extract configuration name
-        rest = replace(file, "raw_upf_state_" => "")
-        rest = replace(rest, ".csv" => "")
-        
-        # Try to parse Operator and Scenario if possible, but fallback to full string
-        parts = split(rest, " ")
+        parts = split(config, " ")
         operator = length(parts) > 0 ? parts[1] : "Unknown"
         scenario = length(parts) > 1 ? join(parts[2:end], " ") : "Unknown"
         
-        df = CSV.read(joinpath(results_dir, file), DataFrame)
-        df.Configuration .= rest
-        df.Operator .= operator
-        df.Scenario .= scenario
+        # Load the 4 evolution files
+        f_5g_entries = joinpath(results_dir, "evolution_5g_entries_$(config).csv")
+        f_5g_mb = joinpath(results_dir, "evolution_5g_fwd_state_info_size_mb_$(config).csv")
+        f_6g_entries = joinpath(results_dir, "evolution_6grupa_entries_$(config).csv")
+        f_6g_mb = joinpath(results_dir, "evolution_6grupa_fwd_state_info_size_mb_$(config).csv")
         
-        append!(all_data, df)
+        if isfile(f_5g_entries) && isfile(f_5g_mb) && isfile(f_6g_entries) && isfile(f_6g_mb)
+            df_5g_entries = CSV.read(f_5g_entries, DataFrame)
+            df_5g_mb = CSV.read(f_5g_mb, DataFrame)
+            df_6g_entries = CSV.read(f_6g_entries, DataFrame)
+            df_6g_mb = CSV.read(f_6g_mb, DataFrame)
+            cols = filter(n -> n != "Time", names(df_5g_entries))
+            num_upfs = length(cols)
+            # Extract values from last row
+            vals_5g_entries = Vector(df_5g_entries[end, cols])
+            vals_5g_mb = Vector(df_5g_mb[end, cols])
+            vals_6g_entries = Vector(df_6g_entries[end, cols])
+            vals_6g_mb = Vector(df_6g_mb[end, cols])
+            # Construct the DataFrame
+            df = DataFrame(
+                UPF_ID = 1:num_upfs,
+                Entries_5G = vals_5g_entries,
+                Total_5G_FwdStateInfoSize_MB = vals_5g_mb,
+                Entries_6GRUPA = vals_6g_entries,
+                Total_6GRUPA_FwdStateInfoSize_MB = vals_6g_mb
+            )
+            df.Configuration .= config
+            df.Operator .= operator
+            df.Scenario .= scenario
+            append!(all_data, df)
+        end
     end
-    
     return all_data
 end
 
