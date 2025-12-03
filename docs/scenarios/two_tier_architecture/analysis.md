@@ -1,4 +1,4 @@
-# Two-Tier Architecture Analysis
+# Analysis
 
 This section details the analysis of the simulation results for the Two-Tier architecture.
 

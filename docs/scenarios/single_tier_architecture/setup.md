@@ -1,4 +1,4 @@
-# Single-Tier Architecture Setup
+# Topology Setup
 
 The **Single-Tier Architecture** represents a network topology graph where Base Stations (gNBs) connect directly to distributed User Plane Functions (UPFs).
 
