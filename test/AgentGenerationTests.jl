@@ -3,6 +3,8 @@ using GeometryBasics
 using PolygonOps
 using Graphs
 using MetaGraphsNext
+using GeoJSON
+using JSON3
 
 # Assuming we are running from project root
 using DesJulia6gRupa
@@ -57,6 +59,23 @@ using DesJulia6gRupa.AgentGeneration
         
         pt = AgentGeneration.select_point_in_polygon(muni_centered)
         # Check if point is inside (0,0) to (1,1)
+        @test 0.0 <= pt.lon <= 1.0
+        @test 0.0 <= pt.lat <= 1.0
+    end
+
+    @testset "Point in GeoJSON Polygon" begin
+        # Create a GeoJSON polygon string
+        json_str = """{"type": "Polygon", "coordinates": [[[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0], [0.0, 0.0]]]}"""
+        poly = GeoJSON.read(json_str)
+        
+        # Test is_point_inside
+        @test AgentGeneration.is_point_inside(Point2(0.5, 0.5), poly)
+        @test !AgentGeneration.is_point_inside(Point2(1.5, 0.5), poly)
+        
+        # Test select_point_in_polygon
+        muni_centered = Municipality("003", "GeoJSONMuni", 1000, GeoPoint(0.5, 0.5), 10000.0, poly)
+        
+        pt = AgentGeneration.select_point_in_polygon(muni_centered)
         @test 0.0 <= pt.lon <= 1.0
         @test 0.0 <= pt.lat <= 1.0
     end
