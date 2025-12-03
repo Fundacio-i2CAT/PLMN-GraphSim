@@ -9,7 +9,8 @@ function collect_5g_metrics(sim_state::SimGlobalState, topology::NetworkTopology
         sessions = sim_state.upf_sessions_5g[edge_idx]
         # Tier 1: Edge UPF Load
         num_sessions = length(sessions) * scale_factor
-        all_upf_entries[edge_idx] = num_sessions  
+        # Each session has 2 entries (UL and DL)
+        all_upf_entries[edge_idx] = num_sessions * 2
         # Tier 2: PSA UPF Load (derived from sessions)
         if num_psa > 0
             for session in sessions
@@ -17,12 +18,14 @@ function collect_5g_metrics(sim_state::SimGlobalState, topology::NetworkTopology
                 # anchor_idx is relative to the list of PSAs (1..num_psa)
                 if anchor_idx > 0 && anchor_idx <= num_psa
                     # Map to the combined vector index: num_edge + anchor_idx
-                    all_upf_entries[num_edge + anchor_idx] += scale_factor
+                    all_upf_entries[num_edge + anchor_idx] += scale_factor * 2
                 end
             end
         end
     end
-    element_size_mb = sizeof(ForwardingState5G) / (1024^2)
+    # We divide by 2 because we are counting 2 entries per session, but the struct contains both.
+    # So the size per entry is half the struct size.
+    element_size_mb = (sizeof(ForwardingState5G) / 2) / (1024^2)
     all_upf_fwd_state_info_size_mb = all_upf_entries .* element_size_mb
 
     return (
