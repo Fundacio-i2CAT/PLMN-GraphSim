@@ -11,30 +11,38 @@ include("../common/Utils.jl")
 using .Utils
 
 # --- Configuration ---
-SCENARIO_NAME = "single-tier"
-# We filter for "Distributed" because that corresponds to the Single Tier scenario in our results
-SCENARIO_FILTER = "Distributed" 
+SCENARIO_NAME = "two-tier"
+# We filter for "TwoTier" because that corresponds to the Two Tier scenario in our results
+SCENARIO_FILTER = "TwoTier" 
 
 # --- Analysis Functions ---
 
-function plot_combined_evolution(config_name::String, file_5g::String, file_6g::String, metric_type::String, output_dir::String; skip_comparison=false)
-    df_5g = CSV.read(file_5g, DataFrame)
-    df_6g = CSV.read(file_6g, DataFrame)
+function plot_combined_evolution_from_df(config_name::String, df::DataFrame, col_5g::Symbol, col_6g::Symbol, metric_type::String, output_dir::String; skip_comparison=false)
+    # Filter for Tier 1 (Edge) for the main evolution plots
+    df_edge = filter(row -> row.Tier == 1, df)
     
-    # Ensure we use the common time range
-    # In case one simulation ended earlier, we should probably truncate to the shorter one
-    # or just plot what we have.
+    # Pivot to Wide format for plotting (Time x UPF)
+    wide_5g = unstack(df_edge, :Time, :UPF_ID, col_5g)
+    wide_6g = unstack(df_edge, :Time, :UPF_ID, col_6g)
     
-    # Calculate Totals (Sum across UPFs)
-    cols_5g = filter(n -> n != "Time", names(df_5g))
-    cols_6g = filter(n -> n != "Time", names(df_6g))
+    wide_5g = coalesce.(wide_5g, 0.0)
+    wide_6g = coalesce.(wide_6g, 0.0)
     
-    # Data is already scaled in the simulation output
+    time_vec = wide_5g.Time
     
-    total_5g = sum(Matrix(df_5g[:, cols_5g]), dims=2)
-    total_6g = sum(Matrix(df_6g[:, cols_6g]), dims=2)
+    cols_5g = filter(n -> n != "Time", names(wide_5g))
+    cols_6g = filter(n -> n != "Time", names(wide_6g))
+    
+    mat_5g = Matrix(wide_5g[:, cols_5g])
+    mat_6g = Matrix(wide_6g[:, cols_6g])
+    
+    total_5g = sum(mat_5g, dims=2)
+    total_6g = sum(mat_6g, dims=2)
     
     generated_files = String[]
+    
+    safe_config = replace(config_name, " " => "_")
+    safe_metric = replace(metric_type, " " => "_", "(" => "", ")" => "")
 
     # Comparison Plot (Log Scale)
     if !skip_comparison
@@ -53,11 +61,8 @@ function plot_combined_evolution(config_name::String, file_5g::String, file_6g::
             titlefontsize=16
         )
         
-        plot!(p_comp, df_5g.Time, total_5g, label="5G (Total)", lw=4, color=:red)
-        plot!(p_comp, df_6g.Time, total_6g, label="6G-RUPA (Total)", lw=4, color=:blue)
-        
-        safe_config = replace(config_name, " " => "_")
-        safe_metric = replace(metric_type, " " => "_", "(" => "", ")" => "")
+        plot!(p_comp, time_vec, total_5g, label="5G (Total)", lw=4, color=:red)
+        plot!(p_comp, time_vec, total_6g, label="6G-RUPA (Total)", lw=4, color=:blue)
         
         outfile_comp = joinpath(output_dir, "comparison_total_$(safe_metric)_$(safe_config).png")
         savefig(p_comp, outfile_comp)
@@ -65,10 +70,7 @@ function plot_combined_evolution(config_name::String, file_5g::String, file_6g::
         push!(generated_files, basename(outfile_comp))
     end
     
-    safe_config = replace(config_name, " " => "_")
-    safe_metric = replace(metric_type, " " => "_", "(" => "", ")" => "")
-
-    # Individual Plots (to showcase every UPF as requested)
+    # Individual Plots
     # 5G
     p_5g = plot(
         xlabel="Time (s)",
@@ -83,9 +85,9 @@ function plot_combined_evolution(config_name::String, file_5g::String, file_6g::
         titlefontsize=16
     )
     for col in cols_5g
-        plot!(p_5g, df_5g.Time, df_5g[!, col], alpha=0.5, lw=2, label=nothing)
+        plot!(p_5g, time_vec, wide_5g[!, col], alpha=0.5, lw=2, label=nothing)
     end
-    plot!(p_5g, df_5g.Time, total_5g ./ length(cols_5g), label="Mean", color=:black, lw=4, linestyle=:dash, legend=:topleft, legendfontsize=12)
+    plot!(p_5g, time_vec, total_5g ./ length(cols_5g), label="Mean", color=:black, lw=4, linestyle=:dash, legend=:topleft, legendfontsize=12)
     
     outfile_5g = joinpath(output_dir, "evolution_5g_$(safe_metric)_$(safe_config).png")
     savefig(p_5g, outfile_5g)
@@ -105,9 +107,9 @@ function plot_combined_evolution(config_name::String, file_5g::String, file_6g::
         titlefontsize=16
     )
     for col in cols_6g
-        plot!(p_6g, df_6g.Time, df_6g[!, col], alpha=0.5, lw=2, label=nothing)
+        plot!(p_6g, time_vec, wide_6g[!, col], alpha=0.5, lw=2, label=nothing)
     end
-    plot!(p_6g, df_6g.Time, total_6g ./ length(cols_6g), label="Mean", color=:black, lw=4, linestyle=:dash, legend=:topleft, legendfontsize=12)
+    plot!(p_6g, time_vec, total_6g ./ length(cols_6g), label="Mean", color=:black, lw=4, linestyle=:dash, legend=:topleft, legendfontsize=12)
     
     outfile_6g = joinpath(output_dir, "evolution_6grupa_$(safe_metric)_$(safe_config).png")
     savefig(p_6g, outfile_6g)
@@ -116,15 +118,61 @@ function plot_combined_evolution(config_name::String, file_5g::String, file_6g::
     return generated_files
 end
 
+function plot_psa_vs_centralized_comparison_from_df(config_name::String, df::DataFrame, output_dir::String)
+    # Filter for Tier 2 (Centralized / PSA)
+    df_tier2 = filter(row -> row.Tier == 2, df)
+    
+    # Pivot to Wide format for summing
+    wide_5g = unstack(df_tier2, :Time, :UPF_ID, :Memory_5G_MB)
+    wide_6g = unstack(df_tier2, :Time, :UPF_ID, :Memory_6G_MB)
+    
+    wide_5g = coalesce.(wide_5g, 0.0)
+    wide_6g = coalesce.(wide_6g, 0.0)
+    
+    cols_5g = filter(n -> n != "Time", names(wide_5g))
+    cols_6g = filter(n -> n != "Time", names(wide_6g))
+    
+    mat_5g = Matrix(wide_5g[:, cols_5g])
+    total_5g_mb = sum(mat_5g, dims=2)
+    
+    mat_6g = Matrix(wide_6g[:, cols_6g])
+    total_6g_mb = sum(mat_6g, dims=2)
+    
+    p_comp = plot(
+        xlabel="Time (s)",
+        ylabel="Memory (MB) (Log Scale)",
+        title="Core Network Memory Comparison\n(5G PSA vs 6G Centralized UPFs)\n$config_name",
+        legend=:topleft,
+        framestyle=:box,
+        margin=10Plots.mm,
+        yscale=:log10,
+        size=(1200, 800),
+        tickfontsize=12,
+        guidefontsize=14,
+        legendfontsize=12,
+        titlefontsize=16
+    )
+    
+    plot!(p_comp, wide_5g.Time, total_5g_mb, label="5G PSA (Total)", lw=4, color=:red)
+    plot!(p_comp, wide_6g.Time, total_6g_mb, label="6G Centralized (Total)", lw=4, color=:blue)
+    
+    safe_config = replace(config_name, " " => "_")
+    outfile = joinpath(output_dir, "comparison_psa_vs_centralized_$(safe_config).png")
+    savefig(p_comp, outfile)
+    println("  -> Generated PSA vs Centralized Comparison: $outfile")
+    return basename(outfile)
+end
+
 function run_evolution_analysis(results_dir::String, images_dir::String)
     println("Running Evolution Analysis...")
     files = readdir(results_dir)
     
     # Find configurations that match our scenario filter
     configs = Set{String}()
+    prefix = "evolution_detailed_"
     for f in files
-        if startswith(f, "evolution_5g_entries_") && occursin(SCENARIO_FILTER, f)
-            config = replace(f, "evolution_5g_entries_" => "")
+        if startswith(f, prefix) && occursin(SCENARIO_FILTER, f)
+            config = replace(f, prefix => "")
             config = replace(config, ".csv" => "")
             push!(configs, config)
         end
@@ -135,25 +183,22 @@ function run_evolution_analysis(results_dir::String, images_dir::String)
     generated_plots = String[]
     
     for config in configs
-        # Data is already scaled in the simulation output, so we don't need to calculate or apply scale factor here.
+        f_path = joinpath(results_dir, "evolution_detailed_$(config).csv")
+        
+        if isfile(f_path)
+            df = CSV.read(f_path, DataFrame)
+            
+            # Entries Comparison
+            plots = plot_combined_evolution_from_df(config, df, :Entries_5G, :Entries_6G, "Entries", images_dir, skip_comparison=true)
+            append!(generated_plots, plots)
+            
+            # Memory Comparison
+            plots = plot_combined_evolution_from_df(config, df, :Memory_5G_MB, :Memory_6G_MB, "Fwd State Info Size (MB)", images_dir, skip_comparison=true)
+            append!(generated_plots, plots)
 
-        # Entries Comparison
-        f5g_entries = joinpath(results_dir, "evolution_5g_entries_$(config).csv")
-        f6g_entries = joinpath(results_dir, "evolution_6grupa_entries_$(config).csv")
-        
-        if isfile(f5g_entries) && isfile(f6g_entries)
-            # Skip comparison plot for Entries as requested
-            plots = plot_combined_evolution(config, f5g_entries, f6g_entries, "Entries", images_dir, skip_comparison=true)
-            append!(generated_plots, plots)
-        end
-        
-        # Memory Comparison
-        f5g_mb = joinpath(results_dir, "evolution_5g_fwd_state_info_size_mb_$(config).csv")
-        f6g_mb = joinpath(results_dir, "evolution_6grupa_fwd_state_info_size_mb_$(config).csv")
-        
-        if isfile(f5g_mb) && isfile(f6g_mb)
-            plots = plot_combined_evolution(config, f5g_mb, f6g_mb, "Fwd State Info Size (MB)", images_dir, skip_comparison=true)
-            append!(generated_plots, plots)
+            # PSA vs Centralized Comparison
+            plot_file = plot_psa_vs_centralized_comparison_from_df(config, df, images_dir)
+            push!(generated_plots, plot_file)
         end
     end
     return generated_plots
@@ -322,13 +367,13 @@ function generate_report(df::DataFrame, evolution_plots::Vector{String}, static_
     rel_img_path = "."
 
     open(report_path, "w") do io
-        println(io, "# Single Tier Scenario Analysis (5G vs 6G-RUPA)")
+        println(io, "# Two Tier Scenario Analysis (5G vs 6G-RUPA)")
         println(io, "")
         println(io, "Generated on: $(now())")
         println(io, "")
         
         println(io, "## 1. Executive Summary")
-        println(io, "This report compares the forwarding information state for the Single Tier (Distributed) scenario.")
+        println(io, "This report compares the forwarding information state for the Two Tier (Hierarchical) scenario.")
         println(io, "")
         
         # Summary Table
@@ -350,9 +395,6 @@ function generate_report(df::DataFrame, evolution_plots::Vector{String}, static_
         end
         
         println(io, "")
-        # println(io, "## 2. Memory Reduction Analysis")
-        # println(io, "![Memory Reduction Factor]($rel_img_path/memory_reduction_factor.png)")
-        # println(io, "")
         
         println(io, "## 2. Table Size Distribution (Box Plot)")
         println(io, "This plot shows the range of forwarding table sizes (number of entries) across all UPFs. A lower box means smaller tables, which is better for scalability. The log scale helps compare the massive difference between 5G and 6G-RUPA.")
@@ -392,8 +434,7 @@ function main()
     # 1. Load Data
     all_data = load_raw_data()
     
-    # 2. Filter for Single Tier (Distributed)
-    # We look for "Distributed" in the Configuration name
+    # 2. Filter for Two Tier
     df = filter(row -> occursin(SCENARIO_FILTER, row.Configuration), all_data)
     
     if nrow(df) == 0
@@ -401,13 +442,12 @@ function main()
         return
     end
     
-    println("Loaded $(nrow(df)) rows for Single Tier scenario.")
+    println("Loaded $(nrow(df)) rows for Two Tier scenario.")
     
     # 3. Run Analysis
     evolution_plots = run_evolution_analysis(results_dir, images_dir)
     
     static_plots = String[]
-    # push!(static_plots, plot_memory_reduction_factor(df, images_dir))
     push!(static_plots, plot_table_sizes_boxplot(df, images_dir))
     push!(static_plots, plot_total_memory_comparison(df, images_dir))
     append!(static_plots, plot_per_upf_statistics(df, images_dir))
@@ -415,7 +455,7 @@ function main()
     # 4. Generate Report
     generate_report(df, evolution_plots, static_plots, images_dir)
     
-    println("Single Tier Analysis Complete.")
+    println("Two Tier Analysis Complete.")
 end
 
 main()
