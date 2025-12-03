@@ -1,5 +1,5 @@
 using Pkg
-Pkg.activate(joinpath(@__DIR__, ".."))
+Pkg.activate(joinpath(@__DIR__, "../.."))
 using Plots # Added to enable plotting extension
 using DesJulia6gRupa
 using DesJulia6gRupa.Plotting
@@ -93,7 +93,7 @@ function process_country(country_key, country_config, sim_config)
         return
     end
 
-    data_dir = joinpath(@__DIR__, "..", country_config["data_dir"])
+    data_dir = joinpath(@__DIR__, "../..", country_config["data_dir"])
 
     mccs = Int[]
     if haskey(country_config, "mccs")
@@ -131,7 +131,7 @@ function process_country(country_key, country_config, sim_config)
 end
 
 function main()
-    config_path = joinpath(@__DIR__, "../config.toml")
+    config_path = joinpath(@__DIR__, "../../config.toml")
     if !isfile(config_path)
         error("Config file not found at $config_path")
     end

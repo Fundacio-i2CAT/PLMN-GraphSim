@@ -71,7 +71,11 @@ function process_country(country_key, country_config, sim_config)
             if op_data["enabled"]
                 op_id = op_data["id"]
                 op_name = titlecase(op_key)
-                run_operator_simulation(op_name, op_id, num_upfs, scenario_name, sim_config, data_dir, mccs, effective_population)
+                try
+                    run_operator_simulation(op_name, op_id, num_upfs, scenario_name, sim_config, data_dir, mccs, effective_population)
+                catch e
+                    @error "Simulation failed for Operator: $op_name ($op_id) in Scenario: $scenario_name" exception=(e, catch_backtrace())
+                end
             end
         end
     end
