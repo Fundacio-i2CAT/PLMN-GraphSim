@@ -2,63 +2,100 @@ using DataFrames
 using CSV
 using ..Types
 
-function save_simulation_results(operator_name::String, scenario_name::String, state::SimGlobalState)
-    df = DataFrame(
-        Time=state.history_time,
-        Total_5G_FwdStateInfoSize_MB=state.history_total_5g_fwd_state_info_size_mb,
-        Max_UPF_5G_FwdStateInfoSize_MB=state.history_max_upf_5g_fwd_state_info_size_mb,
-        Mean_UPF_5G_FwdStateInfoSize_MB=state.history_mean_upf_5g_fwd_state_info_size_mb,
-        Median_UPF_5G_FwdStateInfoSize_MB=state.history_median_upf_5g_fwd_state_info_size_mb,
-        Total_6GRUPA_FwdStateInfoSize_MB=state.history_total_6grupa_fwd_state_info_size_mb,
-        Max_GUPF_6GRUPA_FwdStateInfoSize_MB=state.history_max_gupf_6grupa_fwd_state_info_size_mb,
-        Mean_GUPF_6GRUPA_FwdStateInfoSize_MB=state.history_mean_gupf_6grupa_fwd_state_info_size_mb,
-        Median_GUPF_6GRUPA_FwdStateInfoSize_MB=state.history_median_gupf_6grupa_fwd_state_info_size_mb,
-        Mean_Entries_6GRUPA=state.history_mean_entries_6grupa,
-        Median_Entries_6GRUPA=state.history_median_entries_6grupa
-    )
+function save_simulation_results(operator_name::String, scenario_name::String, state::SimGlobalState, topology::NetworkTopology)
     # Create results directory if it doesn't exist
     results_dir = joinpath(@__DIR__, "../../results")
     if !isdir(results_dir)
         mkdir(results_dir)
     end
-    filename = "simulation_results_$(operator_name)_$(scenario_name).csv"
-    CSV.write(joinpath(results_dir, filename), df)
-    println("  -> Results: results/$filename")
-    save_detailed_evolution(operator_name, scenario_name, state, results_dir)
+    
+    # We no longer save the aggregated simulation_results_*.csv because the statistical fields 
+    # (history_total_*, history_mean_*, etc.) have been removed from SimGlobalState.
+    # Instead, we only save the detailed evolution in Long Format.
+    
+    save_detailed_evolution(operator_name, scenario_name, state, topology, results_dir)
 end
 
-function save_detailed_evolution(operator_name::String, scenario_name::String, state::SimGlobalState, results_dir::String)
-    # Helper to save a matrix (Time x UPF)
-    function save_matrix(data::Vector{Vector{T}}, metric_name::String) where T
-        if isempty(data)
-            return
-        end
-        
-        # Convert Vector of Vectors to Matrix
-        # Rows: Time steps
-        # Cols: UPFs
-        num_rows = length(data)
-        num_cols = length(data[1])
-        
-        # Create DataFrame
-        # Time column
-        df_detailed = DataFrame(Time=state.history_time)
-        
-        # UPF columns
-        for i in 1:num_cols
-            col_name = "UPF_$(i)"
-            df_detailed[!, col_name] = [row[i] for row in data]
-        end
-        
-        filename = "evolution_$(metric_name)_$(operator_name)_$(scenario_name).csv"
-        CSV.write(joinpath(results_dir, filename), df_detailed)
-        println("  -> Detailed Evolution ($metric_name): results/$filename")
-    end
+# function save_topology_map(operator_name::String, scenario_name::String, topology::NetworkTopology, results_dir::String)
+#     if isempty(topology.edge_upf_parent_map)
+#         return
+#     end
+#     
+#     # Create DataFrame for Edge UPF -> PSA mapping
+#     # Edge UPFs are 1-indexed in the map
+#     edge_upfs = 1:length(topology.edge_upf_parent_map)
+#     psa_upfs = topology.edge_upf_parent_map
+#     
+#     df_map = DataFrame(
+#         Edge_UPF_ID = edge_upfs,
+#         PSA_UPF_ID = psa_upfs
+#     )
+#     
+#     filename = "topology_map_$(operator_name)_$(scenario_name).csv"
+#     CSV.write(joinpath(results_dir, filename), df_map)
+#     println("  -> Topology Map: results/$filename")
+# end
 
-    save_matrix(state.history_per_upf_5g_fwd_state_info_size_mb, "5g_fwd_state_info_size_mb")
-    save_matrix(state.history_per_upf_entries_5g, "5g_entries")
-    save_matrix(state.history_per_gupf_6grupa_fwd_state_info_size_mb, "6grupa_fwd_state_info_size_mb")
-    save_matrix(state.history_per_gupf_entries_6grupa, "6grupa_entries")
+function save_detailed_evolution(operator_name::String, scenario_name::String, state::SimGlobalState, topology::NetworkTopology, results_dir::String)
+    times = Float64[]
+    upf_ids = Int[]
+    tiers = Int[]
+    
+    entries_5g = Int[]
+    mem_5g = Float64[]
+    entries_6g = Int[]
+    mem_6g = Float64[]
+    
+    num_steps = length(state.history_time)
+    num_edge = length(topology.upf_locations)
+    
+    for t_idx in 1:num_steps
+        time_val = state.history_time[t_idx]
+        
+        # All vectors should have the same length (number of UPFs) for a given time step
+        # We assume they are all synchronized in size
+        vals_entries_5g = state.history_per_upf_entries_5g[t_idx]
+        vals_mem_5g = state.history_per_upf_5g_fwd_state_info_size_mb[t_idx]
+        vals_entries_6g = state.history_per_gupf_entries_6grupa[t_idx]
+        vals_mem_6g = state.history_per_gupf_6grupa_fwd_state_info_size_mb[t_idx]
+        
+        num_upfs = length(vals_entries_5g)
+        
+        for idx in 1:num_upfs
+            push!(times, time_val)
+            push!(upf_ids, idx)
+            
+            # Determine Tier
+            if idx <= num_edge
+                push!(tiers, 1) # Edge
+            else
+                push!(tiers, 2) # Centralized / PSA
+            end
+            
+            push!(entries_5g, vals_entries_5g[idx])
+            push!(mem_5g, vals_mem_5g[idx])
+            push!(entries_6g, vals_entries_6g[idx])
+            push!(mem_6g, vals_mem_6g[idx])
+        end
+    end
+    
+    df = DataFrame(
+        Time = times,
+        UPF_ID = upf_ids,
+        Tier = tiers,
+        Entries_5G = entries_5g,
+        Memory_5G_MB = mem_5g,
+        Entries_6G = entries_6g,
+        Memory_6G_MB = mem_6g
+    )
+    
+    # Replace spaces with underscores in filename to be safe
+    safe_op = replace(operator_name, " " => "_")
+    safe_scen = replace(scenario_name, " " => "_")
+    
+    filename = "evolution_detailed_$(safe_op)_$(safe_scen).csv"
+    CSV.write(joinpath(results_dir, filename), df)
+    println("  -> Detailed Evolution: results/$filename")
 end
 
 function print_forwarding_tables(state::SimGlobalState, scale_factor::Int)
