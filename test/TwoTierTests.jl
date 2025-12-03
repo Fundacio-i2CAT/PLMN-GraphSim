@@ -179,11 +179,11 @@ using MetaGraphsNext
         # Test Metrics Calculation (to ensure PSA load is derived)
         metrics = Simulation.collect_5g_metrics(state, topology, 1)
         
-        # Edge UPF (Index 1) should have 1 entry
-        @test metrics.per_upf_entries[1] == 1
+        # Edge UPF (Index 1) should have 2 entries (UL + DL)
+        @test metrics.per_upf_entries[1] == 2
         
-        # PSA UPF (Index 2) should have 1 entry (derived)
-        @test metrics.per_upf_entries[2] == 1
+        # PSA UPF (Index 2) should have 2 entries (derived UL + DL)
+        @test metrics.per_upf_entries[2] == 2
         
         # Release Connections
         Simulation.release_ue_connections(state, 1, 1)
