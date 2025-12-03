@@ -12,7 +12,7 @@ scale_factor = 1000
 duration = 100.0
 
 # Mean duration of a user session (active time)
-mean_session_duration = 20.0
+mean_session_duration = 95.0
 
 # Mean time between sessions (offline time)
 mean_offline_duration = 5.0
@@ -48,7 +48,7 @@ mobile_adoption_rate = 0.82
 "Spain Distributed" = 52 # 52 is the number of provinces in Spain without Canary Islands, but counting ceuta and melilla.
 
 [countries.spain.operators]
-vodafone = { id = 1, enabled = false }
+vodafone = { id = 1, enabled = true }
 orange = { id = 3, enabled = false }
 movistar = { id = 7, enabled = true }
 
@@ -66,6 +66,6 @@ mobile_adoption_rate = 0.82
 
 [countries.usa.operators]
 verizon = { id = 480, enabled = true }
-att = { id = 410, enabled = false }
+att = { id = 410, enabled = true }
 tmobile = { id = 260, enabled = false }
 uscellular = { id = 580, enabled = false }
