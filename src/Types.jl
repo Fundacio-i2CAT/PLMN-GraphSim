@@ -9,9 +9,14 @@ using GeometryBasics
 
 export FAR, SessionContext5G, ForwardingEntry6GRUPA, ForwardingState5G, SessionSimMetadata
 export SimGlobalState, GeoPoint, NetworkTopology, GUPFState6GRUPA, Municipality, SimConfig
-export haversine_distance
+export haversine_distance, UserType, eMBB, mMTC, URLLC
 
 # --- Constants ---
+@enum UserType begin
+    eMBB
+    mMTC
+    URLLC
+end
 
 # --- Simulation Constants ---
 # --- Shared Structures ---
