@@ -103,12 +103,13 @@ function print_forwarding_tables(state::SimGlobalState, scale_factor::Int)
     println("\n[5G Architecture] Per-UPF Session Contexts (Dynamic State):")
     for (i, sessions) in enumerate(state.upf_sessions_5g)
         mem_mb = Base.summarysize(sessions) / (1024^2)
-        num_entries = length(sessions)
+        num_sessions = length(sessions)
         # We agreggate calculations just by scaling the number of sessions.
-        real_entries = num_entries * scale_factor
+        # Each session has 2 entries (UL + DL)
+        real_entries = num_sessions * scale_factor * 2
         real_mem_mb = mem_mb * scale_factor
         println("  UPF #$i:")
-        println("    Forwarding Entries: $real_entries (Active PDU Sessions)")
+        println("    Forwarding Entries: $real_entries (Active PDU Sessions * 2)")
         println("    Memory Usage:       $(round(real_mem_mb, digits=4)) MB")
     end
 

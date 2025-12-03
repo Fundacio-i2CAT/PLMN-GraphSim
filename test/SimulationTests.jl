@@ -139,10 +139,7 @@ using MetaGraphsNext
             
             Simulation.save_detailed_evolution(operator_name, scenario_name, state, mock_topology, temp_dir)
             
-            @test isfile(joinpath(temp_dir, "evolution_5g_fwd_state_info_size_mb_TestOp_TestScenario.csv"))
-            @test isfile(joinpath(temp_dir, "evolution_5g_entries_TestOp_TestScenario.csv"))
-            @test isfile(joinpath(temp_dir, "evolution_6grupa_mb_TestOp_TestScenario.csv"))
-            @test isfile(joinpath(temp_dir, "evolution_6grupa_entries_TestOp_TestScenario.csv"))
+            @test isfile(joinpath(temp_dir, "evolution_detailed_TestOp_TestScenario.csv"))
         end
     end
 
