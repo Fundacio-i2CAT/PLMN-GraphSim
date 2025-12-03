@@ -29,5 +29,7 @@ Let's break down the results further.
 
 ## Evolution of Number of Entries per UPF and GUPF over time
 
-One could argue that memory can be optim
+One could argue that memory can be optimized and is somehow implementation dependent, but the number of entries is a more abstract metric that indicates the actual state the UPFs need to maintain, no matter how you later implement the data structures.
+
+
 
