@@ -7,16 +7,7 @@ copyright: Copyright &copy; 2025 Fundacio i2CAT
 nav:
   - Summary: index.md
   - Quickstart: quickstart.md
-  - Country-Specific Datasets:
-      - Getting Data Ready: agents/getting-data-ready.md
-      - Countries:
-          - Spain: agents/countries/spain.md
-          - USA: agents/countries/usa.md
-  - The Simulator:
-      - How Simulator Works: simulation-details/how-simulator-works.md
-      - Simulation Configuration: simulation-details/simulation-configuration.md
-      - UPF Placement Strategy: simulation-details/k-means.md
-      - Mobility Models: simulation-details/mobility-models.md
+  - The Simulator In a Nutshell: simulation-details/in-a-nutshell/in-a-nutshell.md
   - Scenarios:
       - Single-Tier Architecture:
           - scenarios/single_tier_architecture/setup.md
@@ -27,6 +18,17 @@ nav:
       - Mobility:
           - scenarios/mobility/setup.md
           - scenarios/mobility/analysis.md
+  - The Simulator in-depth:
+      - eMBB Focus: simulation-details/embb.md
+      - Country-Specific Datasets:
+          - Getting Data Ready: agents/getting-data-ready.md
+          - Countries:
+              - Spain: agents/countries/spain.md
+              - USA: agents/countries/usa.md
+      - How Simulator Works Under the Hood: simulation-details/how-simulator-works.md
+      - Simulation Configuration: simulation-details/simulation-configuration.md
+      - UPF Placement Strategy: simulation-details/k-means.md
+      - Mobility Models: simulation-details/mobility-models.md
 
 theme:
   name: material
@@ -74,12 +76,18 @@ markdown_extensions:
   - pymdownx.snippets
   - pymdownx.tabbed:
       alternate_style: true
+  - pymdownx.arithmatex:
+      generic: true
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - attr_list
   - tables
   - md_in_html
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
 
 plugins:
   - search
