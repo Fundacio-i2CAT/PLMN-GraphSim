@@ -26,7 +26,8 @@ function create_sim_config(toml_data)
         get(sim_data, "mean_offline_duration", 5.0),
         # Default to basic single-tier scenario if not specified
         Symbol(get(sim_data, "scenario_mode", "single_tier")),
-        get(sim_data, "num_centralized_upfs", 0)
+        get(sim_data, "num_centralized_upfs", 0),
+        get(sim_data, "sampling_interval", 1.0)
     )
 end
 

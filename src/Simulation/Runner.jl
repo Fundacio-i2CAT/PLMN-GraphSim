@@ -19,11 +19,11 @@ function run_operator_simulation(operator_name::String, operator_id::Int, num_up
     topology = load_and_deploy_network(valid_paths, operator_id, num_upfs, data_dir, config)
     simulation = ConcurrentSim.Simulation()
     global_state = init_global_state_for_simulation(topology, config)
-    @process monitor_metrics(simulation, global_state, config.scale_factor)
+    @process monitor_metrics(simulation, global_state, topology, config.scale_factor)
     for i in 1:number_of_agents
         # XXX Default to eMBB for now
         @process user_lifecycle(simulation, i, global_state, topology, eMBB)
     end
     run(simulation, config.duration) # Run for configured duration
-    save_simulation_results(operator_name, scenario_name, global_state)
+    save_simulation_results(operator_name, scenario_name, global_state, topology)
 end
