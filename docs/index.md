@@ -16,8 +16,8 @@ Then, these elements are connected based on proximity.
 
 ```mermaid
 graph LR
-    UE([UE]) -- closest --> gNB[gNB]
-    gNB -- closest --> UPF[UPF]
+    UE([UE]) -- NR interface (closest) --> gNB[gNB]
+    gNB -- N3 interface (closest) --> UPF[UPF]
 ```
 
 
