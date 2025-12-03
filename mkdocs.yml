@@ -17,7 +17,7 @@ nav:
       - Simulation Configuration: simulation-details/simulation-configuration.md
       - UPF Placement Strategy: simulation-details/k-means.md
       - Mobility Models: simulation-details/mobility-models.md
-  - Scenarios to Simulate:
+  - Scenarios:
       - Single-Tier Architecture:
           - scenarios/single_tier_architecture/setup.md
           - scenarios/single_tier_architecture/analysis.md
