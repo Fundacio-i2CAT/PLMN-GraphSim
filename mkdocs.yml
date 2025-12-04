@@ -16,16 +16,16 @@ nav:
           - USA: agents/countries/usa.md
       - Configuration: simulation-details/simulation-configuration.md
   - Scenarios:
-      - scenarios/index.md
+      - Overview: scenarios/index.md
       - Single-Tier Architecture:
-          - scenarios/single_tier_architecture/setup.md
-          - scenarios/single_tier_architecture/analysis.md
+          - Setup: scenarios/single_tier_architecture/setup.md
+          - Analysis: scenarios/single_tier_architecture/analysis.md
       - Two-Tier Architecture:
-          - scenarios/two_tier_architecture/setup.md
-          - scenarios/two_tier_architecture/analysis.md
+          - Setup: scenarios/two_tier_architecture/setup.md
+          - Analysis: scenarios/two_tier_architecture/analysis.md
       - Mobility:
-          - scenarios/mobility/setup.md
-          - scenarios/mobility/analysis.md
+          - Setup: scenarios/mobility/setup.md
+          - Analysis: scenarios/mobility/analysis.md
   - Technical Reference:
       - Core Concepts:
           - In a Nutshell: simulation-details/in-a-nutshell/in-a-nutshell.md
