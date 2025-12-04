@@ -20,6 +20,18 @@ Let's break down the results further.
 
 ![Box Plot of Table Sizes](./boxplot_table_sizes.png)
 
+### Understanding the Distribution
+
+The box plot above illustrates the distribution of forwarding table sizes (number of entries) for every UPF (in 5G) and GUPF (in 6G-RUPA) in the simulation. 
+
+The plot shows:
+
+*   **Y-Axis (Log Scale):** The number of entries is plotted on a logarithmic scale to accommodate the massive difference between architectures.
+*   **The Box:** Shows the middle 50% of the UPFs. The horizontal line inside is the median size.
+*   **Whiskers & Outliers:** The whiskers show the range of typical values, while individual points represent outliers—UPFs with exceptionally high or low loads.
+
+So the separation between the two groups is **essentially three orders of magnitude**. This means that even the largest GUPF in 6G-RUPA has a forwarding table size that is about 1000 times smaller than the smallest UPF in 5G.
+
 ## Evolution of Network Memory per UPF and GUPF over time
 
 !!! note
