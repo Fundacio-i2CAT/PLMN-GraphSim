@@ -41,6 +41,10 @@ Explore the different simulation scenarios available in the project.
 
     Scenarios involving user movement and handovers.
 
+    !!! warning ":construction_worker: Work in Progress :construction_worker:"
+        This scenario is still under development. Stay tuned for updates!
+    ```mermaid
+
     [:octicons-arrow-right-24: View Setup](mobility/setup.md)
     [:octicons-graph-24: View Analysis](mobility/analysis.md)
 

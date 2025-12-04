@@ -8,6 +8,7 @@ copyright: Copyright &copy; 2025 Fundacio i2CAT
 
 nav:
   - DES Julia B5G: index.md
+  - The Simulator In a Nutshell: simulation-details/in-a-nutshell/in-a-nutshell.md
   - Quickstart: quickstart.md
   - User Guide:
       - Data Preparation:
@@ -16,19 +17,18 @@ nav:
           - USA: agents/countries/usa.md
       - Configuration: simulation-details/simulation-configuration.md
   - Scenarios:
-      - Overview: scenarios/index.md
+      - scenarios/index.md
       - Single-Tier Architecture:
-          - Setup: scenarios/single_tier_architecture/setup.md
-          - Analysis: scenarios/single_tier_architecture/analysis.md
+          - scenarios/single_tier_architecture/setup.md
+          - scenarios/single_tier_architecture/analysis.md
       - Two-Tier Architecture:
-          - Setup: scenarios/two_tier_architecture/setup.md
-          - Analysis: scenarios/two_tier_architecture/analysis.md
+          - scenarios/two_tier_architecture/setup.md
+          - scenarios/two_tier_architecture/analysis.md
       - Mobility:
-          - Setup: scenarios/mobility/setup.md
-          - Analysis: scenarios/mobility/analysis.md
-  - Technical Reference:
+          - scenarios/mobility/setup.md
+          - scenarios/mobility/analysis.md
+  - Simulator in-depth:
       - Core Concepts:
-          - In a Nutshell: simulation-details/in-a-nutshell/in-a-nutshell.md
           - Under the Hood: simulation-details/how-simulator-works.md
       - Algorithms & Models:
           - UPF Placement Strategy: simulation-details/k-means.md
