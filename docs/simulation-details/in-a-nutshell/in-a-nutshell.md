@@ -38,10 +38,10 @@ So to distribute the agents we need two things:
 
 With that information, we can distribute the agents proportionally to the population of each municipality, ensuring a realistic distribution of users across the country.
 
-!!! note
+!!! note "Data Preparation"
     This is a but tricky because every country provides this data in a different format and differnt source. For example, in Spain we use data from the INE (Instituto Nacional de Estadística), while in the USA we use data from the Census Bureau. More details about how to prepare the data for each country can be found in the [Agents documentation](agents/getting-data-ready.md).
 
-!!! warning
+??? warning "Sorry..."
     Sorry Alaskans, Hawaiians and people from the Canary Islands, the study of this gets easier if we don't have to deal a lot with un-connected regions, they are removed from the map :)
 
 But once we have the agents distributed, we can visualize them on a map:
