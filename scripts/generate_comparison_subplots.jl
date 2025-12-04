@@ -59,8 +59,8 @@ function generate_comparison_plot(operator, country, file_distributed, file_twot
         ylabel="Memory (MB)",
         legend=:topleft
     )
-    plot!(p1, df_dist.Time, df_dist.Total_Memory_6G, label="Distributed", lw=2)
-    plot!(p1, df_two.Time, df_two.Total_Memory_6G, label="Two-Tier", lw=2)
+    plot!(p1, df_dist.Time, df_dist.Total_Memory_6G, label="Distributed", lw=3, linestyle=:solid, marker=:circle, markersize=4, markerstrokewidth=0)
+    plot!(p1, df_two.Time, df_two.Total_Memory_6G, label="Two-Tier", lw=3, linestyle=:dash, marker=:square, markersize=4, markerstrokewidth=0)
     
     # --- Plot 2: Total Entries 6G Evolution ---
     p2 = plot(
@@ -69,8 +69,8 @@ function generate_comparison_plot(operator, country, file_distributed, file_twot
         ylabel="Entries",
         legend=:topleft
     )
-    plot!(p2, df_dist.Time, df_dist.Total_Entries_6G, label="Distributed", lw=2)
-    plot!(p2, df_two.Time, df_two.Total_Entries_6G, label="Two-Tier", lw=2)
+    plot!(p2, df_dist.Time, df_dist.Total_Entries_6G, label="Distributed", lw=3, linestyle=:solid, marker=:circle, markersize=4, markerstrokewidth=0)
+    plot!(p2, df_two.Time, df_two.Total_Entries_6G, label="Two-Tier", lw=3, linestyle=:dash, marker=:square, markersize=4, markerstrokewidth=0)
 
     # --- Plot 3: Memory Reduction Factor (5G vs 6G) ---
     # Let's compare the reduction factor between the two scenarios
@@ -85,8 +85,8 @@ function generate_comparison_plot(operator, country, file_distributed, file_twot
         ylabel="Factor (x)",
         legend=:topleft
     )
-    plot!(p3, df_dist.Time, red_dist, label="Distributed", lw=2)
-    plot!(p3, df_two.Time, red_two, label="Two-Tier", lw=2)
+    plot!(p3, df_dist.Time, red_dist, label="Distributed", lw=3, linestyle=:solid, marker=:circle, markersize=4, markerstrokewidth=0)
+    plot!(p3, df_two.Time, red_two, label="Two-Tier", lw=3, linestyle=:dash, marker=:square, markersize=4, markerstrokewidth=0)
 
     # --- Plot 4: Total Memory 5G (Baseline) ---
     # Just to show they are similar or different
@@ -96,8 +96,8 @@ function generate_comparison_plot(operator, country, file_distributed, file_twot
         ylabel="Memory (MB)",
         legend=:topleft
     )
-    plot!(p4, df_dist.Time, df_dist.Total_Memory_5G, label="Distributed", lw=2)
-    plot!(p4, df_two.Time, df_two.Total_Memory_5G, label="Two-Tier", lw=2)
+    plot!(p4, df_dist.Time, df_dist.Total_Memory_5G, label="Distributed", lw=3, linestyle=:solid, marker=:circle, markersize=4, markerstrokewidth=0)
+    plot!(p4, df_two.Time, df_two.Total_Memory_5G, label="Two-Tier", lw=3, linestyle=:dash, marker=:square, markersize=4, markerstrokewidth=0)
 
     # Combine into one figure
     final_plot = plot(p1, p2, p3, p4, layout=(2, 2), size=(1200, 800), margin=5Plots.mm)
@@ -108,6 +108,27 @@ function generate_comparison_plot(operator, country, file_distributed, file_twot
 end
 
 function main()
+    # Wong's Color Blind Friendly Palette
+    cb_palette = [
+        colorant"#E69F00", # Orange
+        colorant"#56B4E9", # Sky Blue
+        colorant"#009E73", # Bluish Green
+        colorant"#F0E442", # Yellow
+        colorant"#0072B2", # Blue
+        colorant"#D55E00", # Vermilion
+        colorant"#CC79A7", # Reddish Purple
+        colorant"#000000"  # Black
+    ]
+    
+    default(
+        size=(800, 600), 
+        guidefont=14, 
+        tickfont=12, 
+        legendfont=12,
+        palette=cb_palette,
+        linewidth=2
+    )
+
     files = readdir(RESULTS_DIR)
     
     # Group files by (Operator, Country)
