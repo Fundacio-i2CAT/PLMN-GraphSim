@@ -1,5 +1,4 @@
-images/
-!docs/images
+/images/
 results/
 coverage/
 coverage_html/
