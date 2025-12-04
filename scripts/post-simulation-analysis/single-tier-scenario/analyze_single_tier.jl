@@ -96,9 +96,9 @@ function generate_global_stats_dashboard(df::DataFrame, output_dir::String)
     
     p1 = groupedbar(long_mem.Label, long_mem.Memory_MB, group=long_mem.Metric,
         ylabel="Total Memory (MB)",
-        title="Total Network Memory (Log Scale)",
+        title="Total Forwarding State Memory Across the Operator (Log Scale)",
         yscale=:log10,
-        legend=:topleft
+        legend=:outertop
     )
 
     # 2. Average Memory per UPF (Bar)
@@ -111,9 +111,9 @@ function generate_global_stats_dashboard(df::DataFrame, output_dir::String)
     
     p2 = groupedbar(long_avg.Label, long_avg.Memory_MB, group=long_avg.Metric,
         ylabel="Avg Memory (MB)",
-        title="Average Memory per UPF (Log Scale)",
+        title="Average Memory per UPF / GUPF (Log Scale)",
         yscale=:log10,
-        legend=:topleft
+        legend=:outertop
     )
 
     # 3. Box Plot of Table Sizes
@@ -125,9 +125,9 @@ function generate_global_stats_dashboard(df::DataFrame, output_dir::String)
     
     p3 = groupedboxplot(long_box.Operator, long_box.Entries, group=long_box.Architecture,
         ylabel="Entries",
-        title="Distribution of Table Sizes (Log Scale)",
+        title="Distribution of Table Sizes Across UPFs / GUPFs (Log Scale)",
         yscale=:log10,
-        legend=:topleft
+        legend=:outertop
     )
 
     # 4. Memory Reduction Factor
@@ -141,7 +141,7 @@ function generate_global_stats_dashboard(df::DataFrame, output_dir::String)
 
     p4 = bar(grouped_red.Operator, grouped_red.Reduction,
         ylabel="Factor (x)",
-        title="Memory Reduction Factor (5G / 6G)",
+        title="Memory Reduction Factor (5G / 6G-RUPA)",
         legend=false,
         color=:green
     )
