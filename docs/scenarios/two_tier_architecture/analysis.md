@@ -84,6 +84,10 @@ The plot shows:
 
 ## Detailed Evolution Analysis
 
+??? note "A note on the plots"
+    *   **Logarithmic Scale:** The plots use a logarithmic scale on the Y-axis. Since $\log(0)$ is undefined, the **5G (Orange)** line starts at the first time step where sessions are established (Time 1.0), appearing to "jump" from 0.
+    *   **6G-RUPA (Blue):** This line starts at Time 0 with a non-zero value because the routers are pre-populated with the network topology.
+
 ??? note "A note on how memory is calculated"
     Memory is calculated based on the number of entries and the size of the data structures.
 
