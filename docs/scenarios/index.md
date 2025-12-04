@@ -10,6 +10,12 @@ Explore the different simulation scenarios available in the project.
 
     Baseline architecture with a flat network topology.
 
+    ```mermaid
+    graph LR
+        UE([UE]) -- NR --> gNB[gNB]
+        gNB -- N3 --> UPF[UPF]
+    ```
+
     [:octicons-arrow-right-24: View Setup](single_tier_architecture/setup.md)
     [:octicons-graph-24: View Analysis](single_tier_architecture/analysis.md)
 
@@ -18,6 +24,13 @@ Explore the different simulation scenarios available in the project.
     ---
 
     Hierarchical architecture with edge and regional components.
+
+    ```mermaid
+    graph LR
+        UE([UE]) -- NR --> gNB([gNB])
+        gNB -- N3 --> EdgeUPF(["Edge UPF"])
+        EdgeUPF -- N9 --> PSA(["PSA UPF"])
+    ```
 
     [:octicons-arrow-right-24: View Setup](two_tier_architecture/setup.md)
     [:octicons-graph-24: View Analysis](two_tier_architecture/analysis.md)
