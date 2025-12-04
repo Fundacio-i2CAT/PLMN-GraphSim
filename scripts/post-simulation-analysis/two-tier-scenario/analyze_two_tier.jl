@@ -12,450 +12,256 @@ using .Utils
 
 # --- Configuration ---
 SCENARIO_NAME = "two-tier"
-# We filter for "TwoTier" because that corresponds to the Two Tier scenario in our results
 SCENARIO_FILTER = "TwoTier" 
+
+# Override images dir to point to docs
+IMAGES_DIR = joinpath(@__DIR__, "../../../docs/images/two_tier_scenario")
+if !isdir(IMAGES_DIR)
+    mkpath(IMAGES_DIR)
+end
 
 # --- Analysis Functions ---
 
-function plot_combined_evolution_from_df(config_name::String, df::DataFrame, col_5g::Symbol, col_6g::Symbol, metric_type::String, output_dir::String; skip_comparison=false)
-    # Filter for Tier 1 (Edge) for the main evolution plots
-    df_edge = filter(row -> row.Tier == 1, df)
+function get_combined_evolution_plot(df::DataFrame, col_5g::Symbol, col_6g::Symbol, title::String, ylabel::String; force_scientific::Bool=false)
+    # Explicit Colors (Wong's Palette)
+    c_5g = colorant"#E69F00" # Orange
+    c_6g = colorant"#56B4E9" # Sky Blue
     
-    # Pivot to Wide format for plotting (Time x UPF)
-    wide_5g = unstack(df_edge, :Time, :UPF_ID, col_5g)
-    wide_6g = unstack(df_edge, :Time, :UPF_ID, col_6g)
+    p = plot(
+        xlabel="Time (s)",
+        ylabel=ylabel,
+        title=title,
+        legend=:outertop,
+        framestyle=:box,
+        margin=5Plots.mm,
+        titlefontsize=10,
+        guidefontsize=8,
+        tickfontsize=8,
+        yformatter = force_scientific ? :scientific : :auto,
+        yscale=:log10
+    )
     
-    wide_5g = coalesce.(wide_5g, 0.0)
-    wide_6g = coalesce.(wide_6g, 0.0)
+    upf_ids = unique(df.UPF_ID)
+    first_5g = true
+    first_6g = true
     
-    time_vec = wide_5g.Time
+    for upf in upf_ids
+        sub_df = filter(row -> row.UPF_ID == upf, df)
+        
+        # Data cleaning for log plot (replace <= 0 with NaN)
+        y_5g = map(x -> x <= 0 ? NaN : x, sub_df[!, col_5g])
+        y_6g = map(x -> x <= 0 ? NaN : x, sub_df[!, col_6g])
+        
+        # Only label the first line of each type
+        lbl_5g = first_5g ? "5G UPFs" : nothing
+        lbl_6g = first_6g ? "6G-RUPA GUPFs" : nothing
+        
+        plot!(p, sub_df.Time, y_5g, color=c_5g, alpha=0.3, lw=1.5, label=lbl_5g)
+        plot!(p, sub_df.Time, y_6g, color=c_6g, alpha=0.3, lw=1.5, label=lbl_6g)
+        
+        if first_5g; first_5g = false; end
+        if first_6g; first_6g = false; end
+    end
     
-    cols_5g = filter(n -> n != "Time", names(wide_5g))
-    cols_6g = filter(n -> n != "Time", names(wide_6g))
+    # Mean lines
+    mean_5g = combine(groupby(df, :Time), col_5g => mean => :Mean)
+    mean_6g = combine(groupby(df, :Time), col_6g => mean => :Mean)
     
-    mat_5g = Matrix(wide_5g[:, cols_5g])
-    mat_6g = Matrix(wide_6g[:, cols_6g])
+    y_mean_5g = map(x -> x <= 0 ? NaN : x, mean_5g.Mean)
+    y_mean_6g = map(x -> x <= 0 ? NaN : x, mean_6g.Mean)
     
-    total_5g = sum(mat_5g, dims=2)
-    total_6g = sum(mat_6g, dims=2)
+    plot!(p, mean_5g.Time, y_mean_5g, label="Mean 5G", color=c_5g, lw=3, linestyle=:solid)
+    plot!(p, mean_6g.Time, y_mean_6g, label="Mean 6G-RUPA", color=c_6g, lw=3, linestyle=:solid)
     
-    generated_files = String[]
+    return p
+end
+
+function generate_scenario_dashboard(config_name::String, detailed_file::String, output_dir::String)
+    println("Generating Dashboard for $config_name...")
+    df = CSV.read(detailed_file, DataFrame)
+    
+    # Filter for Centralized UPFs (Tier 2)
+    df_centralized = filter(row -> row.Tier == 2, df)
+    
+    if nrow(df_centralized) == 0
+        println("  Warning: No Tier 2 (Centralized) UPFs found for $config_name")
+        return
+    end
+
+    # 1. Memory Comparison
+    p_mem = get_combined_evolution_plot(df_centralized, :Memory_5G_MB, :Memory_6G_MB, 
+        "Memory Evolution (Centralized UPFs)", "Memory (MB)")
+    
+    # 2. Entries Comparison
+    p_ent = get_combined_evolution_plot(df_centralized, :Entries_5G, :Entries_6G, 
+        "Entries Evolution (Centralized UPFs)", "Entries", force_scientific=true)
+    
+    # Combine
+    dashboard = plot(p_mem, p_ent, 
+        layout=(1, 2), 
+        size=(1200, 600),
+        plot_title="Centralized UPF Evolution: $config_name",
+        plot_titlefontsize=16,
+        margin=10Plots.mm
+    )
     
     safe_config = replace(config_name, " " => "_")
-    safe_metric = replace(metric_type, " " => "_", "(" => "", ")" => "")
-
-    # Comparison Plot (Log Scale)
-    if !skip_comparison
-        p_comp = plot(
-            xlabel="Time (s)",
-            ylabel="Total $metric_type (Log Scale)",
-            title="Evolution of Total $metric_type\n$config_name",
-            legend=:topleft,
-            framestyle=:box,
-            margin=10Plots.mm,
-            yscale=:log10,
-            size=(1200, 800),
-            tickfontsize=12,
-            guidefontsize=14,
-            legendfontsize=12,
-            titlefontsize=16
-        )
-        
-        plot!(p_comp, time_vec, total_5g, label="5G (Total)", lw=4, color=:red)
-        plot!(p_comp, time_vec, total_6g, label="6G-RUPA (Total)", lw=4, color=:blue)
-        
-        outfile_comp = joinpath(output_dir, "comparison_total_$(safe_metric)_$(safe_config).png")
-        savefig(p_comp, outfile_comp)
-        println("  -> Generated Comparison: $outfile_comp")
-        push!(generated_files, basename(outfile_comp))
-    end
-    
-    # Individual Plots
-    # 5G
-    p_5g = plot(
-        xlabel="Time (s)",
-        ylabel="$metric_type",
-        title="Evolution of $metric_type per UPF (5G)\n$config_name",
-        legend=false,
-        framestyle=:box,
-        margin=10Plots.mm,
-        size=(1200, 800),
-        tickfontsize=12,
-        guidefontsize=14,
-        titlefontsize=16
-    )
-    for col in cols_5g
-        plot!(p_5g, time_vec, wide_5g[!, col], alpha=0.5, lw=2, label=nothing)
-    end
-    plot!(p_5g, time_vec, total_5g ./ length(cols_5g), label="Mean", color=:black, lw=4, linestyle=:dash, legend=:topleft, legendfontsize=12)
-    
-    outfile_5g = joinpath(output_dir, "evolution_5g_$(safe_metric)_$(safe_config).png")
-    savefig(p_5g, outfile_5g)
-    push!(generated_files, basename(outfile_5g))
-    
-    # 6G
-    p_6g = plot(
-        xlabel="Time (s)",
-        ylabel="$metric_type",
-        title="Evolution of $metric_type per UPF (6G-RUPA)\n$config_name",
-        legend=false,
-        framestyle=:box,
-        margin=10Plots.mm,
-        size=(1200, 800),
-        tickfontsize=12,
-        guidefontsize=14,
-        titlefontsize=16
-    )
-    for col in cols_6g
-        plot!(p_6g, time_vec, wide_6g[!, col], alpha=0.5, lw=2, label=nothing)
-    end
-    plot!(p_6g, time_vec, total_6g ./ length(cols_6g), label="Mean", color=:black, lw=4, linestyle=:dash, legend=:topleft, legendfontsize=12)
-    
-    outfile_6g = joinpath(output_dir, "evolution_6grupa_$(safe_metric)_$(safe_config).png")
-    savefig(p_6g, outfile_6g)
-    push!(generated_files, basename(outfile_6g))
-    
-    return generated_files
-end
-
-function plot_psa_vs_centralized_comparison_from_df(config_name::String, df::DataFrame, output_dir::String)
-    # Filter for Tier 2 (Centralized / PSA)
-    df_tier2 = filter(row -> row.Tier == 2, df)
-    
-    # Pivot to Wide format for summing
-    wide_5g = unstack(df_tier2, :Time, :UPF_ID, :Memory_5G_MB)
-    wide_6g = unstack(df_tier2, :Time, :UPF_ID, :Memory_6G_MB)
-    
-    wide_5g = coalesce.(wide_5g, 0.0)
-    wide_6g = coalesce.(wide_6g, 0.0)
-    
-    cols_5g = filter(n -> n != "Time", names(wide_5g))
-    cols_6g = filter(n -> n != "Time", names(wide_6g))
-    
-    mat_5g = Matrix(wide_5g[:, cols_5g])
-    total_5g_mb = sum(mat_5g, dims=2)
-    
-    mat_6g = Matrix(wide_6g[:, cols_6g])
-    total_6g_mb = sum(mat_6g, dims=2)
-    
-    p_comp = plot(
-        xlabel="Time (s)",
-        ylabel="Memory (MB) (Log Scale)",
-        title="Core Network Memory Comparison\n(5G PSA vs 6G Centralized UPFs)\n$config_name",
-        legend=:topleft,
-        framestyle=:box,
-        margin=10Plots.mm,
-        yscale=:log10,
-        size=(1200, 800),
-        tickfontsize=12,
-        guidefontsize=14,
-        legendfontsize=12,
-        titlefontsize=16
-    )
-    
-    plot!(p_comp, wide_5g.Time, total_5g_mb, label="5G PSA (Total)", lw=4, color=:red)
-    plot!(p_comp, wide_6g.Time, total_6g_mb, label="6G Centralized (Total)", lw=4, color=:blue)
-    
-    safe_config = replace(config_name, " " => "_")
-    outfile = joinpath(output_dir, "comparison_psa_vs_centralized_$(safe_config).png")
-    savefig(p_comp, outfile)
-    println("  -> Generated PSA vs Centralized Comparison: $outfile")
+    outfile = joinpath(output_dir, "dashboard_evolution_$(safe_config).png")
+    savefig(dashboard, outfile)
     return basename(outfile)
 end
 
-function run_evolution_analysis(results_dir::String, images_dir::String)
-    println("Running Evolution Analysis...")
-    files = readdir(results_dir)
+function generate_global_stats_dashboard(df::DataFrame, output_dir::String)
+    println("Generating Global Stats Dashboard...")
     
-    # Find configurations that match our scenario filter
-    configs = Set{String}()
-    prefix = "evolution_detailed_"
-    for f in files
-        if startswith(f, prefix) && occursin(SCENARIO_FILTER, f)
-            config = replace(f, prefix => "")
-            config = replace(config, ".csv" => "")
-            push!(configs, config)
-        end
-    end
+    # Filter for only Movistar and Verizon
+    df = filter(row -> row.Operator in ["Movistar", "Verizon"], df)
     
-    println("Found configurations for $SCENARIO_NAME: $configs")
-    
-    generated_plots = String[]
-    
-    for config in configs
-        f_path = joinpath(results_dir, "evolution_detailed_$(config).csv")
-        
-        if isfile(f_path)
-            df = CSV.read(f_path, DataFrame)
-            
-            # Entries Comparison
-            plots = plot_combined_evolution_from_df(config, df, :Entries_5G, :Entries_6G, "Entries", images_dir, skip_comparison=true)
-            append!(generated_plots, plots)
-            
-            # Memory Comparison
-            plots = plot_combined_evolution_from_df(config, df, :Memory_5G_MB, :Memory_6G_MB, "Fwd State Info Size (MB)", images_dir, skip_comparison=true)
-            append!(generated_plots, plots)
-
-            # PSA vs Centralized Comparison
-            plot_file = plot_psa_vs_centralized_comparison_from_df(config, df, images_dir)
-            push!(generated_plots, plot_file)
-        end
-    end
-    return generated_plots
-end
-
-function plot_memory_reduction_factor(df::DataFrame, images_dir::String)
-    println("Generating Memory Reduction Factor Plot...")
-    
-    grouped = combine(groupby(df, :Configuration), 
-        :Total_5G_FwdStateInfoSize_MB => sum => :Total_5G,
-        :Total_6GRUPA_FwdStateInfoSize_MB => sum => :Total_6G
-    )
-    
-    grouped.Reduction_Factor = grouped.Total_5G ./ grouped.Total_6G
-    
-    p = bar(grouped.Configuration, grouped.Reduction_Factor,
-        ylabel="Reduction Factor (5G / 6G-RUPA)",
-        title="Memory Reduction Factor (Higher is Better)",
-        legend=false,
-        bar_width=0.6,
-        xrotation=45,
-        framestyle=:box,
-        margin=20Plots.mm,
-        color=:green,
-        size=(1200, 800),
-        tickfontsize=12,
-        guidefontsize=14,
-        titlefontsize=16
-    )
-    
-    for (i, y) in enumerate(grouped.Reduction_Factor)
-        annotate!(i, y, text(@sprintf("%.1fx", y), :bottom, 12))
-    end
-    
-    outfile = joinpath(images_dir, "memory_reduction_factor.png")
-    savefig(p, outfile)
-    return basename(outfile)
-end
-
-function plot_table_sizes_boxplot(df::DataFrame, images_dir::String)
-    println("Generating Box Plot of Table Sizes...")
-    
-    # Prepare data for plotting
-    df_5g = select(df, :Operator, :Entries_5G => :Entries)
-    df_5g.Architecture .= "5G"
-    
-    df_6g = select(df, :Operator, :Entries_6GRUPA => :Entries)
-    df_6g.Architecture .= "6G-RUPA"
-    
-    long_df = vcat(df_5g, df_6g)
-    
-    p = groupedboxplot(long_df.Operator, long_df.Entries, group=long_df.Architecture,
-        ylabel="Number of Entries (Log Scale)",
-        title="Distribution of Forwarding Table Sizes",
-        yscale=:log10,
-        framestyle=:box,
-        legend=:outertopright,
-        margin=15Plots.mm,
-        size=(1200, 800),
-        tickfontsize=12,
-        guidefontsize=14,
-        legendfontsize=12,
-        titlefontsize=16,
-        bar_width=0.8,
-        lw=2
-    )
-    
-    outfile = joinpath(images_dir, "boxplot_table_sizes.png")
-    savefig(p, outfile)
-    return basename(outfile)
-end
-
-function plot_total_memory_comparison(df::DataFrame, images_dir::String)
-    println("Generating Total Memory Comparison Plot...")
-    
-    grouped = combine(groupby(df, [:Operator, :Scenario]), 
+    # 1. Total Memory Comparison (Bar)
+    grouped_mem = combine(groupby(df, [:Operator, :Scenario]), 
         :Total_5G_FwdStateInfoSize_MB => sum => :Memory_5G,
         :Total_6GRUPA_FwdStateInfoSize_MB => sum => :Memory_6G
     )
+    long_mem = stack(grouped_mem, [:Memory_5G, :Memory_6G], variable_name=:Metric, value_name=:Memory_MB)
+    long_mem.Label = long_mem.Operator
     
-    long_df = stack(grouped, [:Memory_5G, :Memory_6G], variable_name=:Metric, value_name=:Memory_MB)
-    long_df.Label = long_df.Operator .* "\n" .* long_df.Scenario
-    
-    p = groupedbar(long_df.Label, long_df.Memory_MB, group=long_df.Metric,
-        ylabel="Total Network Memory (MB)",
-        title="Total Network Memory (Log Scale)",
-        bar_width=0.8,
-        lw=0,
-        framestyle=:box,
+    p1 = groupedbar(long_mem.Label, long_mem.Memory_MB, group=long_mem.Metric,
+        ylabel="Total Memory (MB)",
+        title="Total Forwarding State Memory Across the Operator (Log Scale)",
         yscale=:log10,
-        legend=:outertopright,
-        margin=15Plots.mm,
-        size=(1200, 800),
-        tickfontsize=12,
-        guidefontsize=14,
-        legendfontsize=12,
-        titlefontsize=16
+        legend=:outertop
+    )
+
+    # 2. Average Memory per UPF (Bar)
+    grouped_avg = combine(groupby(df, [:Operator, :Scenario]), 
+        :Total_5G_FwdStateInfoSize_MB => mean => :Avg_Mem_5G,
+        :Total_6GRUPA_FwdStateInfoSize_MB => mean => :Avg_Mem_6G
+    )
+    long_avg = stack(grouped_avg, [:Avg_Mem_5G, :Avg_Mem_6G], variable_name=:Metric, value_name=:Memory_MB)
+    long_avg.Label = long_avg.Operator
+    
+    p2 = groupedbar(long_avg.Label, long_avg.Memory_MB, group=long_avg.Metric,
+        ylabel="Avg Memory (MB)",
+        title="Average Memory per UPF / GUPF (Log Scale)",
+        yscale=:log10,
+        legend=:outertop
+    )
+
+    # 3. Box Plot of Table Sizes
+    df_5g = select(df, :Operator, :Entries_5G => :Entries)
+    df_5g.Architecture .= "5G"
+    df_6g = select(df, :Operator, :Entries_6GRUPA => :Entries)
+    df_6g.Architecture .= "6G-RUPA"
+    long_box = vcat(df_5g, df_6g)
+    
+    p3 = groupedboxplot(long_box.Operator, long_box.Entries, group=long_box.Architecture,
+        ylabel="Entries",
+        title="Distribution of Table Sizes Across UPFs / GUPFs (Log Scale)",
+        yscale=:log10,
+        legend=:outertop
+    )
+
+    # 4. Memory Reduction Factor
+    grouped_red = combine(groupby(df, :Configuration), 
+        :Total_5G_FwdStateInfoSize_MB => sum => :Total_5G,
+        :Total_6GRUPA_FwdStateInfoSize_MB => sum => :Total_6G
+    )
+    grouped_red.Reduction = grouped_red.Total_5G ./ grouped_red.Total_6G
+    # Extract Operator from Configuration (assuming "Operator_Country_Scenario")
+    grouped_red.Operator = [split(c, "_")[1] for c in grouped_red.Configuration]
+
+    p4 = bar(grouped_red.Operator, grouped_red.Reduction,
+        ylabel="Factor (x)",
+        title="Memory Reduction Factor (5G / 6G-RUPA)",
+        legend=false,
+        color=:green
     )
     
-    outfile = joinpath(images_dir, "total_memory_comparison.png")
-    savefig(p, outfile)
+    dashboard = plot(p1, p2, p3, p4, 
+        layout=(2, 2), 
+        size=(1200, 800),
+        plot_title="Global Statistics Dashboard",
+        plot_titlefontsize=16,
+        margin=5Plots.mm
+    )
+    
+    outfile = joinpath(output_dir, "dashboard_global_stats.png")
+    savefig(dashboard, outfile)
     return basename(outfile)
 end
 
-function plot_per_upf_statistics(df::DataFrame, images_dir::String)
-    println("Generating Per-UPF Statistics Plots...")
+function print_summary_table(df::DataFrame)
+    println("\n--- Summary Table (Centralized UPFs / Tier 2) ---")
     
-    grouped = combine(groupby(df, [:Operator, :Scenario]), 
-        :Total_5G_FwdStateInfoSize_MB => mean => :Avg_Mem_5G,
-        :Total_5G_FwdStateInfoSize_MB => median => :Med_Mem_5G,
-        :Total_5G_FwdStateInfoSize_MB => maximum => :Max_Mem_5G,
-        :Total_5G_FwdStateInfoSize_MB => minimum => :Min_Mem_5G,
-        
-        :Total_6GRUPA_FwdStateInfoSize_MB => mean => :Avg_Mem_6G,
-        :Total_6GRUPA_FwdStateInfoSize_MB => median => :Med_Mem_6G,
-        :Total_6GRUPA_FwdStateInfoSize_MB => maximum => :Max_Mem_6G,
-        :Total_6GRUPA_FwdStateInfoSize_MB => minimum => :Min_Mem_6G
-    )
-
-    plots = String[]
-
-    function create_stat_plot(stat_name, col_suffix, title_suffix, filename)
-        cols = [
-            Symbol("$(col_suffix)_Mem_5G"), 
-            Symbol("$(col_suffix)_Mem_6G")
-        ]
-        
-        long_df = stack(grouped, cols, variable_name=:Metric, value_name=:Memory_MB)
-        long_df.Label = long_df.Operator .* "\n" .* long_df.Scenario
-        long_df.Metric = replace.(string.(long_df.Metric), "$(col_suffix)_" => "")
-        
-        p = groupedbar(long_df.Label, long_df.Memory_MB, group=long_df.Metric,
-            ylabel="$stat_name Memory per UPF (MB)",
-            title="$stat_name Memory per UPF (Log Scale)",
-            bar_width=0.8,
-            lw=0,
-            framestyle=:box,
-            yscale=:log10,
-            legend=:outertopright,
-            margin=15Plots.mm,
-            size=(1200, 800),
-            tickfontsize=12,
-            guidefontsize=14,
-            legendfontsize=12,
-            titlefontsize=16
-        )
-        outfile = joinpath(images_dir, filename)
-        savefig(p, outfile)
-        return basename(outfile)
+    # Filter for Tier 2
+    if "Tier" in names(df)
+        df_tier2 = filter(row -> row.Tier == 2, df)
+    else
+        println("Warning: 'Tier' column not found in dataframe. Using all UPFs.")
+        df_tier2 = df
     end
-
-    push!(plots, create_stat_plot("Average", "Avg", "Average", "average_memory_per_upf.png"))
-    push!(plots, create_stat_plot("Median", "Med", "Median", "median_memory_per_upf.png"))
-    push!(plots, create_stat_plot("Maximum", "Max", "Maximum", "max_memory_per_upf.png"))
-    push!(plots, create_stat_plot("Minimum", "Min", "Minimum", "min_memory_per_upf.png"))
     
-    return plots
-end
-
-function generate_report(df::DataFrame, evolution_plots::Vector{String}, static_plots::Vector{String}, images_dir::String)
-    println("Generating Markdown Report...")
-    # Save report in the images directory so it is self-contained
-    report_path = joinpath(images_dir, "analysis_report.md")
+    # Filter for Movistar and Verizon
+    df_tier2 = filter(row -> row.Operator in ["Movistar", "Verizon"], df_tier2)
     
-    # Relative path to images from report (same directory)
-    rel_img_path = "."
-
-    open(report_path, "w") do io
-        println(io, "# Two Tier Scenario Analysis (5G vs 6G-RUPA)")
-        println(io, "")
-        println(io, "Generated on: $(now())")
-        println(io, "")
+    grouped = groupby(df_tier2, :Configuration)
+    
+    println("| Configuration | Total 5G Mem (MB) | Total 6G-RUPA Mem (MB) | Reduction Factor | Max 5G Entries | Max 6G Entries |")
+    println("|---|---|---|---|---|---|")
+    
+    for key in keys(grouped)
+        sub_df = grouped[key]
+        config = key.Configuration
         
-        println(io, "## 1. Executive Summary")
-        println(io, "This report compares the forwarding information state for the Two Tier (Hierarchical) scenario.")
-        println(io, "")
+        total_mem_5g = sum(sub_df.Total_5G_FwdStateInfoSize_MB)
+        total_mem_6g = sum(sub_df.Total_6GRUPA_FwdStateInfoSize_MB)
+        reduction = total_mem_5g / total_mem_6g
         
-        # Summary Table
-        println(io, "### Summary Statistics")
-        println(io, "| Configuration | Total 5G State Size (MB) | Total 6G-RUPA State Size (MB) | Reduction Factor | Max 5G Entries | Max 6G-RUPA Entries |")
-        println(io, "|---|---|---|---|---|---|")
+        max_entries_5g = maximum(sub_df.Entries_5G)
+        max_entries_6g = maximum(sub_df.Entries_6GRUPA)
         
-        grouped = combine(groupby(df, :Configuration), 
-            :Total_5G_FwdStateInfoSize_MB => sum => :Total_5G,
-            :Total_6GRUPA_FwdStateInfoSize_MB => sum => :Total_6G,
-            :Entries_5G => maximum => :Max_Entries_5G,
-            :Entries_6GRUPA => maximum => :Max_Entries_6G
-        )
-        
-        for row in eachrow(grouped)
-            factor = row.Total_5G / row.Total_6G
-            @printf(io, "| %s | %.2f | %.2f | **%.1fx** | %d | %d |\n", 
-                row.Configuration, row.Total_5G, row.Total_6G, factor, row.Max_Entries_5G, row.Max_Entries_6G)
-        end
-        
-        println(io, "")
-        
-        println(io, "## 2. Table Size Distribution (Box Plot)")
-        println(io, "This plot shows the range of forwarding table sizes (number of entries) across all UPFs. A lower box means smaller tables, which is better for scalability. The log scale helps compare the massive difference between 5G and 6G-RUPA.")
-        println(io, "![Box Plot of Table Sizes]($rel_img_path/boxplot_table_sizes.png)")
-        println(io, "")
-        
-        println(io, "## 3. Detailed Memory Comparison")
-        println(io, "### Total Network Memory")
-        println(io, "This compares the total memory required to store forwarding state across the entire network. It highlights the overall efficiency gain of the 6G-RUPA architecture.")
-        println(io, "![Total Memory Comparison]($rel_img_path/total_memory_comparison.png)")
-        println(io, "")
-        println(io, "### Average Memory per UPF")
-        println(io, "This shows the average memory burden on a single UPF. Lower values mean individual network nodes can be lighter and more cost-effective.")
-        println(io, "![Average Memory per UPF]($rel_img_path/average_memory_per_upf.png)")
-        println(io, "")
-        
-        println(io, "## 4. Evolution Over Time")
-        println(io, "These graphs track how the network state grows as users connect over time. 5G typically shows rapid linear growth, while 6G-RUPA remains stable due to its topological routing.")
-        for plot_file in evolution_plots
-            println(io, "### $plot_file")
-            println(io, "![Evolution Plot]($rel_img_path/$plot_file)")
-            println(io, "")
-        end
+        @printf("| %s | %.2f | %.2f | **%.1fx** | %d | %d |\n", 
+            config, total_mem_5g, total_mem_6g, reduction, max_entries_5g, max_entries_6g)
     end
-    println("Report generated: $report_path")
+    println("---------------------------------------------------\n")
 end
 
 function main()
     set_default_plot_style()
-    
     results_dir = get_results_dir()
-    images_dir = get_images_dir(SCENARIO_NAME)
     
     println("Results Dir: $results_dir")
-    println("Images Dir: $images_dir")
+    println("Images Dir: $IMAGES_DIR")
     
-    # 1. Load Data
+    # 1. Load Data (Last time step summary)
     all_data = load_raw_data()
-    
-    # 2. Filter for Two Tier
     df = filter(row -> occursin(SCENARIO_FILTER, row.Configuration), all_data)
     
     if nrow(df) == 0
-        println("No data found for scenario: $SCENARIO_FILTER")
+        println("No data found.")
         return
     end
     
-    println("Loaded $(nrow(df)) rows for Two Tier scenario.")
+    # 2. Generate Global Stats Dashboard
+    generate_global_stats_dashboard(df, IMAGES_DIR)
     
-    # 3. Run Analysis
-    evolution_plots = run_evolution_analysis(results_dir, images_dir)
+    # 3. Print Summary Table
+    print_summary_table(df)
     
-    static_plots = String[]
-    push!(static_plots, plot_table_sizes_boxplot(df, images_dir))
-    push!(static_plots, plot_total_memory_comparison(df, images_dir))
-    append!(static_plots, plot_per_upf_statistics(df, images_dir))
+    # 4. Generate Per-Scenario Evolution Dashboards
+    configs = unique(df.Configuration)
     
-    # 4. Generate Report
-    generate_report(df, evolution_plots, static_plots, images_dir)
+    # Filter for only Movistar and Verizon
+    configs = filter(c -> occursin("Movistar", c) || occursin("Verizon", c), configs)
     
-    println("Two Tier Analysis Complete.")
+    for config in configs
+        f_detailed = joinpath(results_dir, "evolution_detailed_$(config).csv")
+        if isfile(f_detailed)
+            generate_scenario_dashboard(config, f_detailed, IMAGES_DIR)
+        end
+    end
+    
+    println("Analysis Complete.")
 end
 
 main()
