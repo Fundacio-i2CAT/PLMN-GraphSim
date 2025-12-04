@@ -8,7 +8,26 @@ using Statistics
 export load_raw_data, parse_filename, set_default_plot_style, get_results_dir, get_images_dir
 
 function set_default_plot_style()
-    default(size=(800, 600), guidefont=12, tickfont=10, legendfont=10)
+    # Wong's Color Blind Friendly Palette
+    cb_palette = [
+        colorant"#E69F00", # Orange
+        colorant"#56B4E9", # Sky Blue
+        colorant"#009E73", # Bluish Green
+        colorant"#F0E442", # Yellow
+        colorant"#0072B2", # Blue
+        colorant"#D55E00", # Vermilion
+        colorant"#CC79A7", # Reddish Purple
+        colorant"#000000"  # Black
+    ]
+    
+    default(
+        size=(800, 600), 
+        guidefont=14, 
+        tickfont=12, 
+        legendfont=12,
+        palette=cb_palette,
+        linewidth=2
+    )
 end
 
 function get_results_dir()
