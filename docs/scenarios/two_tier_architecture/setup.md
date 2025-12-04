@@ -1,4 +1,4 @@
-# Two-Tier Architecture Setup
+# Topology Setup
 
 The **Two-Tier Architecture** introduces a hierarchical User Plane structure, distinguishing between two kinds of UPFs:
 
@@ -13,10 +13,9 @@ graph LR
     gNB([gNB])
     EdgeUPF(["Edge UPF (UL-CL)"])
     PSA(["Centralized UPF (PSA)"])
-
-    UE -- closest --> gNB
-    gNB -- closest --> EdgeUPF
-    EdgeUPF -- N9 Interface --> PSA
+    UE -- NR interface (closest) --> gNB
+    gNB -- N3 interface (closest) --> EdgeUPF
+    EdgeUPF -- N9 Interface (closest) --> PSA
 ```
 
 ## Architecture Components
