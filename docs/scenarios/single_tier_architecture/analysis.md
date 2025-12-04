@@ -1,10 +1,12 @@
 # Analysis
 
 ## Methodology
-- **Simulation Duration:** 100 time steps.
-- **Scenarios:**
-    - **Movistar (Spain):** Smaller topology, moderate density.
-    - **Verizon (USA):** Large topology, high density.
+
+!!! info "Simulation Setup"
+    - **Simulation Duration:** 100 time steps.
+    - **Scenarios:**
+        - **Movistar (Spain):** Smaller topology, moderate density.
+        - **Verizon (USA):** Large topology, high density.
 
 
 | Configuration  | Total 5G Mem (MB) | Total 6G-RUPA Mem (MB) | Reduction Factor | Max 5G Entries | Max 6G Entries |
