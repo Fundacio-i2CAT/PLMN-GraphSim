@@ -12,10 +12,14 @@ scale_factor = 1000
 duration = 100.0
 
 # Mean duration of a user session (active time)
-mean_session_duration = 20.0
+mean_session_duration = 95.0
 
 # Mean time between sessions (offline time)
 mean_offline_duration = 5.0
+
+# Sampling Interval for Metrics (in time units)
+# Increase this value to speed up simulation (e.g., 5.0 or 10.0)
+sampling_interval = 1.0
 
 # Log Level: "debug", "info", "warn", "error"
 log_level = "info"
@@ -45,12 +49,12 @@ mobile_adoption_rate = 0.82
 # You can add as many scenarios as you want and the simulator will automatically pick them up.
 # "Quick Testing ESP" = 1
 # "Spain Legacy" = 3
-"Spain Distributed" = 52 # 52 is the number of provinces in Spain without Canary Islands, but counting ceuta and melilla.
+"Spain TwoTier" = 52 # 52 is the number of provinces in Spain without Canary Islands, but counting ceuta and melilla.
 
 [countries.spain.operators]
 vodafone = { id = 1, enabled = false }
-orange = { id = 3, enabled = false }
-movistar = { id = 7, enabled = true }
+orange = { id = 3, enabled = true }
+movistar = { id = 7, enabled = false }
 
 [countries.usa]
 enabled = true
@@ -62,10 +66,10 @@ mobile_adoption_rate = 0.82
 [countries.usa.scenarios]
 # "Quick Testing USA" = 1
 # "USA Legacy" = 48
-"USA Distributed" = 96 # 96 is the number of counties in the USA with more than 100k inhabitants.
+"USA TwoTier" = 96 # 96 is the number of counties in the USA with more than 100k inhabitants.
 
 [countries.usa.operators]
-verizon = { id = 480, enabled = true }
+verizon = { id = 480, enabled = false }
 att = { id = 410, enabled = false }
-tmobile = { id = 260, enabled = false }
-uscellular = { id = 580, enabled = false }
+tmobile = { id = 260, enabled = true }
+uscellular = { id = 580, enabled = true }

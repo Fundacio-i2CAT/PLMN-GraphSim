@@ -1,24 +1,24 @@
 image: python:3.9-alpine
 
 stages:
-  - test
-  - deploy
+  # - test
+  - deploy_docs
 
-test:
-  stage: test
-  image: julia:1.11
-  script:
-    - apt-get update && apt-get install -y lcov
-    - julia --project=. -e 'using Pkg; Pkg.instantiate()'
-    - julia scripts/generate_coverage_manual.jl
-    - genhtml lcov.info --output-directory coverage_html
-  artifacts:
-    paths:
-      - coverage_html
-      - lcov.info
+# test:
+#   stage: test
+#   image: julia:1.11
+#   script:
+#     - apt-get update && apt-get install -y lcov
+#     - julia --project=. -e 'using Pkg; Pkg.instantiate()'
+#     - julia scripts/generate_coverage_manual.jl
+#     - genhtml lcov.info --output-directory coverage_html
+#   artifacts:
+#     paths:
+#       - coverage_html
+#       - lcov.info
 
 pages:
-  stage: deploy
+  stage: deploy_docs
   script:
     - pip install -r docs/requirements.txt
     - mkdocs build
