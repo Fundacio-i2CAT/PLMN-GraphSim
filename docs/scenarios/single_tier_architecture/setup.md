@@ -1,4 +1,4 @@
-# Single-Tier Architecture Setup
+# Topology Setup
 
 The **Single-Tier Architecture** represents a network topology graph where Base Stations (gNBs) connect directly to distributed User Plane Functions (UPFs).
 
@@ -6,9 +6,10 @@ The elements are connected based on proximity:
 
 ```mermaid
 graph LR
-    UE([UE]) -- closest --> gNB[gNB]
-    gNB -- closest --> UPF[UPF]
+    UE([UE]) -- NR interface (closest) --> gNB[gNB]
+    gNB -- N3 interface (closest) --> UPF[UPF]
 ```
+
 
 !!! info "UPFs are not connected to each other"
     In this architecture, UPFs operate independently without interconnections. Each gNB connects to its nearest UPF based on geographic proximity.

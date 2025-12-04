@@ -1,23 +1,23 @@
-site_name: DES Julia 6G
+site_name: DES Julia B5G
 site_description: Julia-based Discrete Event Simulator for evaluating scalability of 5G Networks and beyond
-site_url: https://software-networks.org/des_julia_6g_rupa/
+site_url: https://julia-mobile-des-dff3a5.pages.i2cat.net/
+repo_url: https://gitlab.i2cat.net/sergio.gimenez/julia-mobile-des
+repo_name: sergio.gimenez/julia-mobile-des
 site_dir: public
 copyright: Copyright &copy; 2025 Fundacio i2CAT
 
 nav:
-  - Summary: index.md
+  - DES Julia B5G: index.md
+  - The Simulator In a Nutshell: simulation-details/in-a-nutshell/in-a-nutshell.md
   - Quickstart: quickstart.md
-  - Country-Specific Datasets:
-      - Getting Data Ready: agents/getting-data-ready.md
-      - Countries:
+  - User Guide:
+      - Data Preparation:
+          - Overview: agents/getting-data-ready.md
           - Spain: agents/countries/spain.md
           - USA: agents/countries/usa.md
-  - The Simulator:
-      - How Simulator Works: simulation-details/how-simulator-works.md
-      - Simulation Configuration: simulation-details/simulation-configuration.md
-      - UPF Placement Strategy: simulation-details/k-means.md
-      - Mobility Models: simulation-details/mobility-models.md
-  - Scenarios to Simulate:
+      - Configuration: simulation-details/simulation-configuration.md
+  - Scenarios:
+      - scenarios/index.md
       - Single-Tier Architecture:
           - scenarios/single_tier_architecture/setup.md
           - scenarios/single_tier_architecture/analysis.md
@@ -27,12 +27,21 @@ nav:
       - Mobility:
           - scenarios/mobility/setup.md
           - scenarios/mobility/analysis.md
+  - Simulator in-depth:
+      - Core Concepts:
+          - Under the Hood: simulation-details/how-simulator-works.md
+      - Algorithms & Models:
+          - UPF Placement Strategy: simulation-details/k-means.md
+          - Mobility Models: simulation-details/mobility-models.md
+          - eMBB Focus: simulation-details/embb.md
+          - Memory Calculation: memory_calculation.md
 
 theme:
   name: material
   features:
     - navigation.tabs
     - navigation.sections
+    - navigation.indexes
     - toc.integrate
     - content.code.copy
     - content.code.annotate
@@ -74,12 +83,19 @@ markdown_extensions:
   - pymdownx.snippets
   - pymdownx.tabbed:
       alternate_style: true
+  - pymdownx.arithmatex:
+      generic: true
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - attr_list
   - tables
   - md_in_html
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+  - https://unpkg.com/mermaid/dist/mermaid.min.js
 
 plugins:
   - search

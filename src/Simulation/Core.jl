@@ -65,24 +65,42 @@ end
     @yield timeout(env, offline_duration)
 end
 
-@resumable function user_lifecycle(env, user_id, sim_state, topology::NetworkTopology)
-    @yield @process await_user_offline(env, sim_state) # Random start delay to avoid thundering herd at t=0
-    while true
-        if is_simulation_time_over(env, sim_state)
-            break
+@resumable function lifecycle_embb(env, user_id, sim_state, topology::NetworkTopology)
+    # Random start delay to simulate users joining the network over time (Ramp-up)
+    @yield @process await_user_offline(env, sim_state)
+    # eMBB Logic: User attaches and stays attached ("Always On")
+    # We select a location once. (Mobility could be added later, but for State Analysis, static attachment is sufficient)
+    agent_location = select_agent_location(topology)
+    gnb_index = find_serving_gnb(topology, agent_location)
+    if gnb_index != 0
+        # Attach UE to Network, connect to gNB and UPF
+        assigned_upf_index = connect_agent_to_gnb_and_upf(env, topology, user_id, agent_location, gnb_index)
+        # Establish PDU Sessions, Forwarding State gets created
+        num_sessions = create_random_ue_connections(sim_state, assigned_upf_index, topology)
+        @debug "User $user_id (eMBB) attached (Always-On) to gNB $gnb_index at time $(now(env))"
+        # Maintain Session until Simulation End
+        # In eMBB, the PDU session remains active even if traffic is bursty.
+        remaining_time = sim_state.config.duration - now(env)
+        if remaining_time > 0
+            @yield timeout(env, remaining_time)
         end
-        agent_location = select_agent_location(topology)
-        gnb_index = find_serving_gnb(topology, agent_location)
-        if gnb_index != 0
-            assigned_upf_index = connect_agent_to_gnb_and_upf(env, topology, user_id, agent_location, gnb_index)
-            num_sessions = create_random_ue_connections(sim_state, assigned_upf_index, topology)
-            session_duration = rand(Exponential(sim_state.config.mean_session_duration))
-            @yield timeout(env, session_duration)
-            release_ue_connections(sim_state, assigned_upf_index, num_sessions)
-            @debug "User $user_id disconnected from gNB $gnb_index at time $(now(env))"
-            disconnect_ue_from_gnb_and_upf(topology, user_id, gnb_index)
-        end
-        @yield @process await_user_offline(env, sim_state) # Offline / Inter-session wait
+        # Simulation ends, implicit cleanup.
+    end
+end
+
+@resumable function lifecycle_mmtc(env, user_id, sim_state, topology::NetworkTopology)
+    # TODO Placeholder for mMTC logic
+    # mMTC devices might wake up, send data, and go back to sleep (idle mode), releasing resources?
+    # Or they might stay registered but release PDU sessions?
+    # For now, we just wait.
+    @yield timeout(env, sim_state.config.duration)
+end
+
+@resumable function user_lifecycle(env, user_id, sim_state, topology::NetworkTopology, user_type::UserType)
+    if user_type == eMBB
+        @yield @process lifecycle_embb(env, user_id, sim_state, topology)
+    elseif user_type == mMTC
+        @yield @process lifecycle_mmtc(env, user_id, sim_state, topology)
     end
 end
 

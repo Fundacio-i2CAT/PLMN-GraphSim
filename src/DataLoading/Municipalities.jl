@@ -28,10 +28,24 @@ function process_geojson_feature!(polygons::Dict{String,Any}, feature)
     # Check properties for 'id' (Standard)
     properties = get(feature, :properties, nothing)
     if !isnothing(properties) && haskey(properties, :id)
-        muni_id = string(properties.id)
+        raw_id = properties.id
+        if raw_id isa Number
+            muni_id = string(Int(raw_id))
+        elseif raw_id isa String && !isnothing(tryparse(Int, raw_id))
+            muni_id = string(parse(Int, raw_id))
+        else
+            muni_id = string(raw_id)
+        end
     # Fallback: Check top-level id
     elseif haskey(feature, :id)
-        muni_id = string(feature.id)
+        raw_id = feature.id
+        if raw_id isa Number
+            muni_id = string(Int(raw_id))
+        elseif raw_id isa String && !isnothing(tryparse(Int, raw_id))
+            muni_id = string(parse(Int, raw_id))
+        else
+            muni_id = string(raw_id)
+        end
     end
 
     if !isnothing(muni_id) && haskey(feature, :geometry)

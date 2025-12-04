@@ -72,45 +72,32 @@ function init_centralized_state_6g_rupa(topology::NetworkTopology)
 end
 
 function init_global_state_for_simulation(topology::NetworkTopology, config::SimConfig)
-    total_number_of_upfs = length(topology.upf_locations)
+    num_edge_upfs = length(topology.upf_locations)
+    num_centralized_upfs = length(topology.centralized_upf_locations)
+    total_number_of_upfs = num_edge_upfs + num_centralized_upfs
+    
+    # Initialize 5G state for ALL UPFs (Edge + Centralized)
     forwarding_tables5g = init_state_5g(total_number_of_upfs)
+    
     forwarding_tables_6grupa = init_state_6g_rupa(topology)
     centralized_forwarding_tables_6grupa = init_centralized_state_6g_rupa(topology)
     
     time = Float64[]
-    total_5g_mb = Float64[]
-    max_upf_5g_mb = Float64[]
-    mean_upf_5g_mb = Float64[]
-    median_upf_5g_mb = Float64[]
-    total_6grupa_mb = Float64[]
-    max_gupf_6grupa_mb = Float64[]
-    mean_gupf_6grupa_mb = Float64[]
-    median_gupf_6grupa_mb = Float64[]
-    mean_entries_6grupa = Float64[]
-    median_entries_6grupa = Float64[]
-    history_per_upf_5g_mb = Vector{Float64}[]
+    
+    history_per_upf_5g_fwd_state_info_size_mb = Vector{Float64}[]
     history_per_upf_entries_5g = Vector{Int}[]
-    history_per_gupf_6grupa_mb = Vector{Float64}[]
+    history_per_gupf_6grupa_fwd_state_info_size_mb = Vector{Float64}[]
     history_per_gupf_entries_6grupa = Vector{Int}[]
+    
     return SimGlobalState(
         config,
         forwarding_tables5g,
         forwarding_tables_6grupa,
         centralized_forwarding_tables_6grupa,
         time,
-        total_5g_mb,
-        max_upf_5g_mb,
-        mean_upf_5g_mb,
-        median_upf_5g_mb,
-        total_6grupa_mb,
-        max_gupf_6grupa_mb,
-        mean_gupf_6grupa_mb,
-        median_gupf_6grupa_mb,
-        mean_entries_6grupa,
-        median_entries_6grupa,
-        history_per_upf_5g_mb,
+        history_per_upf_5g_fwd_state_info_size_mb,
         history_per_upf_entries_5g,
-        history_per_gupf_6grupa_mb,
+        history_per_gupf_6grupa_fwd_state_info_size_mb,
         history_per_gupf_entries_6grupa
     )
 end

@@ -18,7 +18,7 @@ if choice == "1"
     include("scripts/run_simulation.jl")
 elseif choice == "2"
     println("\n>>> Generating Plots...")
-    include("scripts/plot_topology.jl")
+    include("scripts/plot-topology/plot_topology.jl")
 elseif choice == "q"
     println("Exiting...")
 else

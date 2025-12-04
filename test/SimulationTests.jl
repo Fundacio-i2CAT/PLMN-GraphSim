@@ -103,9 +103,9 @@ using MetaGraphsNext
         @test table[1].output_interface == 1
     end
 
-    @testset "save_raw_upf_data" begin
+    @testset "save_detailed_evolution" begin
         # Mock Config
-        config = SimConfig(1, 2, 1000, 10.0, 5.0, 5.0, :single_tier, 0)
+        config = SimConfig(1, 2, 1000, 10.0, 5.0, 5.0, :single_tier, 0, 1.0)
 
         # Mock State
         state = SimGlobalState(
@@ -113,33 +113,33 @@ using MetaGraphsNext
             [[SessionContext5G(ForwardingState5G(1, 1, FAR(1, 1), FAR(1, 1)), SessionSimMetadata(1, 1))]], # 1 UPF, 1 Session
             [[ForwardingEntry6GRUPA(10, 0xFFFFFF00, 1)]],     # 1 UPF, 1 Entry
             Vector{ForwardingEntry6GRUPA}[], # centralized_forwarding_tables_6grupa
-            Float64[], Float64[], Float64[], Float64[], Float64[],
-            Float64[], Float64[], Float64[], Float64[],
-            Float64[], Float64[],
-            Vector{Float64}[], Vector{Int}[], Vector{Float64}[], Vector{Int}[]
+            [1.0], # history_time
+            [[10.0]], # history_per_upf_5g_fwd_state_info_size_mb
+            [[100]],  # history_per_upf_entries_5g
+            [[5.0]],  # history_per_gupf_6grupa_fwd_state_info_size_mb
+            [[50]]    # history_per_gupf_entries_6grupa
         )
-        # Mock Scale Factor
-        scale_factor = 1000
-        # We can't easily test file I/O without creating temp files, 
-        # but we can check if the function runs without error.
-        # Ideally, we would mock CSV.write, but for now let's just ensure it doesn't crash.
-        # We will use a temp directory for the output.
+        
+        # Mock Topology
+        mock_topology = NetworkTopology(
+            GeoPoint[], 
+            [GeoPoint(0.0, 0.0)], # 1 UPF
+            Int[], 
+            GeoPoint[], # centralized_upf_locations
+            Int[],      # edge_upf_parent_map
+            Municipality[], 
+            Dict{String,Vector{Int}}(), 
+            Float64[], 
+            MetaGraph(Graph(), label_type = Tuple{Symbol, Int}, vertex_data_type = GeoPoint, edge_data_type = Float64)
+        )
+        
         mktempdir() do temp_dir
-            # Temporarily override the results path logic in the function? 
-            # Or just let it write to the real results folder and clean up?
-            # Since the function hardcodes `../results`, it's safer to just test the logic 
-            # by calling it and checking if the file exists, then deleting it.
-            
-            # However, the function uses @__DIR__ relative to the source file, 
-            # so it will try to write to the actual project results folder.
-            # Let's just run it and check if the file is created.
             operator_name = "TestOp"
             scenario_name = "TestScenario"
-            Simulation.save_raw_upf_data(operator_name, scenario_name, state, scale_factor)
-            expected_file = joinpath(@__DIR__, "../results/raw_upf_state_TestOp_TestScenario.csv")
-            @test isfile(expected_file)
-            # Clean up
-            rm(expected_file)
+            
+            Simulation.save_detailed_evolution(operator_name, scenario_name, state, mock_topology, temp_dir)
+            
+            @test isfile(joinpath(temp_dir, "evolution_detailed_TestOp_TestScenario.csv"))
         end
     end
 
