@@ -1,5 +1,5 @@
 using Pkg
-Pkg.activate(joinpath(@__DIR__, ".."))
+Pkg.activate(joinpath(@__DIR__, "../.."))
 using Plots # Added to enable plotting extension
 using DesJulia6gRupa
 using DesJulia6gRupa.Plotting
@@ -19,7 +19,8 @@ function create_sim_config(toml_data)
         get(sim_data, "mean_session_duration", 20.0),
         get(sim_data, "mean_offline_duration", 5.0),
         Symbol(get(sim_data, "scenario_mode", "single_tier")),
-        get(sim_data, "num_centralized_upfs", 0)
+        get(sim_data, "num_centralized_upfs", 0),
+        get(sim_data, "sampling_interval", 1.0)
     )
 end
 
@@ -93,7 +94,7 @@ function process_country(country_key, country_config, sim_config)
         return
     end
 
-    data_dir = joinpath(@__DIR__, "..", country_config["data_dir"])
+    data_dir = joinpath(@__DIR__, "../..", country_config["data_dir"])
 
     mccs = Int[]
     if haskey(country_config, "mccs")
@@ -131,7 +132,7 @@ function process_country(country_key, country_config, sim_config)
 end
 
 function main()
-    config_path = joinpath(@__DIR__, "../config.toml")
+    config_path = joinpath(@__DIR__, "../../config.toml")
     if !isfile(config_path)
         error("Config file not found at $config_path")
     end

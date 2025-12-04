@@ -52,9 +52,17 @@ end
 function filter_gnbs_by_operator!(df::DataFrame, operator_net_id::Int)
     filter!(row -> row.net == operator_net_id, df)
     @info "Filtered $(nrow(df)) gNBs for Operator ID $operator_net_id."
+    if nrow(df) == 0
+        @warn "No gNBs found for Operator ID $operator_net_id. Simulation might fail or be empty."
+    end
 end
 
 function perform_clustering(df::DataFrame, num_upfs::Int)
+    if nrow(df) == 0
+        @warn "Cannot perform clustering on 0 gNBs. Returning empty UPF locations."
+        return Vector{GeoPoint}(), Vector{Int}()
+    end
+
     gnb_coords = Matrix{Float64}(undef, 2, nrow(df))
     gnb_coords[1, :] = df.lon
     gnb_coords[2, :] = df.lat
