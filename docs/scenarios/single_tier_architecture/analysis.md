@@ -16,13 +16,13 @@ The main take here is that if we compare the total memory used by the 5G archite
 
 Let's break down the results further.
 
-## Distribution of Table Sizes
+## Global Statistics
 
-![Box Plot of Table Sizes](./boxplot_table_sizes.png)
+![Global Statistics Dashboard](../../images/single_tier_scenario/dashboard_global_stats.png)
 
 ### Understanding the Distribution
 
-The box plot above illustrates the distribution of forwarding table sizes (number of entries) for every UPF (in 5G) and GUPF (in 6G-RUPA) in the simulation. 
+The box plot (bottom-left in the dashboard) illustrates the distribution of forwarding table sizes (number of entries) for every UPF (in 5G) and GUPF (in 6G-RUPA) in the simulation. 
 
 The plot shows:
 
@@ -32,35 +32,23 @@ The plot shows:
 
 So the separation between the two groups is **essentially three orders of magnitude**. This means that even the largest GUPF in 6G-RUPA has a forwarding table size that is about 1000 times smaller than the smallest UPF in 5G.
 
-## Evolution of Network Memory per UPF and GUPF over time
+## Simulation Evolution Analysis
 
-!!! note
-    Memory is calculated by multiplying every entry by the scaling factor and the size of each entry.
-    * The scaling factor represent the number of users each agent represents in the simulation. So if an agent represents 100 users, each entry in the UPF table represents 100 PDU sessions.
+??? note "A note on how memory is calculated"
+    Memory is calculated based on the number of entries and the size of the data structures.
 
-### Global Comparison
-![Total Memory Comparison](./total_memory_comparison.png)
-![Average Memory per UPF](./average_memory_per_upf.png)
-
-### Movistar Spain
-![Evolution Memory Movistar 5G](./evolution_5g_Fwd_State_Info_Size_MB_Movistar_Spain_Distributed.png)
-![Evolution Memory Movistar 6G](./evolution_6grupa_Fwd_State_Info_Size_MB_Movistar_Spain_Distributed.png)
-
-### Verizon USA
-![Evolution Memory Verizon 5G](./evolution_5g_Fwd_State_Info_Size_MB_Verizon_USA_Distributed.png)
-![Evolution Memory Verizon 6G](./evolution_6grupa_Fwd_State_Info_Size_MB_Verizon_USA_Distributed.png)
-
-## Evolution of Number of Entries per UPF and GUPF over time
-
-One could argue that memory can be optimized and is somehow implementation dependent, but the number of entries is a more abstract metric that indicates the actual state the UPFs need to maintain, no matter how you later implement the data structures.
+    *   **Entry Size:** We use a consistent **12 bytes per entry** for both architectures to ensure a fair comparison.
+        *   **5G:** Derived from a 24-byte `ForwardingState5G` struct containing both Uplink and Downlink tunnels information (2 entries).
+        *   **6G-RUPA:** Derived from a 12-byte `ForwardingEntry6GRUPA` struct.
+    *   **Scaling:**
+        *   **5G:** The number of entries is scaled by the `scale_factor` (1000 users per agent), as 5G maintains per-session state ($O(n)$).
+        *   **6G-RUPA:** The number of entries is determined by the network topology and does not scale with the number of users ($O(1)$ complexity).
 
 ### Movistar Spain
-![Evolution Entries Movistar 5G](./evolution_5g_Entries_Movistar_Spain_Distributed.png)
-![Evolution Entries Movistar 6G](./evolution_6grupa_Entries_Movistar_Spain_Distributed.png)
+![Movistar Spain Dashboard](../../images/single_tier_scenario/dashboard_evolution_Movistar_Spain_Distributed.png)
 
 ### Verizon USA
-![Evolution Entries Verizon 5G](./evolution_5g_Entries_Verizon_USA_Distributed.png)
-![Evolution Entries Verizon 6G](./evolution_6grupa_Entries_Verizon_USA_Distributed.png)
+![Verizon USA Dashboard](../../images/single_tier_scenario/dashboard_evolution_Verizon_USA_Distributed.png)
 
 ## Some Insights
 
