@@ -9,8 +9,14 @@ copyright: Copyright &copy; 2025 Fundacio i2CAT
 nav:
   - DES Julia B5G: index.md
   - Quickstart: quickstart.md
-  - The Simulator In a Nutshell: simulation-details/in-a-nutshell/in-a-nutshell.md
+  - User Guide:
+      - Data Preparation:
+          - Overview: agents/getting-data-ready.md
+          - Spain: agents/countries/spain.md
+          - USA: agents/countries/usa.md
+      - Configuration: simulation-details/simulation-configuration.md
   - Scenarios:
+      - scenarios/index.md
       - Single-Tier Architecture:
           - scenarios/single_tier_architecture/setup.md
           - scenarios/single_tier_architecture/analysis.md
@@ -20,23 +26,22 @@ nav:
       - Mobility:
           - scenarios/mobility/setup.md
           - scenarios/mobility/analysis.md
-  - The Simulator in-depth:
-      - eMBB Focus: simulation-details/embb.md
-      - Country-Specific Datasets:
-          - Getting Data Ready: agents/getting-data-ready.md
-          - Countries:
-              - Spain: agents/countries/spain.md
-              - USA: agents/countries/usa.md
-      - How Simulator Works Under the Hood: simulation-details/how-simulator-works.md
-      - Simulation Configuration: simulation-details/simulation-configuration.md
-      - UPF Placement Strategy: simulation-details/k-means.md
-      - Mobility Models: simulation-details/mobility-models.md
+  - Technical Reference:
+      - Core Concepts:
+          - In a Nutshell: simulation-details/in-a-nutshell/in-a-nutshell.md
+          - Under the Hood: simulation-details/how-simulator-works.md
+      - Algorithms & Models:
+          - UPF Placement Strategy: simulation-details/k-means.md
+          - Mobility Models: simulation-details/mobility-models.md
+          - eMBB Focus: simulation-details/embb.md
+          - Memory Calculation: memory_calculation.md
 
 theme:
   name: material
   features:
     - navigation.tabs
     - navigation.sections
+    - navigation.indexes
     - toc.integrate
     - content.code.copy
     - content.code.annotate
