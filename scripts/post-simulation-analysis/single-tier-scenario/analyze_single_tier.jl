@@ -58,22 +58,22 @@ function generate_scenario_dashboard(config_name::String, detailed_file::String,
     df = CSV.read(detailed_file, DataFrame)
     
     # 1. Memory 5G
-    p_mem_5g = get_evolution_plot(df, :Memory_5G_MB, "Memory Evolution (5G)", "Memory (MB)")
+    p_mem_5g = get_evolution_plot(df, :Memory_5G_MB, "Memory Evolution per UPF (5G)", "Memory (MB)")
     
     # 2. Memory 6G
-    p_mem_6g = get_evolution_plot(df, :Memory_6G_MB, "Memory Evolution (6G-RUPA)", "Memory (MB)")
+    p_mem_6g = get_evolution_plot(df, :Memory_6G_MB, "Memory Evolution per GUPF (6G-RUPA)", "Memory (MB)")
     
     # 3. Entries 5G
-    p_ent_5g = get_evolution_plot(df, :Entries_5G, "Entries Evolution (5G)", "Entries", force_scientific=true)
+    p_ent_5g = get_evolution_plot(df, :Entries_5G, "Entries Evolution per UPF (5G)", "Entries", force_scientific=true)
     
     # 4. Entries 6G
-    p_ent_6g = get_evolution_plot(df, :Entries_6G, "Entries Evolution (6G-RUPA)", "Entries", force_scientific=true)
+    p_ent_6g = get_evolution_plot(df, :Entries_6G, "Entries Evolution per GUPF (6G-RUPA)", "Entries", force_scientific=true)
     
     # Combine
     dashboard = plot(p_mem_5g, p_mem_6g, p_ent_5g, p_ent_6g, 
         layout=(2, 2), 
         size=(1200, 800),
-        plot_title="Evolution Dashboard: $config_name",
+        plot_title="Data Across Simulation: $config_name",
         plot_titlefontsize=16
     )
     
