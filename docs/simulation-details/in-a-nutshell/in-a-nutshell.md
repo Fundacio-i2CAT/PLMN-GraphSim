@@ -1,6 +1,12 @@
 # In a Nutshell
 
-The goal of the simulator is to generate a network graph that somehow is close to what national-level mobile network operators have.
+The goal of the simulator is to generate a network graph that somehow is close to what national-level mobile network operators have. That has to look more or less like this:
+
+```mermaid
+graph LR
+    UE([UE]) -- NR interface --> gNB[gNB]
+    gNB -- N3 interface --> UPF[UPF]
+```
 
 Operators are very confidential about the deployment of their network topologies, so we have to rely on publicly available datasets and reasonable assumptions to create synthetic but realistic topologies.
 
@@ -38,8 +44,10 @@ So to distribute the agents we need two things:
 
 With that information, we can distribute the agents proportionally to the population of each municipality, ensuring a realistic distribution of users across the country.
 
-!!! note "Data Preparation"
-    This is a but tricky because every country provides this data in a different format and differnt source. For example, in Spain we use data from the INE (Instituto Nacional de Estadística), while in the USA we use data from the Census Bureau. More details about how to prepare the data for each country can be found in the [Agents documentation](agents/getting-data-ready.md).
+??? note "Data Preparation is a bit tricky..."
+    This is a but tricky because every country provides this data in a different format and differnt source.
+    
+    For example, in Spain we use data from the INE (Instituto Nacional de Estadística), while in the USA we use data from the Census Bureau. More details about how to prepare the data for each country can be found in the [Agents documentation](agents/getting-data-ready.md).
 
 ??? warning "Sorry..."
     Sorry Alaskans, Hawaiians and people from the Canary Islands, the study of this gets easier if we don't have to deal a lot with un-connected regions, they are removed from the map :)
@@ -84,16 +92,16 @@ graph LR
     gNB -- N3 interface --> UPF[UPF]
 ```
 
-We have the UEs (agents) and the gNBs, but we still need to add the UPFs. So what we do here is to just place the UPFs in the optimal way taking in account the gNB locations. So we are optimizing the placement of UPFs to have the minimum squared distance to the gNBs. More details on that can be found in the [K-means](simulation-details/k-means.md) section.
+We have the **UEs (agents)** and the **gNBs**, but we still need to add the **UPFs**. So what we do here is to let the simulator place the UPFs in the optimal way taking in account the gNB locations. So we are **optimizing the placement of UPFs to have the minimum squared euclidean distance to the gNBs**. More details on that can be found in the [K-means](simulation-details/k-means.md) section.
 
-!!! info
-    Note that for simplicity we are not taking in account the orography, road distances, or other real-world factors that operators would consider when deploying UPFs. However, this approach gives us a reasonable approximation of how UPFs could be distributed in a real network.
+!!! note 
+    Note that for simplicity **we are not taking in account the orography, road distances, or other real-world** factors that operators would consider when deploying UPFs. However, this approach gives us a reasonable approximation of how UPFs could be distributed in a real network.
 
 !!! tip
-    The number of UPFs to deploy is configurable. You basically tell the simulator how many UPFs to deploy, and it will place them optimally. You can experiment with different numbers to see how it affects the network topology
+    The number of UPFs to deploy **is configurable**. You basically tell the simulator how many UPFs to deploy, and it will place them optimally. You can experiment with different numbers to see how it affects the network topology
 
 
-A naive deployment for the UPFs could be like:
+A naive amount of UPFs to be deployed (at least to start) could be like:
 
 * :flag_es: Spain: **52 UPFs**. 1 UPF per province, minus Las Palmas and Santa Cruz de Tenerife plus Ceuta and Melilla)
 
@@ -127,7 +135,7 @@ graph LR
     gNB -- N3 interface(closest) --> UPF[UPF]
 ```
 
-!!! note
+!!! note "Closest in terms of Haversine Distance"
     The *closest* actually means the minimum haversine distance between two geographic coordinates (latitude and longitude).
 
 And that's it! We have a synthetic but realistic network topology that we can use to simulate and analyze the performance of 5G networks at a scale.
@@ -146,12 +154,16 @@ And that's it! We have a synthetic but realistic network topology that we can us
 
 ## Next Steps
 
-This was a very high-level overview of how the simulator builds the network topology. We call this scenario the "single-tier" scenario because all UPFs are distributed across the territory, but the UPFs are not interconnected among them. This is not realistic for large operators that would have a more hierarchical structure with some centralized UPFs.
+This was a very high-level overview of how the simulator builds the network topology. We call this scenario the "**single-tier**" scenario because **all UPFs are distributed across the territory**, but the UPFs are not interconnected among them. 
 
-* For more information on how to set up this scenario refer to the [Single-Tier Scenario](simulation-details/single-tier-scenario.md) documentation.
+This is not realistic for large operators that would have a more hierarchical structure with some centralized UPFs.
+
+[Check the Scenarios...](../../scenarios/index.md){ .md-button .md-button--primary }
+
+<!-- * For more information on how to set up this scenario refer to the [Single-Tier Scenario](simulation-details/single-tier-scenario.md) documentation.
 
 * For more information on the hierarchical scenario with centralized UPFs refer to the [Two-Tier Scenario](simulation-details/two-tier-scenario.md) documentation.
 
 * For more information on how the simulation works internally refer to the [Simulation Details](simulation-details/overview.md) documentation.
 
-* For more information on how to extend the simulator for other countries, refer to the [Agents](agents/getting-data-ready.md) documentation.
+* For more information on how to extend the simulator for other countries, refer to the [Agents](agents/getting-data-ready.md) documentation. -->
