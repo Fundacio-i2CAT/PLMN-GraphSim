@@ -4,6 +4,7 @@
 
 !!! info "Simulation Setup"
     - **Simulation Duration:** 100 time steps.
+    - **User Lifecycle**: Users connect around time step 5 and disconnect around time step 95. (typical [eMBB scenario](../../simulation-details/embb.md))
     - **Scenarios:**
         - **Movistar (Spain):** Smaller topology, moderate density.
         - **Verizon (USA):** Large topology, high density.

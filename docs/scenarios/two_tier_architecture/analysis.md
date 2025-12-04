@@ -6,18 +6,51 @@
     - **Simulation Duration:** 100 time steps.
     - **Scenarios:**
         - **Movistar (Spain):** Two-Tier architecture (Edge + Centralized).
+        - **Vodafone (Spain):** Two-Tier architecture (Edge + Centralized).
+        - **Orange (Spain):** Two-Tier architecture (Edge + Centralized).
         - **Verizon (USA):** Two-Tier architecture (Edge + Centralized).
+        - **AT&T (USA):** Two-Tier architecture (Edge + Centralized).
+        - **T-Mobile (USA):** Two-Tier architecture (Edge + Centralized).
+        - **US Cellular (USA):** Two-Tier architecture (Edge + Centralized).
+    
 
+??? note "A note on how memory is calculated"
+    Memory is calculated based on the number of entries and the size of the data structures.
 
-!!! note
-    The following table summarizes the statistics for the **Centralized UPFs (Tier 2)** only, as they represent the bottleneck in the core network.
+    *   **Entry Size:** We use a consistent **12 bytes per entry** for both architectures to ensure a fair comparison.
+        *   **5G:** Derived from a 24-byte `ForwardingState5G` struct containing both Uplink and Downlink tunnels information (2 entries).
+        *   **6G-RUPA:** Derived from a 12-byte `ForwardingEntry6GRUPA` struct.
+    *   **Scaling:**
+        *   **5G:** The number of entries is scaled by the `scale_factor` (1000 users per agent), as 5G maintains per-session state ($O(n)$).
+        *   **6G-RUPA:** The number of entries is determined by the network topology and does not scale with the number of users ($O(1)$ complexity).
 
-| Configuration          | Total 5G Mem (MB) | Total 6G-RUPA Mem (MB) | Reduction Factor | Max 5G Entries | Max 6G Entries |
-| ---------------------- | ----------------- | ---------------------- | ---------------- | -------------- | -------------- |
-| Movistar_Spain_TwoTier | 1392.79           | ~0.00                  | **781,824.4x**   | 46,526,000     | 19             |
-| Verizon_USA_TwoTier    | 9431.10           | ~0.00                  | **3,717,753.4x** | 196,364,000    | 24             |
+## Results by Country
 
 The reduction factors are even more extreme here than in the single-tier scenario because the Centralized UPFs in 5G must maintain state for *all* sessions in their region, whereas in 6G-RUPA, the core routers only need to know the topology of the core network, which is very small (19-24 nodes).
+
+=== "Spain"
+
+    | Configuration | Total 5G Mem (MB) | Total 6G-RUPA Mem (MB) | Reduction Factor | Max 5G Entries | Max 6G Entries |
+    | :--- | :--- | :--- | :--- | :--- | :--- |
+    | **Movistar_Spain_Tier1** | 1392.79 | 0.83 | **1,682.2x** | 19,096,000 | 7,412 |
+    | **Movistar_Spain_Tier2** | 1392.79 | 0.00 | **781,824.4x** | 46,526,000 | 19 |
+    | **Orange_Spain_Tier1** | 1390.09 | 0.66 | **2,098.8x** | 20,338,000 | 2,905 |
+    | **Orange_Spain_Tier2** | 1390.09 | 0.00 | **643,823.3x** | 45,780,000 | 17 |
+    | **Vodafone_Spain_Tier1** | 1390.14 | 0.44 | **3,129.7x** | 14,824,000 | 1,126 |
+    | **Vodafone_Spain_Tier2** | 1390.14 | 0.00 | **547,994.0x** | 34,140,000 | 13 |
+
+=== "USA"
+
+    | Configuration | Total 5G Mem (MB) | Total 6G-RUPA Mem (MB) | Reduction Factor | Max 5G Entries | Max 6G Entries |
+    | :--- | :--- | :--- | :--- | :--- | :--- |
+    | **Att_USA_Tier1** | 9429.20 | 2.73 | **3,452.1x** | 48,270,000 | 12,522 |
+    | **Att_USA_Tier2** | 9429.20 | 0.00 | **3,717,004.5x** | 198,988,000 | 22 |
+    | **Tmobile_USA_Tier1** | 9426.11 | 4.82 | **1,954.9x** | 49,996,000 | 24,387 |
+    | **Tmobile_USA_Tier2** | 9426.11 | 0.00 | **3,715,786.5x** | 269,568,000 | 25 |
+    | **Uscellular_USA_Tier1** | 9432.98 | 0.07 | **135,303.0x** | 98,692,000 | 146 |
+    | **Uscellular_USA_Tier2** | 9432.98 | 0.00 | **3,718,493.2x** | 365,244,000 | 30 |
+    | **Verizon_USA_Tier1** | 9431.10 | 2.10 | **4,490.4x** | 41,606,000 | 7,783 |
+    | **Verizon_USA_Tier2** | 9431.10 | 0.00 | **3,717,753.4x** | 196,364,000 | 24 |
 
 ## Global Statistics
 
@@ -44,12 +77,6 @@ The plot shows:
     *   **Scaling:**
         *   **5G:** The number of entries is scaled by the `scale_factor` (1000 users per agent), as 5G maintains per-session state ($O(n)$).
         *   **6G-RUPA:** The number of entries is determined by the network topology and does not scale with the number of users ($O(1)$ complexity).
-
-### Movistar Spain
-![Movistar Spain Dashboard](../../images/two_tier_scenario/dashboard_evolution_Movistar_Spain_TwoTier.png)
-
-### Verizon USA
-![Verizon USA Dashboard](../../images/two_tier_scenario/dashboard_evolution_Verizon_USA_TwoTier.png)
 
 ## Key Insights
 
