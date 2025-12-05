@@ -1,4 +1,4 @@
-# DesJulia6gRupa
+# PLMN-GraphSim
 
 ## Configuration
 
