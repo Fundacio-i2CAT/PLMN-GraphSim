@@ -1,8 +1,8 @@
-site_name: DES Julia B5G
+site_name: PLMN-GraphSim
 site_description: Julia-based Discrete Event Simulator for evaluating scalability of 5G Networks and beyond
-site_url: https://julia-mobile-des-dff3a5.pages.i2cat.net/
-repo_url: https://gitlab.i2cat.net/sergio.gimenez/julia-mobile-des
-repo_name: sergio.gimenez/julia-mobile-des
+site_url: https://plmn-graphsim-7935d4.pages.i2cat.net/
+repo_url: https://gitlab.i2cat.net/sergio.gimenez/PLMN-GraphSim
+repo_name: sergio.gimenez/PLMN-GraphSim
 site_dir: public
 copyright: Copyright &copy; 2025 Fundacio i2CAT
 
