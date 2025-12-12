@@ -8,3 +8,7 @@ lcov.info
 .venv
 .mypy_cache/
 public
+# Large data
+data/spain/
+data/usa/
+data.zip
