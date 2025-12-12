@@ -1,0 +1,111 @@
+site_name: PLMN-GraphSim
+site_description: Julia-based Discrete Event Simulator for evaluating scalability of 5G Networks and beyond
+site_url: https://plmn-graphsim-7935d4.pages.i2cat.net/
+repo_url: https://gitlab.i2cat.net/sergio.gimenez/PLMN-GraphSim
+repo_name: sergio.gimenez/PLMN-GraphSim
+site_dir: public
+copyright: Copyright &copy; 2025 Fundacio i2CAT
+
+nav:
+  - PLMN-GraphSim: index.md
+  - The Simulator In a Nutshell: simulation-details/in-a-nutshell/in-a-nutshell.md
+  - Quickstart: quickstart.md
+  - User Guide:
+      - Data Preparation:
+          - Overview: agents/getting-data-ready.md
+          - Spain: agents/countries/spain.md
+          - USA: agents/countries/usa.md
+      - Configuration: simulation-details/simulation-configuration.md
+  - Scenarios:
+      - scenarios/index.md
+      - Single-Tier Architecture:
+          - scenarios/single_tier_architecture/setup.md
+          - scenarios/single_tier_architecture/analysis.md
+      - Two-Tier Architecture:
+          - scenarios/two_tier_architecture/setup.md
+          - scenarios/two_tier_architecture/analysis.md
+      - Mobility:
+          - scenarios/mobility/setup.md
+          - scenarios/mobility/analysis.md
+  - Simulator in-depth:
+      - Core Concepts:
+          - Under the Hood: simulation-details/how-simulator-works.md
+      - Algorithms & Models:
+          - UPF Placement Strategy: simulation-details/k-means.md
+          - Mobility Models: simulation-details/mobility-models.md
+          - eMBB Focus: simulation-details/embb.md
+          - Memory Calculation: memory_calculation.md
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.indexes
+    - toc.integrate
+    - content.code.copy
+    - content.code.annotate
+  palette:
+    - media: "(prefers-color-scheme)"
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
+
+markdown_extensions:
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - admonition
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - attr_list
+  - tables
+  - md_in_html
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+  - https://unpkg.com/mermaid/dist/mermaid.min.js
+
+plugins:
+  - search
+  - build_plantuml:
+      render: "server"
+      server: "http://www.plantuml.com/plantuml"
+      disable_ssl_certificate_validation: true
+      output_format: "svg"
+      allow_multiple_roots: false
+      diagram_root: "docs/plantuml-diagrams"
+      output_folder: "out"
+      input_folder: "../../src"
+      input_extensions: ""

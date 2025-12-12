@@ -1,0 +1,74 @@
+# Simulation Configuration
+
+[simulation]
+# Scale Factor: 1 Agent represents X real users.
+# Higher values = fewer agents = faster simulation but less granular.
+# Lower values = more agents = slower simulation but more realistic distribution.
+# This is tipically a good compromise between speed and realism, even with big countries such as the US
+# but feel free to play with the resolution.
+scale_factor = 1000
+
+# Duration of the simulation in time units
+duration = 100.0
+
+# Mean duration of a user session (active time)
+mean_session_duration = 95.0
+
+# Mean time between sessions (offline time)
+mean_offline_duration = 5.0
+
+# Sampling Interval for Metrics (in time units)
+# Increase this value to speed up simulation (e.g., 5.0 or 10.0)
+sampling_interval = 1.0
+
+# Log Level: "debug", "info", "warn", "error"
+log_level = "info"
+
+# Number of PDU Sessions per User (e.g., Internet + IMS/VoNR)
+# This changes depending on the use case. Since we only are measuring eMBB for now, we only have two.
+min_sessions_per_user = 1
+max_sessions_per_user = 2
+
+# Architecture Configuration
+scenario_mode = "single_tier" # Options: "single_tier", "two_tier"
+num_centralized_upfs = 5 # Only used if scenario_mode = "two_tier"
+
+[countries]
+
+[countries.spain]
+enabled = true
+data_dir = "data/spain"
+mccs = [214]
+population = 49_442_844
+mobile_adoption_rate = 0.82
+
+[countries.spain.scenarios]
+# Define the scenarios to run.
+# Key is the Scenario Name, Value is the Number of UPFs (Centroids).
+# You can add as many scenarios as you want and the simulator will automatically pick them up.
+# "Quick Testing ESP" = 1
+# "Spain Legacy" = 3
+"Spain Distributed" = 52 # 52 is the number of provinces in Spain without Canary Islands, but counting ceuta and melilla.
+
+[countries.spain.operators]
+vodafone = { id = 1, enabled = true }
+orange = { id = 3, enabled = true }
+movistar = { id = 7, enabled = true }
+
+[countries.usa]
+enabled = true
+data_dir = "data/usa"
+mccs = [310, 311, 312, 313, 314, 315, 316]
+population = 335_000_000
+mobile_adoption_rate = 0.82
+
+[countries.usa.scenarios]
+# "Quick Testing USA" = 1
+# "USA Legacy" = 48
+"USA Distributed" = 817 #  is the number of counties in the USA with more than 50k inhabitants.
+
+[countries.usa.operators]
+verizon = { id = 480, enabled = true }
+att = { id = 410, enabled = true }
+tmobile = { id = 260, enabled = true }
+uscellular = { id = 580, enabled = true }
