@@ -1,0 +1,14 @@
+/images/
+scripts/images/
+results/
+coverage/
+coverage_html/
+*.cov
+*.log
+lcov.info
+.venv
+.mypy_cache/
+public
+# Large data
+data/spain/
+data/usa/
