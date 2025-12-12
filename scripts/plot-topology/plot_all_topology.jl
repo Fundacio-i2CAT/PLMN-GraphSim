@@ -55,7 +55,7 @@ function plot_single_scenario(op_name, op_id, scenario_name, num_upfs, valid_pat
         end
 
         # 4. Plot
-        plot_network_graph(topology, op_name, scenario_name)
+        plot_network_graph(topology, op_name, scenario_name; agent_locations=agent_locs)
 
         plot_topology_map(
             topology,
