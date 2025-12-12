@@ -71,4 +71,3 @@ mobile_adoption_rate = 0.82
 verizon = { id = 480, enabled = true }
 att = { id = 410, enabled = true }
 tmobile = { id = 260, enabled = true }
-uscellular = { id = 580, enabled = true }

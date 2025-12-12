@@ -58,7 +58,7 @@ function DesJulia6gRupa.Plotting.plot_topology_map(
         # title="6G-RUPA Topology: $operator_name - $scenario_name",
         xlabel="Longitude",
         ylabel="Latitude",
-        legend=:outertopright,
+        legend=:bottomleft,
         size=(2400, 2000), # Increased resolution (2x dimensions)
         dpi=300,           # High DPI for zooming
         aspect_ratio=:equal,
