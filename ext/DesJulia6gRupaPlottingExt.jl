@@ -55,10 +55,10 @@ function DesJulia6gRupa.Plotting.plot_topology_map(
     yticks_val = lat_start:lat_step:lat_stop
 
     p = plot(
-        title="6G-RUPA Topology: $operator_name - $scenario_name",
+        # title="6G-RUPA Topology: $operator_name - $scenario_name",
         xlabel="Longitude",
         ylabel="Latitude",
-        legend=:outertopright,
+        legend=:bottomleft,
         size=(2400, 2000), # Increased resolution (2x dimensions)
         dpi=300,           # High DPI for zooming
         aspect_ratio=:equal,
@@ -149,25 +149,36 @@ function DesJulia6gRupa.Plotting.plot_topology_map(
     if !isdir(output_dir)
         mkpath(output_dir)
     end
-    output_filename = "topology_map_cities_$(lowercase(operator_name))_$(lowercase(scenario_name)).png"
-    output_path = joinpath(output_dir, output_filename)
-    savefig(p, output_path)
-    println("Plot saved to $output_path")
+    output_filename_pdf = "topology_map_cities_$(lowercase(operator_name))_$(lowercase(scenario_name)).pdf"
+    output_path_pdf = joinpath(output_dir, output_filename_pdf)
+    savefig(p, output_path_pdf)
+    println("Plot saved to $output_path_pdf")
+
+    output_filename_png = "topology_map_cities_$(lowercase(operator_name))_$(lowercase(scenario_name)).png"
+    output_path_png = joinpath(output_dir, output_filename_png)
+    savefig(p, output_path_png)
+    println("Plot saved to $output_path_png")
 end
 
 function DesJulia6gRupa.Plotting.plot_network_graph(
     topology::NetworkTopology, 
     operator_name::String, 
     scenario_name::String;
+    agent_locations::Vector{GeoPoint} = GeoPoint[],
     output_dir::String = joinpath(@__DIR__, "../images")
 )
     println("Generating Graph Visualization for $operator_name...")
     
     # Determine Plot Limits from Data
-    ylims_val, xlims_val = calculate_plot_limits(topology.gnb_locations)
+    # Include agents in limits calculation if present
+    points_for_limits = copy(topology.gnb_locations)
+    if false && !isempty(agent_locations)
+        append!(points_for_limits, agent_locations)
+    end
+    ylims_val, xlims_val = calculate_plot_limits(points_for_limits)
 
     p = plot(
-        title="6G-RUPA Network Graph: $operator_name",
+        # title="6G-RUPA Network Graph: $operator_name",
         xlabel="Longitude",
         ylabel="Latitude",
         legend=false,
@@ -180,6 +191,44 @@ function DesJulia6gRupa.Plotting.plot_network_graph(
         guidefontsize=18,
         tickfontsize=14
     )
+
+    # 0. Draw Edges (Agent -> gNB)
+    if false && !isempty(agent_locations)
+        println("  Drawing connections for $(length(agent_locations)) agents to nearest gNBs...")
+        
+        agent_gnb_lons = Float64[]
+        agent_gnb_lats = Float64[]
+        
+        # Pre-calculate gNB coordinates for faster lookup
+        gnb_coords = [(g.lat, g.lon) for g in topology.gnb_locations]
+        
+        for agent in agent_locations
+            # Find nearest gNB
+            # Simple linear search is fine for plotting purposes usually
+            min_dist = Inf
+            nearest_gnb_idx = -1
+            
+            for (i, gnb) in enumerate(topology.gnb_locations)
+                d = haversine_distance(agent, gnb)
+                if d < min_dist
+                    min_dist = d
+                    nearest_gnb_idx = i
+                end
+            end
+            
+            if nearest_gnb_idx != -1
+                gnb_loc = topology.gnb_locations[nearest_gnb_idx]
+                push!(agent_gnb_lons, agent.lon, gnb_loc.lon, NaN)
+                push!(agent_gnb_lats, agent.lat, gnb_loc.lat, NaN)
+            end
+        end
+        
+        plot!(p, agent_gnb_lons, agent_gnb_lats,
+            linecolor=:lightblue,
+            linewidth=0.3,
+            alpha=0.4
+        )
+    end
 
     # 1. Draw Edges (gNB <-> UPF)
     # We use the NaN separator technique for fast plotting of many segments
@@ -247,6 +296,20 @@ function DesJulia6gRupa.Plotting.plot_network_graph(
     end
 
     # 3. Plot Nodes
+    
+    # Agents
+    if false && !isempty(agent_locations)
+        agent_lons = [p.lon for p in agent_locations]
+        agent_lats = [p.lat for p in agent_locations]
+        scatter!(p, agent_lons, agent_lats,
+            label="Users",
+            markersize=1.5,
+            markercolor=:blue,
+            markeralpha=0.6,
+            markerstrokewidth=0
+        )
+    end
+
     gnb_lons = [p.lon for p in topology.gnb_locations]
     gnb_lats = [p.lat for p in topology.gnb_locations]
     upf_lons = [p.lon for p in topology.upf_locations]
@@ -285,10 +348,15 @@ function DesJulia6gRupa.Plotting.plot_network_graph(
     if !isdir(output_dir)
         mkpath(output_dir)
     end
-    output_filename = "graph_viz_$(lowercase(operator_name))_$(lowercase(scenario_name)).png"
-    output_path = joinpath(output_dir, output_filename)
-    savefig(p, output_path)
-    println("Graph visualization saved to $output_path")
+    output_filename_pdf = "graph_viz_$(lowercase(operator_name))_$(lowercase(scenario_name)).pdf"
+    output_path_pdf = joinpath(output_dir, output_filename_pdf)
+    savefig(p, output_path_pdf)
+    println("Graph visualization saved to $output_path_pdf")
+
+    output_filename_png = "graph_viz_$(lowercase(operator_name))_$(lowercase(scenario_name)).png"
+    output_path_png = joinpath(output_dir, output_filename_png)
+    savefig(p, output_path_png)
+    println("Graph visualization saved to $output_path_png")
 end
 
 end

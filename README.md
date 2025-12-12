@@ -1,5 +1,21 @@
 # PLMN-GraphSim
 
+## Prerequisites & Setup
+
+To set up the simulation environment and download the necessary datasets:
+
+1.  **Instantiate Julia Environment:**
+    ```bash
+    julia --project=. -e 'using Pkg; Pkg.instantiate()'
+    ```
+
+2.  **Download Datasets:**
+    This project uses large geospatial datasets that are hosted externally. Run the provided script to download and extract them automatically:
+    ```bash
+    julia scripts/download_data.jl
+    ```
+    *Note: For the review process, this script fetches the anonymized dataset from Figshare.*
+
 ## Configuration
 
 The simulation is configured via `config.toml`. You can define simulation parameters (duration, scale factor) and select which countries and operators to simulate.
