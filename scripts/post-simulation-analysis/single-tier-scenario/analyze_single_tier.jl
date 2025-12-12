@@ -73,14 +73,17 @@ function generate_scenario_dashboard(config_name::String, detailed_file::String,
     dashboard = plot(p_mem_5g, p_mem_6g, p_ent_5g, p_ent_6g, 
         layout=(2, 2), 
         size=(1200, 800),
+        dpi=300,
         plot_title="Data Across Simulation: $config_name",
         plot_titlefontsize=16
     )
     
     safe_config = replace(config_name, " " => "_")
-    outfile = joinpath(output_dir, "dashboard_evolution_$(safe_config).pdf")
-    savefig(dashboard, outfile)
-    return basename(outfile)
+    outfile_pdf = joinpath(output_dir, "dashboard_evolution_$(safe_config).pdf")
+    savefig(dashboard, outfile_pdf)
+    outfile_png = joinpath(output_dir, "dashboard_evolution_$(safe_config).png")
+    savefig(dashboard, outfile_png)
+    return basename(outfile_pdf)
 end
 
 function generate_global_stats_dashboard(df::DataFrame, output_dir::String)
@@ -181,14 +184,17 @@ function generate_global_stats_dashboard(df::DataFrame, output_dir::String)
     dashboard = plot(p1, p2, p3, 
         layout=l, 
         size=(1000, 1200),
+        dpi=300,
         # plot_title="Global Statistics Dashboard (Single Tier)",
         plot_titlefontsize=16,
         margin=5Plots.mm
     )
     
-    outfile = joinpath(output_dir, "dashboard_global_stats.pdf")
-    savefig(dashboard, outfile)
-    return basename(outfile)
+    outfile_pdf = joinpath(output_dir, "dashboard_global_stats.pdf")
+    savefig(dashboard, outfile_pdf)
+    outfile_png = joinpath(output_dir, "dashboard_global_stats.png")
+    savefig(dashboard, outfile_png)
+    return basename(outfile_pdf)
 end
 
 function main()
@@ -212,12 +218,12 @@ function main()
     
     # 3. Generate Per-Scenario Evolution Dashboards
     configs = unique(df.Configuration)
-    # for config in configs
-    #     f_detailed = joinpath(results_dir, "evolution_detailed_$(config).csv")
-    #     if isfile(f_detailed)
-    #         generate_scenario_dashboard(config, f_detailed, IMAGES_DIR)
-    #     end
-    # end
+    for config in configs
+        f_detailed = joinpath(results_dir, "evolution_detailed_$(config).csv")
+        if isfile(f_detailed)
+            generate_scenario_dashboard(config, f_detailed, IMAGES_DIR)
+        end
+    end
     
     println("Analysis Complete.")
 end
