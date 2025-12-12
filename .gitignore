@@ -1,4 +1,6 @@
 /images/
+scripts/images/
+scripts/post-simulation-analysis/images
 results/
 coverage/
 coverage_html/

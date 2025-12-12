@@ -30,9 +30,8 @@ min_sessions_per_user = 1
 max_sessions_per_user = 2
 
 # Architecture Configuration
-scenario_mode = "two_tier" # Options: "single_tier", "two_tier"
+scenario_mode = "single_tier" # Options: "single_tier", "two_tier"
 num_centralized_upfs = 5 # Only used if scenario_mode = "two_tier"
-
 
 [countries]
 
@@ -49,12 +48,12 @@ mobile_adoption_rate = 0.82
 # You can add as many scenarios as you want and the simulator will automatically pick them up.
 # "Quick Testing ESP" = 1
 # "Spain Legacy" = 3
-"Spain TwoTier" = 52 # 52 is the number of provinces in Spain without Canary Islands, but counting ceuta and melilla.
+"Spain Distributed" = 52 # 52 is the number of provinces in Spain without Canary Islands, but counting ceuta and melilla.
 
 [countries.spain.operators]
-vodafone = { id = 1, enabled = false }
+vodafone = { id = 1, enabled = true }
 orange = { id = 3, enabled = true }
-movistar = { id = 7, enabled = false }
+movistar = { id = 7, enabled = true }
 
 [countries.usa]
 enabled = true
@@ -66,10 +65,9 @@ mobile_adoption_rate = 0.82
 [countries.usa.scenarios]
 # "Quick Testing USA" = 1
 # "USA Legacy" = 48
-"USA TwoTier" = 96 # 96 is the number of counties in the USA with more than 100k inhabitants.
+"USA Distributed" = 817 #  is the number of counties in the USA with more than 50k inhabitants.
 
 [countries.usa.operators]
-verizon = { id = 480, enabled = false }
-att = { id = 410, enabled = false }
+verizon = { id = 480, enabled = true }
+att = { id = 410, enabled = true }
 tmobile = { id = 260, enabled = true }
-uscellular = { id = 580, enabled = true }
