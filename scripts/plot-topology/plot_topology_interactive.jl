@@ -190,15 +190,23 @@ function main()
             agent_lats = [p.lat for p in agent_locs]
         end
         
+        # Determine limits based on country
+        if selected_country_key == "usa"
+            plot_ylims = (23, 50)
+        else
+            plot_ylims = (35, 44)
+        end
+
         # Plotting
         p = plot(
             # title="Network Topology: $selected_country_key - $selected_operator_key", 
             xlabel="Longitude", 
             ylabel="Latitude", 
-            legend=:outertopright,
+            legend=:bottomleft,
             size=(1200, 1200),
             dpi=300,
-            aspect_ratio=:equal
+            aspect_ratio=:equal,
+            ylims=plot_ylims
         )
         
         # Helper to add series

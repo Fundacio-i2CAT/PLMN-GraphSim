@@ -105,7 +105,7 @@ function run_country_study(country_key, operator_key, operator_id, operator_name
     println("---------------------------------------------------")
     
     # Ensure images directory exists
-    images_dir = joinpath(@__DIR__, "../images/two_tier_scenario")
+    images_dir = joinpath(@__DIR__, "../../../images/two_tier_scenario")
     if !isdir(images_dir)
         mkpath(images_dir)
     end
@@ -127,16 +127,16 @@ function run_country_study(country_key, operator_key, operator_id, operator_name
         yscale=:log10 # Log scale might be better if differences are huge
     )
     
-    plot_path_pdf = joinpath(images_dir, "memory_vs_centralized_upfs_$(country_key).pdf")
+    plot_path_pdf = joinpath(images_dir, "memory_vs_centralized_upfs_$(country_key)_$(operator_key).pdf")
     savefig(p, plot_path_pdf)
     println("Plot saved to: $plot_path_pdf")
 
-    plot_path_png = joinpath(images_dir, "memory_vs_centralized_upfs_$(country_key).png")
+    plot_path_png = joinpath(images_dir, "memory_vs_centralized_upfs_$(country_key)_$(operator_key).png")
     savefig(p, plot_path_png)
     println("Plot saved to: $plot_path_png")
     
     # Save aggregated results
-    csv_path = joinpath(@__DIR__, "../../../results/memory_vs_centralized_upfs_$(country_key).csv")
+    csv_path = joinpath(@__DIR__, "../../../results/memory_vs_centralized_upfs_$(country_key)_$(operator_key).csv")
     CSV.write(csv_path, results)
     println("Aggregated results saved to: $csv_path")
 end
@@ -155,13 +155,49 @@ function run_all_studies()
             scale_factor=1000
         ),
         (
+            country="spain", 
+            op_key="orange", 
+            op_id=3, 
+            op_name="Orange", 
+            edge_upfs=52,
+            counts=[1, 2, 4, 8, 16, 32],
+            scale_factor=1000
+        ),
+        (
+            country="spain", 
+            op_key="vodafone", 
+            op_id=1, 
+            op_name="Vodafone", 
+            edge_upfs=52,
+            counts=[1, 2, 4, 8, 16, 32],
+            scale_factor=1000
+        ),
+        (
             country="usa", 
             op_key="verizon", 
             op_id=480, 
             op_name="Verizon", 
             edge_upfs=817,
-            counts=[1, 2, 4, 8, 16, 32, 64], # Added 64 for USA
-            scale_factor=1000 # Higher scale factor for USA to manage simulation time
+            counts=[1, 2, 4, 8, 16, 32, 64],
+            scale_factor=1000
+        ),
+        (
+            country="usa", 
+            op_key="att", 
+            op_id=410, 
+            op_name="Att", 
+            edge_upfs=817,
+            counts=[1, 2, 4, 8, 16, 32, 64],
+            scale_factor=1000
+        ),
+        (
+            country="usa", 
+            op_key="tmobile", 
+            op_id=260, 
+            op_name="Tmobile", 
+            edge_upfs=817,
+            counts=[1, 2, 4, 8, 16, 32, 64],
+            scale_factor=1000
         )
     ]
 
@@ -176,6 +212,65 @@ function run_all_studies()
             study.scale_factor
         )
     end
+
+    # Generate Combined Plot
+    generate_combined_plot(studies)
+end
+
+function generate_combined_plot(studies)
+    println("\n---------------------------------------------------")
+    println("Generating Combined Plot...")
+    println("---------------------------------------------------")
+    
+    p = plot(
+        xlabel="Number of Centralized UPFs",
+        ylabel="Average Memory per UPF (MB)",
+        yscale=:log10,
+        legend=:outertopright,
+        framestyle=:box,
+        dpi=300,
+        size=(1000, 600)
+    )
+
+    colors = [:blue, :red, :green, :orange, :purple, :cyan]
+    markers = [:circle, :square, :diamond, :utriangle, :dtriangle, :star5]
+
+    for (i, study) in enumerate(studies)
+        csv_path = joinpath(@__DIR__, "../../../results/memory_vs_centralized_upfs_$(study.country)_$(study.op_key).csv")
+        if !isfile(csv_path)
+            println("  Warning: Results file not found for $(study.op_name) ($csv_path)")
+            continue
+        end
+        
+        df = CSV.read(csv_path, DataFrame)
+        
+        # Plot 5G (Dashed)
+        plot!(p, df.Num_Centralized_UPFs, df.Avg_Memory_5G_MB, 
+            label="$(study.op_name) (5G)", 
+            color=colors[i], 
+            linestyle=:dash,
+            marker=markers[i],
+            alpha=0.5
+        )
+        
+        # Plot 6G (Solid)
+        plot!(p, df.Num_Centralized_UPFs, df.Avg_Memory_6G_MB, 
+            label="$(study.op_name) (6G-RUPA)", 
+            color=colors[i], 
+            linestyle=:solid,
+            marker=markers[i],
+            lw=2
+        )
+    end
+    
+    images_dir = joinpath(@__DIR__, "../../../images/two_tier_scenario")
+    plot_path_pdf = joinpath(images_dir, "memory_vs_centralized_upfs_combined.pdf")
+    savefig(p, plot_path_pdf)
+    println("Combined Plot saved to: $plot_path_pdf")
+
+    plot_path_png = joinpath(images_dir, "memory_vs_centralized_upfs_combined.png")
+    savefig(p, plot_path_png)
+    println("Combined Plot saved to: $plot_path_png")
 end
 
 run_all_studies()
