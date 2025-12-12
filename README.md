@@ -2,23 +2,19 @@
 
 ## Prerequisites & Setup
 
-**⚠️ Important:** This repository uses **Git Large File Storage (LFS)** to manage large geospatial datasets (`.geojson`). You must have Git LFS installed to download the data correctly.
+To set up the simulation environment and download the necessary datasets:
 
-* Install lfs: `sudo apt install git-lfs`
-* Clone the repo
-
-    ```bash
-    git lfs install
-    git clone git@github.com:sergio-gimenez/PLMN-GraphSim.git
-    cd PLMN-GraphSim
-    git lfs pull  # Explicitly fetch large data files
-    ```
-
-* Instantiate Julia Environment:
+1.  **Instantiate Julia Environment:**
     ```bash
     julia --project=. -e 'using Pkg; Pkg.instantiate()'
     ```
 
+2.  **Download Datasets:**
+    This project uses large geospatial datasets that are hosted externally. Run the provided script to download and extract them automatically:
+    ```bash
+    julia scripts/download_data.jl
+    ```
+    *Note: For the review process, this script fetches the anonymized dataset from Figshare.*
 
 ## Configuration
 
