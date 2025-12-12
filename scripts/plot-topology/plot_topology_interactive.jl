@@ -177,17 +177,37 @@ function main()
         
         if choice_plot in [2, 3, 4, 5]
             # Calculate number of agents to plot
-            # Use a fixed number for visualization to be responsive, or use config
-            # Let's use a reasonable number like 2000 for visualization
-            num_agents_to_plot = 2000
-            println("Generating $num_agents_to_plot agents for visualization...")
+            population = get(selected_country_config, "population", 0)
+            mobile_adoption_rate = get(selected_country_config, "mobile_adoption_rate", 0.82)
+            effective_population = population * mobile_adoption_rate
+            
+            # Use the scale factor from sim_config
+            num_agents_to_plot = ceil(Int, effective_population / sim_config.scale_factor)
+            
+            println("Generating $num_agents_to_plot agents for visualization (Population: $population, Scale: $(sim_config.scale_factor))...")
             agent_locs = generate_agent_locations(topology, num_agents_to_plot)
             agent_lons = [p.lon for p in agent_locs]
             agent_lats = [p.lat for p in agent_locs]
         end
         
+        # Determine limits based on country
+        if selected_country_key == "usa"
+            plot_ylims = (23, 50)
+        else
+            plot_ylims = (35, 44)
+        end
+
         # Plotting
-        p = plot(title="Network Topology: $selected_country_key - $selected_operator_key", xlabel="Longitude", ylabel="Latitude", legend=:outertopright)
+        p = plot(
+            # title="Network Topology: $selected_country_key - $selected_operator_key", 
+            xlabel="Longitude", 
+            ylabel="Latitude", 
+            legend=:bottomleft,
+            size=(1200, 1200),
+            dpi=300,
+            aspect_ratio=:equal,
+            ylims=plot_ylims
+        )
         
         # Helper to add series
         function add_gnbs!()
@@ -195,7 +215,9 @@ function main()
         end
         
         function add_agents!()
-            scatter!(p, agent_lons, agent_lats, label="Agents", markersize=1.5, markercolor=:blue, markerstrokewidth=0, alpha=0.6)
+            # Use smaller markers for high density
+            ms = length(agent_lons) > 10000 ? 0.8 : 1.5
+            scatter!(p, agent_lons, agent_lats, label="Agents", markersize=ms, markercolor=:blue, markerstrokewidth=0, alpha=0.6)
         end
         
         function add_upfs_tier1!()
@@ -231,10 +253,16 @@ function main()
         output_dir = joinpath(@__DIR__, "../../images/topology_plots")
         mkpath(output_dir)
         timestamp = Dates.format(now(), "yyyymmdd_HHMMSS")
-        filename = "topology_$(selected_country_key)_$(selected_operator_key)_$(timestamp).png"
-        output_path = joinpath(output_dir, filename)
-        savefig(p, output_path)
-        println("Plot saved to: $output_path")
+        
+        filename_pdf = "topology_$(selected_country_key)_$(selected_operator_key)_$(timestamp).pdf"
+        output_path_pdf = joinpath(output_dir, filename_pdf)
+        savefig(p, output_path_pdf)
+        println("Plot saved to: $output_path_pdf")
+
+        filename_png = "topology_$(selected_country_key)_$(selected_operator_key)_$(timestamp).png"
+        output_path_png = joinpath(output_dir, filename_png)
+        savefig(p, output_path_png)
+        println("Plot saved to: $output_path_png")
         println("\n--- Ready for next plot ---\n")
     end
 end

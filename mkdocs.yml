@@ -7,7 +7,7 @@ site_dir: public
 copyright: Copyright &copy; 2025 Fundacio i2CAT
 
 nav:
-  - DES Julia B5G: index.md
+  - PLMN-GraphSim: index.md
   - The Simulator In a Nutshell: simulation-details/in-a-nutshell/in-a-nutshell.md
   - Quickstart: quickstart.md
   - User Guide:
