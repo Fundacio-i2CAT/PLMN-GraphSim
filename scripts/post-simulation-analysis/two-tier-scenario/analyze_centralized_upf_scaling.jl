@@ -1,5 +1,5 @@
 using Pkg
-Pkg.activate(joinpath(@__DIR__, ".."))
+# Pkg.activate(joinpath(@__DIR__, ".."))
 
 using DesJulia6gRupa
 using DesJulia6gRupa.Simulation
@@ -23,11 +23,11 @@ function run_country_study(country_key, operator_key, operator_id, operator_name
     scenario_base_name = "TwoTier_Scaling"
 
     # Load base config
-    config_path = joinpath(@__DIR__, "../config.toml")
+    config_path = joinpath(@__DIR__, "../../../config.toml")
     toml_data = TOML.parsefile(config_path)
     
     country_config = toml_data["countries"][country_key]
-    data_dir = joinpath(@__DIR__, "..", country_config["data_dir"])
+    data_dir = joinpath(@__DIR__, "../../..", country_config["data_dir"])
     mccs = Vector{Int}(country_config["mccs"])
     population = country_config["population"]
     mobile_adoption_rate = country_config["mobile_adoption_rate"]
@@ -72,7 +72,7 @@ function run_country_study(country_key, operator_key, operator_id, operator_name
         # Analyze Results
         safe_op = replace(operator_name, " " => "_")
         safe_scen = replace(scenario_name, " " => "_")
-        results_file = joinpath(@__DIR__, "../results/evolution_detailed_$(safe_op)_$(safe_scen).csv")
+        results_file = joinpath(@__DIR__, "../../../results/evolution_detailed_$(safe_op)_$(safe_scen).csv")
         
         if !isfile(results_file)
             @error "Results file not found: $results_file"
@@ -123,15 +123,20 @@ function run_country_study(country_key, operator_key, operator_id, operator_name
         lw=2,
         legend=:topright,
         framestyle=:box,
+        dpi=300,
         yscale=:log10 # Log scale might be better if differences are huge
     )
     
-    plot_path = joinpath(images_dir, "memory_vs_centralized_upfs_$(country_key).pdf")
-    savefig(p, plot_path)
-    println("Plot saved to: $plot_path")
+    plot_path_pdf = joinpath(images_dir, "memory_vs_centralized_upfs_$(country_key).pdf")
+    savefig(p, plot_path_pdf)
+    println("Plot saved to: $plot_path_pdf")
+
+    plot_path_png = joinpath(images_dir, "memory_vs_centralized_upfs_$(country_key).png")
+    savefig(p, plot_path_png)
+    println("Plot saved to: $plot_path_png")
     
     # Save aggregated results
-    csv_path = joinpath(@__DIR__, "../results/memory_vs_centralized_upfs_$(country_key).csv")
+    csv_path = joinpath(@__DIR__, "../../../results/memory_vs_centralized_upfs_$(country_key).csv")
     CSV.write(csv_path, results)
     println("Aggregated results saved to: $csv_path")
 end

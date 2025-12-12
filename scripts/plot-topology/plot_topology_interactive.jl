@@ -197,6 +197,7 @@ function main()
             ylabel="Latitude", 
             legend=:outertopright,
             size=(1200, 1200),
+            dpi=300,
             aspect_ratio=:equal
         )
         
@@ -245,10 +246,15 @@ function main()
         mkpath(output_dir)
         timestamp = Dates.format(now(), "yyyymmdd_HHMMSS")
         
-        filename = "topology_$(selected_country_key)_$(selected_operator_key)_$(timestamp).pdf"
-        output_path = joinpath(output_dir, filename)
-        savefig(p, output_path)
-        println("Plot saved to: $output_path")
+        filename_pdf = "topology_$(selected_country_key)_$(selected_operator_key)_$(timestamp).pdf"
+        output_path_pdf = joinpath(output_dir, filename_pdf)
+        savefig(p, output_path_pdf)
+        println("Plot saved to: $output_path_pdf")
+
+        filename_png = "topology_$(selected_country_key)_$(selected_operator_key)_$(timestamp).png"
+        output_path_png = joinpath(output_dir, filename_png)
+        savefig(p, output_path_png)
+        println("Plot saved to: $output_path_png")
         println("\n--- Ready for next plot ---\n")
     end
 end

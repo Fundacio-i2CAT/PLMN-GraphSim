@@ -149,10 +149,15 @@ function DesJulia6gRupa.Plotting.plot_topology_map(
     if !isdir(output_dir)
         mkpath(output_dir)
     end
-    output_filename = "topology_map_cities_$(lowercase(operator_name))_$(lowercase(scenario_name)).pdf"
-    output_path = joinpath(output_dir, output_filename)
-    savefig(p, output_path)
-    println("Plot saved to $output_path")
+    output_filename_pdf = "topology_map_cities_$(lowercase(operator_name))_$(lowercase(scenario_name)).pdf"
+    output_path_pdf = joinpath(output_dir, output_filename_pdf)
+    savefig(p, output_path_pdf)
+    println("Plot saved to $output_path_pdf")
+
+    output_filename_png = "topology_map_cities_$(lowercase(operator_name))_$(lowercase(scenario_name)).png"
+    output_path_png = joinpath(output_dir, output_filename_png)
+    savefig(p, output_path_png)
+    println("Plot saved to $output_path_png")
 end
 
 function DesJulia6gRupa.Plotting.plot_network_graph(
@@ -343,10 +348,15 @@ function DesJulia6gRupa.Plotting.plot_network_graph(
     if !isdir(output_dir)
         mkpath(output_dir)
     end
-    output_filename = "graph_viz_$(lowercase(operator_name))_$(lowercase(scenario_name)).pdf"
-    output_path = joinpath(output_dir, output_filename)
-    savefig(p, output_path)
-    println("Graph visualization saved to $output_path")
+    output_filename_pdf = "graph_viz_$(lowercase(operator_name))_$(lowercase(scenario_name)).pdf"
+    output_path_pdf = joinpath(output_dir, output_filename_pdf)
+    savefig(p, output_path_pdf)
+    println("Graph visualization saved to $output_path_pdf")
+
+    output_filename_png = "graph_viz_$(lowercase(operator_name))_$(lowercase(scenario_name)).png"
+    output_path_png = joinpath(output_dir, output_filename_png)
+    savefig(p, output_path_png)
+    println("Graph visualization saved to $output_path_png")
 end
 
 end

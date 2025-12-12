@@ -99,15 +99,18 @@ function generate_scenario_dashboard(config_name::String, detailed_file::String,
     dashboard = plot(p_mem, p_ent, 
         layout=(1, 2), 
         size=(1200, 600),
+        dpi=300,
         plot_title="Centralized UPF Evolution: $config_name",
         plot_titlefontsize=16,
         margin=10Plots.mm
     )
     
     safe_config = replace(config_name, " " => "_")
-    outfile = joinpath(output_dir, "dashboard_evolution_$(safe_config).pdf")
-    savefig(dashboard, outfile)
-    return basename(outfile)
+    outfile_pdf = joinpath(output_dir, "dashboard_evolution_$(safe_config).pdf")
+    savefig(dashboard, outfile_pdf)
+    outfile_png = joinpath(output_dir, "dashboard_evolution_$(safe_config).png")
+    savefig(dashboard, outfile_png)
+    return basename(outfile_pdf)
 end
 
 function generate_global_stats_dashboard(df::DataFrame, output_dir::String)
@@ -201,14 +204,17 @@ function generate_global_stats_dashboard(df::DataFrame, output_dir::String)
     dashboard = plot(p1, p2, p3, 
         layout=l, 
         size=(1200, 1000),
+        dpi=300,
         # plot_title="Global Statistics Dashboard",
         plot_titlefontsize=16,
         margin=5Plots.mm
     )
     
-    outfile = joinpath(output_dir, "dashboard_global_stats.pdf")
-    savefig(dashboard, outfile)
-    return basename(outfile)
+    outfile_pdf = joinpath(output_dir, "dashboard_global_stats.pdf")
+    savefig(dashboard, outfile_pdf)
+    outfile_png = joinpath(output_dir, "dashboard_global_stats.png")
+    savefig(dashboard, outfile_png)
+    return basename(outfile_pdf)
 end
 
 function print_summary_table(df::DataFrame)
