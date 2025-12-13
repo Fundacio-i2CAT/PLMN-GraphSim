@@ -21,7 +21,7 @@ julia --project=. main.jl
 That will execute a very simple interactive menu:
 
 ```source
-   6G-RUPA DES Simulation Framework       
+   PLMN-GraphSim DES Simulation Framework       
 ==========================================
 Select an action to run:
 1. Run Full Simulation

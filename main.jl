@@ -2,7 +2,7 @@ using Pkg
 Pkg.activate(@__DIR__)
 
 println("==========================================")
-println("   6G-RUPA DES Simulation Framework       ")
+println("   PLMN-GraphSim DES Simulation Framework       ")
 println("==========================================")
 println("Select an action to run:")
 println("1. Run Full Simulation (Centralized vs Distributed)")

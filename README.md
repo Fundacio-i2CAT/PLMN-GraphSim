@@ -2,19 +2,29 @@
 
 ## Prerequisites & Setup
 
-To set up the simulation environment and download the necessary datasets:
+FIrst, install Julia (version 1.11 recommneded).
 
-1.  **Instantiate Julia Environment:**
-    ```bash
-    julia --project=. -e 'using Pkg; Pkg.instantiate()'
-    ```
+```bash
+curl -fsSL https://install.julialang.org | sh
+```
 
-2.  **Download Datasets:**
-    This project uses large geospatial datasets that are hosted externally. Run the provided script to download and extract them automatically:
-    ```bash
-    julia scripts/download_data.jl
-    ```
-    *Note: For the review process, this script fetches the anonymized dataset from Figshare.*
+Now let's  set up the simulation environment and download the necessary datasets:
+
+Instantiate Julia Environment:
+
+```bash
+julia --project=. -e 'using Pkg; Pkg.instantiate()'
+```
+
+Then download datasets
+
+This project uses large geospatial datasets that have been pre-processed by the scripts in `data/processing_scripts/`. To simplify the setup, we provide a script to download the pre-processed datasets directly.
+
+```bash
+julia scripts/download_data.jl
+```
+
+*Note: For the review process, this script fetches the anonymized dataset from Figshare.*
 
 ## Configuration
 
@@ -51,7 +61,7 @@ julia --project=. main.jl
 That will execute a very simple interactive menu:
 
 ```source
-   6G-RUPA DES Simulation Framework       
+   PLMN-GraphSim DES Simulation Framework       
 ==========================================
 Select an action to run:
 1. Run Full Simulation (Centralized vs Distributed)

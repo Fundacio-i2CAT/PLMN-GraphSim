@@ -1,9 +1,8 @@
 using Downloads
 
-# TODO: Create a release on GitLab (e.g., tag v0.1.0) and upload 'data.zip' to it.
+# TODO: Create a release on GitHub (e.g., tag v0.1.0) and upload 'data.zip' to it.
 # Then, copy the link to the uploaded asset and paste it below.
 # FOR BLIND REVIEW: Use a Figshare/Zenodo anonymous link here.
-# const DATA_URL = "https://gitlab.i2cat.net/sergio.gimenez/julia-mobile-des/-/releases/v0.1.0/downloads/data.zip"
 const DATA_URL = "https://figshare.com/s/c116f5a9c2e0f0a77ceb"
 const DATA_DIR = joinpath(@__DIR__, "..", "data")
 

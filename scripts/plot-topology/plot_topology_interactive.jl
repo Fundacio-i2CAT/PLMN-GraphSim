@@ -3,10 +3,10 @@
 
 using Pkg
 Pkg.activate(joinpath(@__DIR__, "../.."))
-using DesJulia6gRupa
-using DesJulia6gRupa.DataLoading
-using DesJulia6gRupa.Types
-using DesJulia6gRupa.AgentGeneration
+using PLMNGraphSim
+using PLMNGraphSim.DataLoading
+using PLMNGraphSim.Types
+using PLMNGraphSim.AgentGeneration
 using TOML
 using Plots
 using Dates

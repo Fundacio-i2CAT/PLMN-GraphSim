@@ -1,4 +1,4 @@
-module DesJulia6gRupa
+module PLMNGraphSim
 
 include("Types.jl")
 include("DataLoading.jl")
