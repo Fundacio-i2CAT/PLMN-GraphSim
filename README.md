@@ -16,15 +16,37 @@ Instantiate Julia Environment:
 julia --project=. -e 'using Pkg; Pkg.instantiate()'
 ```
 
-Then download datasets
+It will take a few minutes to download and compile all dependencies.
 
-This project uses large geospatial datasets that have been pre-processed by the scripts in `data/processing_scripts/`. To simplify the setup, we provide a script to download the pre-processed datasets directly.
+Then download datasets. This project uses large geospatial datasets that have been pre-processed by the scripts in `data/processing_scripts/`. To simplify the setup, we provide a script to download the pre-processed datasets directly.
 
 ```bash
 julia scripts/download_data.jl
 ```
 
 *Note: For the review process, this script fetches the anonymized dataset from Figshare.*
+
+Figshare sometimes does not allow direct downloads via command line tools. If you encounter issues, please download the dataset manually from [this link](https://figshare.com/articles/dataset/PLMN-GraphSim_Datasets/23315328) and extract it in `PLMN-GraphSim/data/`:
+
+```bash
+unzip -o data.zip -d PLMN-GraphSim/data/
+```
+
+Now you are all set to run the simulator. To run it just do:
+
+```bash
+$ julia --project=. main.jl
+
+  Activating project at `~/PLMN-GraphSim`
+==========================================
+   6G-RUPA DES Simulation Framework
+==========================================
+Select an action to run:
+1. Run Full Simulation (Centralized vs Distributed)
+2. Plot Network Topology
+q. Quit
+==========================================
+```
 
 ## Configuration
 
