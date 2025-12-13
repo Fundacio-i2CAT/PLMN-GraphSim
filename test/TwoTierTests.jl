@@ -1,8 +1,8 @@
 using Test
-using DesJulia6gRupa
-using DesJulia6gRupa.Types
-using DesJulia6gRupa.DataLoading
-using DesJulia6gRupa.Simulation
+using PLMNGraphSim
+using PLMNGraphSim.Types
+using PLMNGraphSim.DataLoading
+using PLMNGraphSim.Simulation
 using Graphs
 using MetaGraphsNext
 
@@ -29,7 +29,7 @@ using MetaGraphsNext
         ]
         
         # Cluster into 2 Centralized UPFs
-        centralized_locs, mapping = DesJulia6gRupa.DataLoading.perform_hierarchical_clustering(edge_upfs, 2)
+        centralized_locs, mapping = PLMNGraphSim.DataLoading.perform_hierarchical_clustering(edge_upfs, 2)
         
         @test length(centralized_locs) == 2
         @test length(mapping) == 6
@@ -49,7 +49,7 @@ using MetaGraphsNext
         centralized_locs = [GeoPoint(2.0, 2.0)]
         edge_to_centralized = [1]
         
-        mg = DesJulia6gRupa.DataLoading.build_graph(edge_upf_locs, gnb_locs, gnb_to_upf, centralized_locs, edge_to_centralized)
+        mg = PLMNGraphSim.DataLoading.build_graph(edge_upf_locs, gnb_locs, gnb_to_upf, centralized_locs, edge_to_centralized)
         
         # Check Nodes
         @test haskey(mg, (:gNB, 1))

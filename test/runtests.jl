@@ -1,7 +1,7 @@
 using Test
-using DesJulia6gRupa
+using PLMNGraphSim
 
-@testset "DesJulia6gRupa.jl" begin
+@testset "PLMNGraphSim.jl" begin
     include("AgentGenerationTests.jl")
     include("SimulationTests.jl")
     include("TwoTierTests.jl")

@@ -1,10 +1,10 @@
 using Pkg
 Pkg.activate(joinpath(@__DIR__, "../.."))
 using Plots # Added to enable plotting extension
-using DesJulia6gRupa
-using DesJulia6gRupa.Plotting
-using DesJulia6gRupa.Types
-using DesJulia6gRupa.AgentGeneration
+using PLMNGraphSim
+using PLMNGraphSim.Plotting
+using PLMNGraphSim.Types
+using PLMNGraphSim.AgentGeneration
 using TOML
 using CSV
 using DataFrames
@@ -29,7 +29,7 @@ function plot_single_scenario(op_name, op_id, scenario_name, num_upfs, valid_pat
 
     try
         # 1. Load Topology
-        topology = DesJulia6gRupa.DataLoading.load_and_deploy_network(valid_paths, op_id, num_upfs, data_dir, sim_config)
+        topology = PLMNGraphSim.DataLoading.load_and_deploy_network(valid_paths, op_id, num_upfs, data_dir, sim_config)
         # 2. Generate Agents
         total_pop = sum([m.population for m in topology.municipalities])
 

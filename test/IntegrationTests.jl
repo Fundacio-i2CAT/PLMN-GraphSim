@@ -1,8 +1,8 @@
 using Test
-using DesJulia6gRupa
-using DesJulia6gRupa.Simulation
-using DesJulia6gRupa.DataLoading
-using DesJulia6gRupa.Types
+using PLMNGraphSim
+using PLMNGraphSim.Simulation
+using PLMNGraphSim.DataLoading
+using PLMNGraphSim.Types
 import ConcurrentSim
 
 @testset "Integration Tests (End-to-End)" begin

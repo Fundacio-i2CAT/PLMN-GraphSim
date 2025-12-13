@@ -1,8 +1,8 @@
-module DesJulia6gRupaPlottingExt
+module PLMNGraphSimPlottingExt
 
-using DesJulia6gRupa
-using DesJulia6gRupa.Plotting
-using DesJulia6gRupa.Types
+using PLMNGraphSim
+using PLMNGraphSim.Plotting
+using PLMNGraphSim.Types
 using Plots
 using CSV
 using DataFrames
@@ -33,7 +33,7 @@ function calculate_plot_limits(points::Vector{GeoPoint}, buffer_percent::Float64
     return (min_lat - lat_buf, max_lat + lat_buf), (min_lon - lon_buf, max_lon + lon_buf)
 end
 
-function DesJulia6gRupa.Plotting.plot_topology_map(
+function PLMNGraphSim.Plotting.plot_topology_map(
     topology::NetworkTopology,
     operator_name::String,
     scenario_name::String;
@@ -160,7 +160,7 @@ function DesJulia6gRupa.Plotting.plot_topology_map(
     println("Plot saved to $output_path_png")
 end
 
-function DesJulia6gRupa.Plotting.plot_network_graph(
+function PLMNGraphSim.Plotting.plot_network_graph(
     topology::NetworkTopology, 
     operator_name::String, 
     scenario_name::String;

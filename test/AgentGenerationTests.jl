@@ -7,9 +7,9 @@ using GeoJSON
 using JSON3
 
 # Assuming we are running from project root
-using DesJulia6gRupa
-using DesJulia6gRupa.Types
-using DesJulia6gRupa.AgentGeneration
+using PLMNGraphSim
+using PLMNGraphSim.Types
+using PLMNGraphSim.AgentGeneration
 
 @testset "AgentGeneration Tests" begin
 

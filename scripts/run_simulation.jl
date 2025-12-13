@@ -1,9 +1,9 @@
 using Pkg
 Pkg.activate(joinpath(@__DIR__, ".."))
-using DesJulia6gRupa
-using DesJulia6gRupa.Simulation
-using DesJulia6gRupa.Types
-using DesJulia6gRupa.LoggingSetup
+using PLMNGraphSim
+using PLMNGraphSim.Simulation
+using PLMNGraphSim.Types
+using PLMNGraphSim.LoggingSetup
 using TOML
 using Logging
 

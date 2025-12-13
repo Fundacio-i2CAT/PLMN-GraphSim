@@ -1,7 +1,7 @@
 using Test
-using DesJulia6gRupa
-using DesJulia6gRupa.Simulation
-using DesJulia6gRupa.Types
+using PLMNGraphSim
+using PLMNGraphSim.Simulation
+using PLMNGraphSim.Types
 using Graphs
 using MetaGraphsNext
 

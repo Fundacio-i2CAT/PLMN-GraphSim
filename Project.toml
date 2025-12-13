@@ -1,6 +1,6 @@
-name = "DesJulia6gRupa"
+name = "PLMNGraphSim"
 uuid = "5a6b7c8d-9e0f-1a2b-3c4d-5e6f7a8b9c0d"
-authors = ["Sergio"]
+authors = ["Anonymous"]
 version = "0.1.0"
 
 [deps]
@@ -29,7 +29,7 @@ StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
 TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 
 [extensions]
-DesJulia6gRupaPlottingExt = "Plots"
+PLMNGraphSimPlottingExt = "Plots"
 
 [compat]
 Aqua = "0.8.14"

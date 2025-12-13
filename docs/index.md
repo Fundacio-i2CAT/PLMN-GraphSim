@@ -3,11 +3,7 @@
 This is the documentation for the Julia-based Discrete Event Simulator designed to evaluate the scalability of 5G networks and beyond.
 
 ??? question "Julia? Why?"
-    I could see myself asking this question if past me would be looking at this. While in Boston, I attended a workshop in the MIT about Dyad, a framework for  modeling and simulation, but more suited for systems that require essentially continuous time simulations.
-
-    It was interesting but not really suitable for this use case. However, Julia kind of caught my attention, as it is designed for high-performance numerical and scientific computing, combining the ease of use of languages like Python with the speed of C/C++. After some research, I found out that Julia has a strong ecosystem for discrete event simulation, including packages like `ConcurrentSim`, which provides a robust framework for building and running simulations. I implemented a quick proof of concept and I was amazed on how efficient Julia is. So this made Julia a very attractive choice for developing a discrete event simulator tailored to evaluating the scalability of 5G networks and beyond.
-
-    And this is the result :D
+    Julia is designed for high-performance numerical and scientific computing, combining the ease of use of languages like Python with the speed of C/C++. It has a strong ecosystem for discrete event simulation, including packages like `ConcurrentSim`, which provides a robust framework for building and running simulations. This makes Julia a very attractive choice for developing a discrete event simulator tailored to evaluating the scalability of 5G networks and beyond.
 
 The simulator allows researchers and network engineers to model, simulate, and analyze various network scenarios, focusing on the deployment and performance of User Plane Functions (UPFs) across different geographic regions.
 
