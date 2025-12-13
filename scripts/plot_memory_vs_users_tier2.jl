@@ -16,7 +16,7 @@ function plot_memory_vs_users(filename::String, scenario_name::String)
     filepath = joinpath(RESULTS_DIR, filename)
     if !isfile(filepath)
         println("File not found: $filepath")
-        return
+        returnI 
     end
 
     df = CSV.read(filepath, DataFrame)

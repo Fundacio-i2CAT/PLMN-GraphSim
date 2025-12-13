@@ -14,3 +14,5 @@ public
 data/spain/
 data/usa/
 data.zip
+# Ignore large GeoJSON files
+*.geojson
