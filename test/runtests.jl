@@ -6,6 +6,7 @@ using DesJulia6gRupa
     include("SimulationTests.jl")
     include("TwoTierTests.jl")
     include("IntegrationTests.jl")
+    include("MobilityTests.jl")
     
     if Base.find_package("Aqua") !== nothing && Base.find_package("JET") !== nothing
         include("qa.jl")
