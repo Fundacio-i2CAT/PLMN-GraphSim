@@ -14,7 +14,6 @@ To set up the simulation environment and download the necessary datasets:
     ```bash
     julia scripts/download_data.jl
     ```
-    *Note: For the review process, this script fetches the anonymized dataset from Figshare.*
 
 ## Configuration
 
@@ -115,4 +114,3 @@ julia --project=. test/runtests.jl
    ```
 
    Then open http://localhost:8000
-
