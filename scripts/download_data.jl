@@ -1,37 +1,59 @@
 using Downloads
+using JSON3
 
-# TODO: Create a release on GitLab (e.g., tag v0.1.0) and upload 'data.zip' to it.
-# Then, copy the link to the uploaded asset and paste it below.
-# FOR BLIND REVIEW: Use a Figshare/Zenodo anonymous link here.
-# const DATA_URL = "https://gitlab.i2cat.net/sergio.gimenez/julia-mobile-des/-/releases/v0.1.0/downloads/data.zip"
-const DATA_URL = "https://figshare.com/s/c116f5a9c2e0f0a77ceb"
+const DATASET_PID = "doi:10.34810/data3210"
 const DATA_DIR = joinpath(@__DIR__, "..", "data")
+const API_BASE = "https://dataverse.csuc.cat/api"
+
+const FILE_MAP = [
+    # Spain
+    ("$(API_BASE)/access/datafile/450093", "spain", "municipalities.csv"),
+    ("$(API_BASE)/access/datafile/450098", "spain", "cities.csv"),
+    ("$(API_BASE)/access/datafile/450101", "spain", "regions.geojson"),
+    ("$(API_BASE)/access/datafile/450103", "spain/opencellid", "214.csv"),
+    # USA
+    ("$(API_BASE)/access/datafile/450102", "usa", "municipalities.csv"),
+    ("$(API_BASE)/access/datafile/450104", "usa", "cities.csv"),
+    ("$(API_BASE)/access/datafile/450097", "usa", "regions.geojson"),
+    ("$(API_BASE)/access/datafile/450094", "usa/opencellid", "311.csv"),
+    ("$(API_BASE)/access/datafile/450095", "usa/opencellid", "312.csv"),
+    ("$(API_BASE)/access/datafile/450096", "usa/opencellid", "313.csv"),
+    ("$(API_BASE)/access/datafile/450099", "usa/opencellid", "314.csv"),
+    ("$(API_BASE)/access/datafile/450100", "usa/opencellid", "310.csv"),
+]
 
 function download_and_extract()
     if !isdir(DATA_DIR)
         mkpath(DATA_DIR)
     end
 
-    zip_path = joinpath(DATA_DIR, "data.zip")
-    
-    println("Downloading data from $DATA_URL...")
-    try
-        Downloads.download(DATA_URL, zip_path)
-        println("Download complete.")
-        
-        println("Extracting data...")
-        # Using system unzip command (works on Linux/macOS)
-        # For Windows, or if unzip is missing, you might need a pure Julia solution like ZipFile.jl
-        # The -o flag overwrites existing files without prompting
-        run(`unzip -o $zip_path -d $DATA_DIR`)
-        
-        println("Extraction complete.")
-        rm(zip_path)
-        println("Cleaned up zip file.")
-        
-    catch e
-        println("Error: $e")
-        println("Please ensure 'unzip' is installed or manually download and extract the data to $DATA_DIR")
+    errors = []
+
+    for (url, subdir, filename) in FILE_MAP
+        dest_dir = joinpath(DATA_DIR, subdir)
+        if !isdir(dest_dir)
+            mkpath(dest_dir)
+        end
+        dest_path = joinpath(dest_dir, filename)
+
+        println("Downloading $filename from dataset...")
+        try
+            Downloads.download(url, dest_path)
+            println("  -> $dest_path")
+        catch e
+            msg = "Failed to download $filename: $e"
+            println(msg)
+            push!(errors, msg)
+        end
+    end
+
+    if isempty(errors)
+        println("\nAll files downloaded successfully.")
+    else
+        println("\nSome files failed to download:")
+        for err in errors
+            println("  $err")
+        end
     end
 end
 

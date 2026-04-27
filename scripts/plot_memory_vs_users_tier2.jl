@@ -57,7 +57,16 @@ function plot_memory_vs_users(filename::String, scenario_name::String)
         color=:red,
         legend=:topleft,
         grid=true,
-        formatter=:plain # Avoid scientific notation if possible
+        formatter=:plain, # Avoid scientific notation if possible
+        size=(1200, 800),
+        dpi=300,
+        left_margin=10Plots.mm,
+        right_margin=4Plots.mm,
+        bottom_margin=8Plots.mm,
+        guidefont=font(12),
+        tickfont=font(10),
+        legendfont=font(10),
+        titlefont=font(12)
     )
 
     plot!(

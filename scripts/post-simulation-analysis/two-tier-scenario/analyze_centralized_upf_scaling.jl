@@ -229,7 +229,12 @@ function generate_combined_plot(studies)
         legend=:outertopright,
         framestyle=:box,
         dpi=300,
-        size=(1000, 600)
+        size=(1100, 650),
+        left_margin=12Plots.mm,
+        right_margin=6Plots.mm,
+        bottom_margin=6Plots.mm,
+        guidefont=font(11),
+        tickfont=font(9)
     )
 
     colors = [:blue, :red, :green, :orange, :purple, :cyan]
