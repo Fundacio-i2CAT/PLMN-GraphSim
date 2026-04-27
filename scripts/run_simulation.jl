@@ -15,8 +15,29 @@ function load_config()
     return TOML.parsefile(config_path)
 end
 
+function create_mobility_config(toml_data)
+    mob = get(toml_data, "mobility", Dict())
+    enabled = get(mob, "enabled", false)
+    update_interval = Float64(get(mob, "update_interval", 1.0))
+    model_name = lowercase(String(get(mob, "model", "none")))
+    model = if !enabled || model_name in ("none", "stationary", "no_mobility")
+        NoMobility()
+    elseif model_name in ("random_waypoint", "rwp", "waypoint")
+        RandomWaypoint(
+            Float64(get(mob, "speed_kmh", 5.0)),
+            Float64(get(mob, "pause_time", 0.0)),
+            Float64(get(mob, "max_jump_km", 1.0)),
+        )
+    else
+        @warn "Unknown mobility model '$model_name', falling back to NoMobility"
+        NoMobility()
+    end
+    return MobilityConfig(enabled, update_interval, model)
+end
+
 function create_sim_config(toml_data)
     sim_data = toml_data["simulation"]
+    mobility_cfg = create_mobility_config(sim_data)
     return SimConfig(
         sim_data["min_sessions_per_user"],
         sim_data["max_sessions_per_user"],
@@ -27,7 +48,8 @@ function create_sim_config(toml_data)
         # Default to basic single-tier scenario if not specified
         Symbol(get(sim_data, "scenario_mode", "single_tier")),
         get(sim_data, "num_centralized_upfs", 0),
-        get(sim_data, "sampling_interval", 1.0)
+        get(sim_data, "sampling_interval", 1.0),
+        mobility_cfg,
     )
 end
 

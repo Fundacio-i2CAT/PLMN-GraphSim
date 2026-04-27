@@ -10,6 +10,7 @@ using GeometryBasics
 export FAR, SessionContext5G, ForwardingEntry6GRUPA, ForwardingState5G, SessionSimMetadata
 export SimGlobalState, GeoPoint, NetworkTopology, GUPFState6GRUPA, Municipality, SimConfig
 export haversine_distance, UserType, eMBB, mMTC, URLLC
+export MobilityConfig, MobilityModel, NoMobility, RandomWaypoint
 
 @enum UserType begin
     eMBB
@@ -68,6 +69,45 @@ struct ForwardingEntry6GRUPA
     output_interface::Int32
 end
 
+# --- Mobility Models ---
+# Abstract type so future models (Gauss-Markov, trajectory replay, population-aware
+# random walk, ...) can be added without touching the lifecycle code.
+abstract type MobilityModel end
+
+"Stationary user. Equivalent to legacy behaviour (single-shot location)."
+struct NoMobility <: MobilityModel end
+
+"""
+Random Waypoint mobility model.
+
+At each waypoint the agent picks a new destination uniformly inside a square
+of side `2*max_jump_km` centred on its current position, walks toward it at
+`speed_kmh`, then pauses for `pause_time` simulated seconds before repeating.
+
+Speeds in km/h, pause time in simulation time units (assumed seconds).
+"""
+struct RandomWaypoint <: MobilityModel
+    speed_kmh::Float64
+    pause_time::Float64
+    max_jump_km::Float64
+end
+
+"""
+Per-simulation mobility configuration.
+
+`enabled = false` keeps the legacy stationary behaviour intact (default).
+`update_interval` controls how often the agent re-evaluates its position and
+serving gNB; smaller values give finer-grained handover detection at higher
+simulation cost.
+"""
+struct MobilityConfig
+    enabled::Bool
+    update_interval::Float64
+    model::MobilityModel
+end
+
+MobilityConfig() = MobilityConfig(false, 1.0, NoMobility())
+
 struct SimConfig
     min_sessions::Int
     max_sessions::Int
@@ -78,7 +118,16 @@ struct SimConfig
     scenario::Symbol # :basic, :two_tier, :roaming
     num_centralized_upfs::Int # For :two_tier scenario
     sampling_interval::Float64
+    mobility::MobilityConfig
 end
+
+# Backward-compatible constructor (mobility disabled by default).
+SimConfig(min_sessions, max_sessions, scale_factor, duration,
+          mean_session_duration, mean_offline_duration, scenario,
+          num_centralized_upfs, sampling_interval) =
+    SimConfig(min_sessions, max_sessions, scale_factor, duration,
+              mean_session_duration, mean_offline_duration, scenario,
+              num_centralized_upfs, sampling_interval, MobilityConfig())
 
 # --- Simulation State ---
 mutable struct SimGlobalState
@@ -94,7 +143,33 @@ mutable struct SimGlobalState
     history_per_upf_entries_5g::Vector{Vector{Int}}
     history_per_gupf_6grupa_fwd_state_info_size_mb::Vector{Vector{Float64}}
     history_per_gupf_entries_6grupa::Vector{Vector{Int}}
+
+    # --- Mobility / Handover Counters (PoC) ---
+    # Cumulative totals over the whole run.
+    handover_count::Int                  # cell-change events detected
+    signaling_events_5g::Int             # generic 5G handover signaling events (Phase 1: split Xn vs N2)
+    signaling_events_6grupa::Int         # 6G-RUPA local renumbering events
+    # Per-sampling-tick history (parallel to history_time).
+    history_handovers::Vector{Int}
+    history_signaling_events_5g::Vector{Int}
+    history_signaling_events_6grupa::Vector{Int}
 end
+
+# Backward-compatible constructor used by existing tests and call sites
+# (no mobility counters supplied -> initialised to zero/empty).
+SimGlobalState(config, upf_sessions_5g, forwarding_tables_6grupa,
+               centralized_forwarding_tables_6grupa, history_time,
+               history_per_upf_5g_fwd_state_info_size_mb,
+               history_per_upf_entries_5g,
+               history_per_gupf_6grupa_fwd_state_info_size_mb,
+               history_per_gupf_entries_6grupa) =
+    SimGlobalState(config, upf_sessions_5g, forwarding_tables_6grupa,
+                   centralized_forwarding_tables_6grupa, history_time,
+                   history_per_upf_5g_fwd_state_info_size_mb,
+                   history_per_upf_entries_5g,
+                   history_per_gupf_6grupa_fwd_state_info_size_mb,
+                   history_per_gupf_entries_6grupa,
+                   0, 0, 0, Int[], Int[], Int[])
 
 struct GUPFState6GRUPA
     forwarding_table::Vector{ForwardingEntry6GRUPA}

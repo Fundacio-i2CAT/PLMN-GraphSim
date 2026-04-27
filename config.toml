@@ -33,6 +33,18 @@ max_sessions_per_user = 2
 scenario_mode = "single_tier" # Options: "single_tier", "two_tier"
 num_centralized_upfs = 5 # Only used if scenario_mode = "two_tier"
 
+# --- Mobility (PoC) ---
+# Disabled by default: leaves the legacy stationary "always-on" eMBB behaviour
+# untouched. Enable to study handover signaling cost (5G inter-UPF migration vs
+# 6G-RUPA local renumbering). See docs/scenarios/mobility/.
+[simulation.mobility]
+enabled = false
+model = "random_waypoint"   # Options: "none", "random_waypoint"
+update_interval = 1.0       # Simulation seconds between position updates / HO checks
+speed_kmh = 5.0             # Pedestrian ~5, vehicular ~50, HSR ~250
+pause_time = 0.0            # Reserved for future stateful waypoint model
+max_jump_km = 1.0           # Cap per-tick displacement (sanity bound)
+
 [countries]
 
 [countries.spain]
