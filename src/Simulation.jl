@@ -17,6 +17,8 @@ using ..AgentGeneration
 export run_operator_simulation, init_global_state_for_simulation, create_session_context
 
 include("Simulation/State.jl")
+include("Simulation/Mobility.jl")
+include("Simulation/Handover.jl")
 include("Simulation/Core.jl")
 include("Simulation/Metrics/Metrics.jl")
 include("Simulation/Reporting.jl")

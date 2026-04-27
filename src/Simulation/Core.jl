@@ -2,6 +2,7 @@ using ConcurrentSim
 using ResumableFunctions
 using Distributions
 using Random
+using Graphs
 using MetaGraphsNext
 using ..Types
 using ..AgentGeneration
@@ -88,6 +89,71 @@ end
     end
 end
 
+"""
+    lifecycle_embb_mobile(env, user_id, sim_state, topology)
+
+Mobile variant of `lifecycle_embb`. After attach, the agent periodically updates
+its position according to `sim_state.config.mobility.model` and re-evaluates its
+serving gNB. On a cell change a handover is triggered for both 5G and 6G-RUPA
+state machines (event counters are bumped; 5G session contexts migrate UPFs).
+
+The stationary `lifecycle_embb` is preserved unchanged so existing experiments
+reproduce bit-for-bit when `mobility.enabled = false`.
+"""
+@resumable function lifecycle_embb_mobile(env, user_id, sim_state, topology::NetworkTopology)
+    @yield @process await_user_offline(env, sim_state)
+    agent_location = select_agent_location(topology)
+    gnb_index = find_serving_gnb(topology, agent_location)
+    gnb_index == 0 && return
+    assigned_upf_index = connect_agent_to_gnb_and_upf(env, topology, user_id, agent_location, gnb_index)
+
+    # Track this agent's session contexts so we can migrate them on handover.
+    num_sessions = rand(sim_state.config.min_sessions:sim_state.config.max_sessions)
+    agent_sessions = Vector{SessionContext5G}(undef, num_sessions)
+    for i in 1:num_sessions
+        ctx = create_session_context(assigned_upf_index, topology)
+        push!(sim_state.upf_sessions_5g[assigned_upf_index], ctx)
+        agent_sessions[i] = ctx
+    end
+
+    current_gnb = gnb_index
+    current_upf = assigned_upf_index
+    current_loc = agent_location
+    update_dt = sim_state.config.mobility.update_interval
+    model = sim_state.config.mobility.model
+
+    while !is_simulation_time_over(env, sim_state)
+        @yield timeout(env, update_dt)
+        is_simulation_time_over(env, sim_state) && break
+        current_loc = step_position(model, current_loc, update_dt)
+        new_gnb = find_serving_gnb(topology, current_loc)
+        if new_gnb == 0 || new_gnb == current_gnb
+            continue
+        end
+        # Cell change detected -> handover.
+        sim_state.handover_count += 1
+        new_upf = topology.gnb_to_upf_map[new_gnb]
+        # Update graph edges to reflect new attachment.
+        if haskey(topology.graph, (:Agent, user_id), (:gNB, current_gnb))
+            delete!(topology.graph, (:Agent, user_id), (:gNB, current_gnb))
+        end
+        d = haversine_distance(current_loc, topology.gnb_locations[new_gnb])
+        add_edge!(topology.graph, (:Agent, user_id), (:gNB, new_gnb), d)
+
+        # 5G: migrate session contexts only if serving UPF actually changed.
+        if new_upf != current_upf
+            agent_sessions = handle_handover_5g!(sim_state, topology,
+                                                  agent_sessions,
+                                                  current_upf, new_upf)
+            current_upf = new_upf
+        end
+        # 6G-RUPA: local renumbering on every cell change, regardless of UPF.
+        handle_handover_6grupa!(sim_state, topology, current_gnb, new_gnb)
+        current_gnb = new_gnb
+        @debug "User $user_id handover: gNB $(current_gnb) -> $(new_gnb), UPF -> $(new_upf) at $(now(env))"
+    end
+end
+
 @resumable function lifecycle_mmtc(env, user_id, sim_state, topology::NetworkTopology)
     # TODO Placeholder for mMTC logic
     # mMTC devices might wake up, send data, and go back to sleep (idle mode), releasing resources?
@@ -98,7 +164,11 @@ end
 
 @resumable function user_lifecycle(env, user_id, sim_state, topology::NetworkTopology, user_type::UserType)
     if user_type == eMBB
-        @yield @process lifecycle_embb(env, user_id, sim_state, topology)
+        if sim_state.config.mobility.enabled
+            @yield @process lifecycle_embb_mobile(env, user_id, sim_state, topology)
+        else
+            @yield @process lifecycle_embb(env, user_id, sim_state, topology)
+        end
     elseif user_type == mMTC
         @yield @process lifecycle_mmtc(env, user_id, sim_state, topology)
     end
