@@ -33,4 +33,10 @@ function update_history!(sim_state, current_time, metrics_5g, metrics_6grupa)
     
     push!(sim_state.history_per_gupf_6grupa_fwd_state_info_size_mb, all_6g_mb)
     push!(sim_state.history_per_gupf_entries_6grupa, all_6g_entries)
+
+    # Mobility / signaling counters: snapshot cumulative totals so post-hoc
+    # analysis can derive instantaneous rates by differencing.
+    push!(sim_state.history_handovers, sim_state.handover_count)
+    push!(sim_state.history_signaling_events_5g, sim_state.signaling_events_5g)
+    push!(sim_state.history_signaling_events_6grupa, sim_state.signaling_events_6grupa)
 end

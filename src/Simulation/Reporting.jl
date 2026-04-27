@@ -14,6 +14,35 @@ function save_simulation_results(operator_name::String, scenario_name::String, s
     # Instead, we only save the detailed evolution in Long Format.
     
     save_detailed_evolution(operator_name, scenario_name, state, topology, results_dir)
+
+    # Mobility metrics are written only when mobility was actually exercised, to
+    # avoid cluttering the results dir for legacy stationary runs.
+    if state.config.mobility.enabled
+        save_mobility_evolution(operator_name, scenario_name, state, results_dir)
+    end
+end
+
+"""
+    save_mobility_evolution(operator_name, scenario_name, state, results_dir)
+
+Persist the per-tick cumulative handover and signaling-event counters as a
+long-form CSV. Columns:
+  Time, Handovers_Cumulative, SignalingEvents_5G_Cumulative,
+  SignalingEvents_6GRUPA_Cumulative
+"""
+function save_mobility_evolution(operator_name::String, scenario_name::String,
+                                 state::SimGlobalState, results_dir::String)
+    df = DataFrame(
+        Time = state.history_time,
+        Handovers_Cumulative = state.history_handovers,
+        SignalingEvents_5G_Cumulative = state.history_signaling_events_5g,
+        SignalingEvents_6GRUPA_Cumulative = state.history_signaling_events_6grupa,
+    )
+    safe_op = replace(operator_name, " " => "_")
+    safe_scen = replace(scenario_name, " " => "_")
+    filename = "mobility_evolution_$(safe_op)_$(safe_scen).csv"
+    CSV.write(joinpath(results_dir, filename), df)
+    println("  -> Mobility Evolution: results/$filename")
 end
 
 # function save_topology_map(operator_name::String, scenario_name::String, topology::NetworkTopology, results_dir::String)
