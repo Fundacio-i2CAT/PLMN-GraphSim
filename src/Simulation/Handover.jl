@@ -25,7 +25,7 @@ function handle_handover_5g!(sim_state::SimGlobalState,
                              new_domain_id::Int,
                              old_operator_id::Int,
                              new_operator_id::Int)
-    if isempty(agent_sessions) || old_upf == new_upf
+    if isempty(agent_sessions)
         return agent_sessions
     end
 

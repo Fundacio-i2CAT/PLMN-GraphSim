@@ -147,16 +147,14 @@ reproduce bit-for-bit when `mobility.enabled = false`.
         d = haversine_distance(current_loc, topology.gnb_locations[new_gnb])
         add_edge!(topology.graph, (:Agent, user_id), (:gNB, new_gnb), d)
 
-        # 5G: migrate session contexts only if serving UPF actually changed.
-        if new_upf != current_upf
-            agent_sessions = handle_handover_5g!(sim_state, topology,
-                                                  agent_sessions,
-                                                  current_upf, new_upf,
-                                                  current_domain, new_domain,
-                                                  current_operator, new_operator)
-            current_upf = new_upf
-            current_domain = new_domain
-        end
+        # 5G: handle handover (Xn same-UPF or N2 different-UPF), classify and record σ cost
+        agent_sessions = handle_handover_5g!(sim_state, topology,
+                                              agent_sessions,
+                                              current_upf, new_upf,
+                                              current_domain, new_domain,
+                                              current_operator, new_operator)
+        current_upf = new_upf
+        current_domain = new_domain
         # 6G-RUPA: local renumbering on every cell change, regardless of UPF.
         handle_handover_6grupa!(sim_state, topology, current_gnb, new_gnb,
                                 current_domain, new_domain,
