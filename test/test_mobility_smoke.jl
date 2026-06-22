@@ -47,7 +47,7 @@ run(env, config.duration)
 DSim.save_simulation_results("SmokeTest", "MobilityEnabled", sim_state, topology)
 
 # Check CSV was generated with σ columns
-results_dir = joinpath(@__DIR__, "results")
+results_dir = joinpath(dirname(@__DIR__), "results")
 csv_path = joinpath(results_dir, "mobility_evolution_SmokeTest_MobilityEnabled.csv")
 
 if isfile(csv_path)
