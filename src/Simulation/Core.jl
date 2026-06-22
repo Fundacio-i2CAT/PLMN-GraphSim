@@ -118,6 +118,8 @@ reproduce bit-for-bit when `mobility.enabled = false`.
 
     current_gnb = gnb_index
     current_upf = assigned_upf_index
+    current_domain = assigned_upf_index  # Simple: domain ID = UPF index
+    current_operator = 1                 # Single operator for now
     current_loc = agent_location
     update_dt = sim_state.config.mobility.update_interval
     model = sim_state.config.mobility.model
@@ -131,8 +133,10 @@ reproduce bit-for-bit when `mobility.enabled = false`.
             continue
         end
         # Cell change detected -> handover.
-        sim_state.handover_count += 1
         new_upf = topology.gnb_to_upf_map[new_gnb]
+        new_domain = new_upf  # Domain = UPF index
+        new_operator = 1      # Single operator
+
         # Update graph edges to reflect new attachment.
         if haskey(topology.graph, (:Agent, user_id), (:gNB, current_gnb))
             delete!(topology.graph, (:Agent, user_id), (:gNB, current_gnb))
@@ -144,11 +148,16 @@ reproduce bit-for-bit when `mobility.enabled = false`.
         if new_upf != current_upf
             agent_sessions = handle_handover_5g!(sim_state, topology,
                                                   agent_sessions,
-                                                  current_upf, new_upf)
+                                                  current_upf, new_upf,
+                                                  current_domain, new_domain,
+                                                  current_operator, new_operator)
             current_upf = new_upf
+            current_domain = new_domain
         end
         # 6G-RUPA: local renumbering on every cell change, regardless of UPF.
-        handle_handover_6grupa!(sim_state, topology, current_gnb, new_gnb)
+        handle_handover_6grupa!(sim_state, topology, current_gnb, new_gnb,
+                                current_domain, new_domain,
+                                current_operator, new_operator)
         current_gnb = new_gnb
         @debug "User $user_id handover: gNB $(current_gnb) -> $(new_gnb), UPF -> $(new_upf) at $(now(env))"
     end
