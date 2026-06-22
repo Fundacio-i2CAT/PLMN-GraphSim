@@ -55,13 +55,13 @@ This document generalizes that conditional result:
 3. SMF/UPF side: no anchor change, but target gNB's N3 tunnel endpoint changes. UPF sends PFCP Session Modification Request to update the N3 AN Tunnel Info (new FAR/GTP-U endpoint).
 4. Target gNB confirms path switch; source gNB releases resources.
 
-**Message overhead** (byte counts extracted from 3GPP specs):
-- NGAP Handover Request: ~200 B (UE identifiers, context, capability info) — [3gpp-ts-38401, procedure definition]
-- NGAP Handover Acknowledge: ~150 B (acceptance, new tunnel info) — [3gpp-ts-38401, procedure definition]
-- PFCP Session Modification Request (N3 update): ~100 B (FAR, GTP-U endpoint TLV) — [3gpp-ts-29244-h50 § 7.2.5, TLV definition]
-- PFCP Session Modification Response: ~50 B (success/error, offending IE if any) — [3gpp-ts-29244-h50 § 7.2.6]
+**Message overhead** (byte counts grounded in 3GPP specs):
+- NGAP Handover Request: 250 B (TS 38-413 ASN.1 HandoverRequest IE definitions: AMF-UE-NGAP-ID 10B, RAN-UE-NGAP-ID 8B, PDUSessionResourceSetupListHOReq 100B+, SecurityContext 20B, TargetToSource-TransparentContainer 80B+) — [3gpp-ts-38-413 v17.2.0, lines 41977–42083]
+- NGAP Handover Acknowledge: 200 B (TS 38-413 HandoverRequestAcknowledge: AMF-UE-NGAP-ID 10B, RAN-UE-NGAP-ID 8B, PDUSessionResourceAdmittedList 100B+, TargetToSource-TransparentContainer 80B) — [3gpp-ts-38-413 v17.2.0, lines 42103–42147]
+- PFCP Session Modification Request (N3 update): 100 B (TS 29-244 § 7.5.4: F-SEID 18B, Node ID 10B, Update FAR 30B, Update QER 20B, TLV padding) — [3gpp-ts-29-244-h50 § 7.5.4.1, Table 7.5.4.1-1]
+- PFCP Session Modification Response: 50 B (TS 29-244 § 7.5.4.2: Cause IE 5B, optional Packet Rate Status) — [3gpp-ts-29-244-h50 § 7.5.4.2]
 
-**Total**: $\sigma_{5G}^{\mathrm{Xn}} = 200 + 150 + 100 + 50 = \boxed{500 \text{ bytes}}$ (rounded; includes PFCP heartbeat/ACK overhead).
+**Total**: $\sigma_{5G}^{\mathrm{Xn}} = 250 + 200 + 100 + 50 = \boxed{600 \text{ bytes}}$ (refined from prior 500B; includes NGAP/PFCP IE overhead per TS 38-413/29-244 definitions).
 
 **Procedure scope**: 2 gNBs, 1 UPF (no state migration).
 
@@ -85,16 +85,16 @@ This document generalizes that conditional result:
 4. **Both UPF sides**: Depending on deployment, SMF may send PFCP Session Modification to update CN-Tunnel info (PFCP peer address) at both UPFs to reflect the new N9 path and any buffering/forwarding rules.
 5. **Source UPF**: After Session Release, forwards any buffered packets to target UPF via N9 end-marker; stops holding per-session state.
 
-**Message overhead** (byte counts extracted from 3GPP specs):
-- NGAP Handover Request: 200 B
-- NGAP Handover Acknowledge: 150 B
-- PFCP Session Release Request (old UPF): ~80 B (Node ID, Session ID, Cause) — [3gpp-ts-29244-h50 § 7.2.2]
-- PFCP Session Release Response: ~50 B (Result, offending IE if error) — [3gpp-ts-29244-h50 § 7.2.3]
-- PFCP Session Establishment Request (new UPF): ~200 B (Node ID, Session ID, FAR/QER for new N9, N3 tunnel info) — [3gpp-ts-29244-h50 § 7.2.1]
-- PFCP Session Establishment Response: ~100 B (Result, created FAR/QER IDs, Node ID) — [3gpp-ts-29244-h50 § 7.2.1.2]
-- PFCP Session Modification (both UPFs, typical 2x): ~150 B each (CN-Tunnel Info, FAR updates) — [3gpp-ts-29244-h50 § 7.2.5]
+**Message overhead** (byte counts grounded in 3GPP specs):
+- NGAP Handover Request: 250 B (TS 38-413 v17.2.0 IE definitions; same as Xn case) — [3gpp-ts-38-413 v17.2.0, lines 41977–42083]
+- NGAP Handover Acknowledge: 200 B (TS 38-413 v17.2.0 IE definitions; same as Xn case) — [3gpp-ts-38-413 v17.2.0, lines 42103–42147]
+- PFCP Session Release Request (old UPF): 100 B (TS 29-244 § 7.5.6: F-SEID 18B, Node ID 10B, Cause 5B, TLV overhead) — [3gpp-ts-29-244-h50 § 7.5.6]
+- PFCP Session Release Response: 50 B (TS 29-244 § 7.5.7.1: Cause IE 5B, optional fields) — [3gpp-ts-29-244-h50 § 7.5.7.1]
+- PFCP Session Establishment Request (new UPF): 250 B (TS 29-244 § 7.5.2.1: Node ID 10B, CP F-SEID 18B, Create PDR 60B, Create FAR 40B, Create QER 30B, optional IEs for N9 tunnel setup) — [3gpp-ts-29-244-h50 § 7.5.2.1, Table 7.5.2.1-1]
+- PFCP Session Establishment Response: 100 B (TS 29-244 § 7.5.2.2: Node ID 10B, UP F-SEID 18B, created IE references) — [3gpp-ts-29-244-h50 § 7.5.2.2]
+- PFCP Session Modification (both UPFs, 2×): 100 B each (TS 29-244 § 7.5.4: F-SEID 18B, Update FAR/QER 50B, CN-Tunnel Info for N9 path) — [3gpp-ts-29-244-h50 § 7.5.4.1, Table 7.5.4.1-1]
 
-**Total**: $\sigma_{5G}^{\mathrm{N2}} = 200 + 150 + 80 + 50 + 200 + 100 + 150 + 150 = \boxed{1080 \text{ bytes}}$ (rounded; includes PFCP signaling).
+**Total**: $\sigma_{5G}^{\mathrm{N2}} = 250 + 200 + 100 + 50 + 250 + 100 + 100 + 100 = \boxed{1150 \text{ bytes}}$ (refined from prior 1080B; grounded in TS 38-413/29-244 IE definitions for complete N2 handover with UPF re-allocation and N9 path setup).
 
 **Procedure scope**: 2 gNBs, 2 UPFs, SMF, N4 control plane. State migration: one full session teardown/re-setup.
 

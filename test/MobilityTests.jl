@@ -70,11 +70,11 @@ using MetaGraphsNext
         @test length(state.upf_sessions_5g[1]) == 0
         @test length(state.upf_sessions_5g[2]) == 1
         @test length(new_sessions) == 1
-        @test state.sigma_5g_n2 == 1080
+        @test state.sigma_5g_n2 == 1150
 
         # Same-UPF call is a no-op.
         Simulation.handle_handover_5g!(state, topology, new_sessions, 2, 2, 2, 2, 1, 1)
-        @test state.sigma_5g_n2 == 1080
+        @test state.sigma_5g_n2 == 1150
     end
 
     @testset "handle_handover_6grupa! counts local renumbering events" begin

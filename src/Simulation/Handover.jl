@@ -9,10 +9,10 @@ using ..Types
 Handle 5G handover, classifying as Xn (same anchor) or N2 (different anchor),
 and distinguishing roaming (operator change) from intra-MNO handovers.
 
-σ values (grounded in 3GPP specs, mobility-formal-model.md §3):
-  - Xn (intra-domain, same anchor): 500 bytes
-  - N2 (inter-domain, different anchor): 1080 bytes
-  - Roaming (Home-Routed inter-PLMN): 1180 bytes
+σ values (grounded in 3GPP specs TS 38-413/29-244, mobility-formal-model.md §3):
+  - Xn (intra-domain, same anchor): 600 bytes (refined; NGAP 450B + PFCP 150B)
+  - N2 (inter-domain, different anchor): 1150 bytes (refined; NGAP 450B + Release/Establish/Mod 700B)
+  - Roaming (Home-Routed inter-PLMN): 1180 bytes (5G inter-PLMN N9/N8 signaling via V-SMF)
 
 Returns the new vector of SessionContext5G with updated metadata.
 """
@@ -42,14 +42,16 @@ function handle_handover_5g!(sim_state::SimGlobalState,
         1180
     elseif is_anchor_change || is_domain_change
         # N2 handover: anchor/domain UPF changes
-        # 1080 bytes per formal model §3.2 (NGAP + dual PFCP session setup/teardown)
-        sim_state.sigma_5g_n2 += Int64(1080)
-        1080
+        # 1150 bytes per formal model §3.2 (NGAP 450B + PFCP Release/Establish/Mod 700B)
+        # Grounded in TS 38-413 v17.2.0 + TS 29-244 § 7.5.2/7.5.4/7.5.6 (PFCP Session procedures)
+        sim_state.sigma_5g_n2 += Int64(1150)
+        1150
     else
         # Xn handover: same anchor, same domain
-        # 500 bytes per formal model §3.1 (NGAP + single PFCP modification)
-        sim_state.sigma_5g_xn += Int64(500)
-        500
+        # 600 bytes per formal model §3.1 (NGAP 450B + PFCP Session Mod 150B)
+        # Grounded in TS 38-413 v17.2.0 (NGAP IE definitions) + TS 29-244 § 7.5.4 (PFCP)
+        sim_state.sigma_5g_xn += Int64(600)
+        600
     end
 
     # Remove the agent's sessions from old UPF
