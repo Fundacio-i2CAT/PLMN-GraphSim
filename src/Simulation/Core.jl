@@ -124,10 +124,13 @@ reproduce bit-for-bit when `mobility.enabled = false`.
     update_dt = sim_state.config.mobility.update_interval
     model = sim_state.config.mobility.model
 
+    # Initialize mobility state for this agent
+    mobility_state = MobilityState(agent_location, 0.0, 0.0, 0.0, 0.0)
+
     while !is_simulation_time_over(env, sim_state)
         @yield timeout(env, update_dt)
         is_simulation_time_over(env, sim_state) && break
-        current_loc = step_position(model, current_loc, update_dt)
+        current_loc = step_position(model, current_loc, mobility_state, update_dt)
         new_gnb = find_serving_gnb(topology, current_loc)
         if new_gnb == 0 || new_gnb == current_gnb
             continue

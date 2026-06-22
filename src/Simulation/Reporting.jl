@@ -25,18 +25,22 @@ end
 """
     save_mobility_evolution(operator_name, scenario_name, state, results_dir)
 
-Persist the per-tick cumulative handover and signaling-event counters as a
+Persist the per-tick cumulative handover and signaling-cost counters as a
 long-form CSV. Columns:
-  Time, Handovers_Cumulative, SignalingEvents_5G_Cumulative,
-  SignalingEvents_6GRUPA_Cumulative
+  Time, Handovers_Cumulative, Sigma_5G_Xn, Sigma_5G_N2, Sigma_RUPA_Intra,
+  Sigma_RUPA_Inter, Sigma_Roam_5G, Sigma_Roam_RUPA
 """
 function save_mobility_evolution(operator_name::String, scenario_name::String,
                                  state::SimGlobalState, results_dir::String)
     df = DataFrame(
         Time = state.history_time,
         Handovers_Cumulative = state.history_handovers,
-        SignalingEvents_5G_Cumulative = state.history_signaling_events_5g,
-        SignalingEvents_6GRUPA_Cumulative = state.history_signaling_events_6grupa,
+        Sigma_5G_Xn = state.history_sigma_5g_xn,
+        Sigma_5G_N2 = state.history_sigma_5g_n2,
+        Sigma_RUPA_Intra = state.history_sigma_rupa_intra,
+        Sigma_RUPA_Inter = state.history_sigma_rupa_inter,
+        Sigma_Roam_5G = state.history_sigma_roam_5g,
+        Sigma_Roam_RUPA = state.history_sigma_roam_rupa,
     )
     safe_op = replace(operator_name, " " => "_")
     safe_scen = replace(scenario_name, " " => "_")

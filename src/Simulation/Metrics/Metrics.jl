@@ -34,9 +34,15 @@ function update_history!(sim_state, current_time, metrics_5g, metrics_6grupa)
     push!(sim_state.history_per_gupf_6grupa_fwd_state_info_size_mb, all_6g_mb)
     push!(sim_state.history_per_gupf_entries_6grupa, all_6g_entries)
 
-    # Mobility / signaling counters: snapshot cumulative totals so post-hoc
+    # Mobility / handover counters: snapshot cumulative totals so post-hoc
     # analysis can derive instantaneous rates by differencing.
     push!(sim_state.history_handovers, sim_state.handover_count)
-    push!(sim_state.history_signaling_events_5g, sim_state.signaling_events_5g)
-    push!(sim_state.history_signaling_events_6grupa, sim_state.signaling_events_6grupa)
+
+    # Signaling cost σ breakdown: track each category's cumulative byte cost
+    push!(sim_state.history_sigma_5g_xn, sim_state.sigma_5g_xn)
+    push!(sim_state.history_sigma_5g_n2, sim_state.sigma_5g_n2)
+    push!(sim_state.history_sigma_rupa_intra, sim_state.sigma_rupa_intra)
+    push!(sim_state.history_sigma_rupa_inter, sim_state.sigma_rupa_inter)
+    push!(sim_state.history_sigma_roam_5g, sim_state.sigma_roam_5g)
+    push!(sim_state.history_sigma_roam_rupa, sim_state.sigma_roam_rupa)
 end
