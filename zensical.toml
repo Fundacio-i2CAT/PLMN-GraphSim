@@ -1,0 +1,158 @@
+# ============================================================================
+#
+# Zensical configuration for PLMN-GraphSim.
+#
+# Zensical is the successor to Material for MkDocs, built by the same authors.
+# This file migrates the previous mkdocs.yml to Zensical's native TOML format,
+# using the default "modern" theme variant with the project's teal palette.
+#
+# Docs: https://zensical.org/docs/
+#
+# ============================================================================
+
+[project]
+
+# The site_name is shown in the page header and the browser window title.
+# Read more: https://zensical.org/docs/setup/basics/#site_name
+site_name = "PLMN-GraphSim"
+
+# The site_description is included in the HTML head for use by search engines.
+# Read more: https://zensical.org/docs/setup/basics/#site_description
+site_description = "Julia-based Discrete Event Simulator for evaluating scalability of 5G Networks and beyond"
+
+# The canonical URL for the site. Required for instant navigation and sitemap.
+# Read more: https://zensical.org/docs/setup/basics/#site_url
+site_url = "https://plmn-graphsim-7935d4.pages.i2cat.net/"
+
+# Repository information rendered next to the search bar.
+# Read more: https://zensical.org/docs/setup/repository/
+repo_url = "https://gitlab.i2cat.net/sergio.gimenez/PLMN-GraphSim"
+repo_name = "sergio.gimenez/PLMN-GraphSim"
+
+# Copyright notice rendered in the page footer.
+# Read more: https://zensical.org/docs/setup/basics/#copyright
+copyright = "Copyright &copy; 2025 Fundacio i2CAT"
+
+# Output directory (kept as "public" to match CI artifacts and .gitignore).
+# Read more: https://zensical.org/docs/setup/basics/#site_dir
+site_dir = "public"
+
+# Explicit navigation structure. Paths are relative to docs_dir.
+# Read more: https://zensical.org/docs/setup/navigation/#explicit-navigation
+nav = [
+  { "PLMN-GraphSim" = "index.md" },
+  { "The Simulator In a Nutshell" = "simulation-details/in-a-nutshell/in-a-nutshell.md" },
+  { "Quickstart" = "quickstart.md" },
+  { "User Guide" = [
+    { "Data Preparation" = [
+      { "Overview" = "agents/getting-data-ready.md" },
+      { "Spain" = "agents/countries/spain.md" },
+      { "USA" = "agents/countries/usa.md" }
+    ]},
+    { "Configuration" = "simulation-details/simulation-configuration.md" }
+  ]},
+  { "Scenarios" = [
+    "scenarios/index.md",
+    { "Single-Tier Architecture" = [
+      "scenarios/single_tier_architecture/setup.md",
+      "scenarios/single_tier_architecture/analysis.md"
+    ]},
+    { "Two-Tier Architecture" = [
+      "scenarios/two_tier_architecture/setup.md",
+      "scenarios/two_tier_architecture/analysis.md"
+    ]},
+    { "Mobility" = [
+      "scenarios/mobility/setup.md",
+      "scenarios/mobility/analysis.md"
+    ]}
+  ]},
+  { "Simulator in-depth" = [
+    { "Core Concepts" = [
+      { "Under the Hood" = "simulation-details/how-simulator-works.md" }
+    ]},
+    { "Algorithms & Models" = [
+      { "UPF Placement Strategy" = "simulation-details/k-means.md" },
+      { "Mobility Models" = "simulation-details/mobility-models.md" },
+      { "eMBB Focus" = "simulation-details/embb.md" },
+      { "Memory Calculation" = "memory_calculation.md" }
+    ]}
+  ]}
+]
+
+# Additional JavaScript. Mermaid.js is initialized natively by Zensical when a
+# `mermaid` code block is present, so only the MathJax runtime is needed here.
+# Read more: https://zensical.org/docs/setup/extensions/python-markdown-extensions/#arithmatex
+extra_javascript = [
+  "javascripts/mathjax.js",
+  "https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"
+]
+
+# ----------------------------------------------------------------------------
+# Section for configuring theme options
+# ----------------------------------------------------------------------------
+[project.theme]
+
+# Zensical ships two variants: "modern" (default, shown here) and "classic"
+# (matches Material for MkDocs). We use the default modern variant.
+# Read more: https://zensical.org/docs/setup/basics/#theme-variant
+variant = "modern"
+
+language = "en"
+
+# Feature toggles. This is the default modern feature set from `zensical new`,
+# which keeps the project's prior behavior (tabs/sections/indexes, code copy
+# and annotate) and adds modern conveniences (instant navigation, search
+# highlighting, back-to-top, breadcrumbs).
+# Read more: https://zensical.org/docs/setup/navigation/
+features = [
+  "announce.dismiss",
+  "content.code.annotate",
+  "content.code.copy",
+  "content.code.select",
+  "content.footnote.tooltips",
+  "content.tabs.link",
+  "content.tooltips",
+  "navigation.footer",
+  "navigation.indexes",
+  "navigation.instant",
+  "navigation.instant.prefetch",
+  "navigation.path",
+  "navigation.sections",
+  "navigation.tabs",
+  "navigation.top",
+  "navigation.tracking",
+  "search.highlight",
+  "toc.follow"
+]
+
+# ----------------------------------------------------------------------------
+# Color palette. Preserves the project's teal/teal palette with an automatic
+# light/dark mode that defers to the OS preference, plus manual toggles.
+# Read more: https://zensical.org/docs/setup/colors/#automatic-light-dark-mode
+# ----------------------------------------------------------------------------
+
+# Palette toggle for automatic mode (follows OS preference).
+[[project.theme.palette]]
+media = "(prefers-color-scheme)"
+primary = "teal"
+accent = "teal"
+toggle.icon = "lucide/sun-moon"
+toggle.name = "Switch to light mode"
+
+# Palette toggle for light mode.
+[[project.theme.palette]]
+media = "(prefers-color-scheme: light)"
+scheme = "default"
+primary = "teal"
+accent = "teal"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
+
+# Palette toggle for dark mode.
+[[project.theme.palette]]
+media = "(prefers-color-scheme: dark)"
+scheme = "slate"
+primary = "teal"
+accent = "teal"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to system preference"

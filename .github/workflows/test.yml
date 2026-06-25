@@ -1,0 +1,41 @@
+name: Test
+
+# Ported from the commented-out `test` job in .gitlab-ci.yml. Kept manual
+# since it was disabled in GitLab CI. Trigger via the Actions tab or by
+# uncommenting the push/pull_request filters below.
+on:
+  workflow_dispatch:
+  # push:
+  #   branches: [main, master]
+  # pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: "1.11"
+
+      - name: Install lcov
+        run: sudo apt-get update && sudo apt-get install -y lcov
+
+      - uses: julia-actions/cache@v2
+
+      - name: Instantiate Julia environment
+        run: julia --project=. -e 'using Pkg; Pkg.instantiate()'
+
+      - name: Generate coverage
+        run: julia --project=. scripts/generate_coverage_manual.jl
+
+      - name: Build coverage HTML
+        run: genhtml lcov.info --output-directory coverage_html
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: |
+            coverage_html
+            lcov.info

@@ -1,4 +1,4 @@
-image: python:3.9-alpine
+image: python:3.11-alpine
 
 stages:
   # - test
@@ -21,7 +21,7 @@ pages:
   stage: deploy_docs
   script:
     - pip install -r docs/requirements.txt
-    - mkdocs build
+    - zensical build
   artifacts:
     paths:
       - public

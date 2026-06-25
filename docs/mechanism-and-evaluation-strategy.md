@@ -60,7 +60,7 @@ only the local neighbourhood reconverges — Grasa et al. 2017 §III):
 - Internetwork (N+1) layer forwards traffic to home DIF based on address aggregation (per access.tex §IV-B).
 - Signaling: intra-DIF cost + N+1 forwarding state refresh.
 - Procedure bytes:
-  - Intra-DIF: 200B or 400B (intra/inter-domain, context-dependent)
+  - Intra-DIF renumber: ~200B (flat; inter-domain core-prefix churn is superseded)
   - N+1 layer refresh: ~100B (scope aggregation update)
 - **σ_RUPA^roam ≈ 300B per handover** (lighter than 5G HR due to topological aggregation avoiding per-flow anchoring)
 

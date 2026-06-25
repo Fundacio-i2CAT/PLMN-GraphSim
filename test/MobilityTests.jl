@@ -249,4 +249,67 @@ using MetaGraphsNext
         @test state.sigma_rupa_inter == 200           # flat renumber (was wrongly 400)
         @test state.handover_count == 2
     end
+
+    # Two-tier handover taxonomy (mobility-formal-model.md §2): a move is L1 (same
+    # edge UPF), L2 (diff edge UPF, same PSA), or L3 (diff PSA). 5G charges a graded
+    # cost per level (Xn 600 / N2 UL-CL 1150 / N2 PSA-reloc 1500); 6G-RUPA renumbers
+    # flat (200) at every level with ΔS_core = 0; per-level event counts feed the mix.
+    @testset "two-tier L1/L2/L3 classification + graded 5G / flat RUPA σ" begin
+        # 3 edge UPFs over 2 PSAs: edge1,edge2 -> PSA1 ; edge3 -> PSA2.
+        gnb_locs = [GeoPoint(0.0,0.0), GeoPoint(0.1,0.1), GeoPoint(0.2,0.2), GeoPoint(0.3,0.3)]
+        upf_locs = [GeoPoint(0.0,0.0), GeoPoint(0.1,0.1), GeoPoint(0.3,0.3)]
+        parent_map = [1, 1, 2]                          # edge -> PSA
+        psa_locs = [GeoPoint(0.05,0.05), GeoPoint(0.3,0.3)]
+        topology = NetworkTopology(
+            gnb_locs, upf_locs, [1, 2, 3, 3],
+            psa_locs, parent_map,
+            Municipality[], Dict{String,Vector{Int}}(), Float64[],
+            MetaGraph(Graph(), label_type = Tuple{Symbol, Int},
+                      vertex_data_type = GeoPoint, edge_data_type = Float64),
+        )
+
+        # Pure classification.
+        @test Simulation.handover_level(topology, 1, 1) == 1   # same edge
+        @test Simulation.handover_level(topology, 1, 2) == 2   # diff edge, PSA1==PSA1
+        @test Simulation.handover_level(topology, 2, 3) == 3   # PSA1 -> PSA2
+        @test Simulation.handover_level(topology, 1, 3) == 3   # PSA1 -> PSA2
+
+        scale = 1000
+        config = SimConfig(1, 1, scale, 10.0, 5.0, 5.0, :two_tier, 2, 1.0,
+                           MobilityConfig(true, 1.0, RandomWaypoint(5.0, 0.0, 1.0)))
+        state = Simulation.init_global_state_for_simulation(topology, config)
+
+        ctx = Simulation.create_session_context(1, topology)
+        push!(state.upf_sessions_5g[1], ctx)
+        sessions = [ctx]
+
+        # L1: edge1->edge1 (gNB hop within edge UPF 1). Xn 600, RUPA flat 200.
+        sessions = Simulation.dispatch_handover!(state, topology, sessions,
+                                                 1, 2, 1, 1, 1, 1, 1, 1)
+        @test state.sigma_5g_xn == 600
+        @test state.sigma_5g_n2 == 0
+        @test state.sigma_5g_psa == 0
+        @test state.sigma_rupa_intra == 200
+        @test state.ho_l1 == 1 && state.ho_l2 == 0 && state.ho_l3 == 0
+
+        # L2: edge1->edge2, both under PSA1. N2 UL-CL 1150, RUPA flat 200.
+        sessions = Simulation.dispatch_handover!(state, topology, sessions,
+                                                 2, 3, 1, 2, 1, 2, 1, 1)
+        @test state.sigma_5g_n2 == 1150
+        @test state.sigma_5g_psa == 0
+        @test state.sigma_rupa_inter == 200            # flat, classified inter
+        @test state.ho_l2 == 1
+
+        # L3: edge2->edge3, PSA1 -> PSA2. N2 PSA-reloc 1500, RUPA STILL flat 200.
+        sessions = Simulation.dispatch_handover!(state, topology, sessions,
+                                                 3, 4, 2, 3, 2, 3, 1, 1)
+        @test state.sigma_5g_psa == 1500               # graded up at L3
+        @test state.sigma_rupa_inter == 400            # +200 flat (now 2 inter events)
+        @test state.ho_l3 == 1
+
+        # ΔS_core = 0 for RUPA across all three levels; 5G wrote per-session each time.
+        @test state.core_writes_rupa == 0
+        @test state.core_writes_5g == 3 * scale        # 1 session x scale x 3 handovers
+        @test state.handover_count == 3
+    end
 end

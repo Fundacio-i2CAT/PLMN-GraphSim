@@ -102,7 +102,7 @@ heaviest terrestrial handover [TS 23-501 §5.6.9; TS 23-502 §4.3.5].
 $$\sigma_{5G}^{\mathrm{N2,PSA}} \approx 1500\ \text{bytes}\quad\textit{(approx — to ground in TS 23-502 §4.3.5)}$$
 
 ### 3.4 6G-RUPA — renumbering (all levels, flat)
-**Mechanism (Grasa et al. 2017 §III; RINA RM lines 1408–1410):** the moving IPCP
+**Mechanism (Grasa et al. 2017 §III; RINA RM lines 1814–1828):** the moving IPCP
 (UE) obtains a new synonym (address) reflecting its new location and then:
 1. **advertises the new address via routing** to its direct neighbours
    (link-state update within the DIF; address→PoA);
@@ -113,7 +113,7 @@ $$\sigma_{5G}^{\mathrm{N2,PSA}} \approx 1500\ \text{bytes}\quad\textit{(approx �
 
 Active flows are **not** torn down: an address is a *synonym* for the IPCP, and
 EFCP connections are keyed on connection-endpoint/port-ids, so a change of address
-does not break the flow (RINA RM line 1408; experimentally **0 packet loss** in
+does not break the flow (RINA RM lines 1818–1828; experimentally **0 packet loss** in
 IRATI, Grasa et al. Figs 6–10).
 
 **The cost does not escalate with move distance**, because the address is
@@ -177,12 +177,12 @@ rate $\lambda$ and user count $N$: $\Delta S_{\mathrm{core}} = 0$.
 the core uses to reach attachment domains; this set is determined by the deployed
 topology, not by where any UE currently is. A handover renumbers the UE into the
 destination domain $\mathcal{B}'$ by assigning a new synonym under $P_{\mathcal{B}'}
-\in \mathcal{P}_{\mathrm{core}}$ (RINA RM 1408–1410). Since $P_{\mathcal{B}'}$
+\in \mathcal{P}_{\mathrm{core}}$ (RINA RM 1814–1828). Since $P_{\mathcal{B}'}$
 already exists, no prefix is added or removed: $T(\mathcal{P}_{\mathrm{core}}) =
 \mathcal{P}_{\mathrm{core}}$, so $\Delta S_{\mathrm{core}} = c_p \cdot
 (|T(\mathcal{P}_{\mathrm{core}})| - |\mathcal{P}_{\mathrm{core}}|) = 0$. Active
 flows persist because the address is a synonym and EFCP is keyed on
-connection-endpoint-ids, not addresses (RINA RM 1408; 0 packet loss, Grasa et al.).
+connection-endpoint-ids, not addresses (RINA RM 1114, 1818–1828; 0 packet loss, Grasa et al.).
 Only the local neighbourhood routing reconverges (Grasa et al. §III), so the result
 holds regardless of how far the UE moves. access.tex Theorem 4 is the special case
 $\mathcal{B}=\mathcal{B}'$. $\square$
@@ -254,7 +254,7 @@ leave quantification to future work.
   in RINA," 2017** — renumbering walk-through (§III), directory-as-policy (§II),
   IRATI experiments (0 packet loss, RTT impact only at extreme rates, Figs 6–10).
 - RINA Reference Model — address as DIF-scoped location-dependent synonym (l.1114);
-  Changing Address procedure (l.1408–1410); directory name→address / address→PoA
+  Changing Address procedure (l.1814–1828); directory name→address / address→PoA
   (l.1380, 1388); topological name spaces (l.1468–1486).
 - 3GPP TS 38-413 (NGAP), TS 29-244 (PFCP), TS 23-501/23-502 (5G system / procedures,
   PSA relocation SSC modes).

@@ -3,6 +3,27 @@ using MetaGraphsNext
 using ..Types
 
 """
+    handover_level(topology, old_upf, new_upf) -> Int
+
+Classify a handover by the two-tier taxonomy (mobility-formal-model.md §2):
+  - L1: same edge UPF                       (5G Xn; RUPA same-edge renumber)
+  - L2: different edge UPF, **same PSA**     (5G N2 UL-CL relocation)
+  - L3: different PSA (anchor relocation)    (5G N2 PSA reloc, SSC mode 2/3)
+
+PSA of an edge UPF is `topology.edge_upf_parent_map[edge_upf]`. In single-tier
+deployments (`edge_upf_parent_map` empty) there is no PSA distinction, so any
+edge-UPF change is L2.
+"""
+function handover_level(topology::NetworkTopology, old_upf::Int, new_upf::Int)
+    old_upf == new_upf && return 1
+    pm = topology.edge_upf_parent_map
+    isempty(pm) && return 2
+    old_psa = old_upf <= length(pm) ? pm[old_upf] : old_upf
+    new_psa = new_upf <= length(pm) ? pm[new_upf] : new_upf
+    return old_psa == new_psa ? 2 : 3
+end
+
+"""
     handle_handover_5g!(sim_state, topology, agent_sessions, old_upf, new_upf,
                         old_domain_id, new_domain_id, old_operator_id, new_operator_id)
 
@@ -32,22 +53,29 @@ function handle_handover_5g!(sim_state::SimGlobalState,
     # Classify handover type
     is_anchor_change = (old_upf != new_upf)
     is_operator_change = (old_operator_id != new_operator_id)
-    is_domain_change = (old_domain_id != new_domain_id)
+    level = handover_level(topology, old_upf, new_upf)
 
-    # Determine σ cost and increment appropriate counter
+    # Determine σ cost and increment appropriate counter, by level.
     sigma_bytes = if is_operator_change
         # Roaming (Home-Routed inter-PLMN): most expensive
         # 1180 bytes per formal model §3.5 (inter-visited-PLMN coordination)
         sim_state.sigma_roam_5g += Int64(1180)
         1180
-    elseif is_anchor_change || is_domain_change
-        # N2 handover: anchor/domain UPF changes
+    elseif level == 3
+        # L3 — N2 PSA/anchor relocation (SSC mode 2/3): old session torn down at the
+        # old PSA, new one established at the new PSA, IP address changes.
+        # ~1500 bytes (NGAP 450B + PFCP Release/Establish/Mod across two PSAs).
+        # NOTE: approximate, pending TS 23-502 §4.3.5 grounding (supervisor item).
+        sim_state.sigma_5g_psa += Int64(1500)
+        1500
+    elseif level == 2
+        # L2 — N2 UL-CL relocation: edge UPF changes, PSA/IP preserved.
         # 1150 bytes per formal model §3.2 (NGAP 450B + PFCP Release/Establish/Mod 700B)
         # Grounded in TS 38-413 v17.2.0 + TS 29-244 § 7.5.2/7.5.4/7.5.6 (PFCP Session procedures)
         sim_state.sigma_5g_n2 += Int64(1150)
         1150
     else
-        # Xn handover: same anchor, same domain
+        # L1 — Xn handover: same edge UPF, RAN-local path switch.
         # 600 bytes per formal model §3.1 (NGAP 450B + PFCP Session Mod 150B)
         # Grounded in TS 38-413 v17.2.0 (NGAP IE definitions) + TS 29-244 § 7.5.4 (PFCP)
         sim_state.sigma_5g_xn += Int64(600)
@@ -178,5 +206,17 @@ function dispatch_handover!(sim_state::SimGlobalState,
                             old_domain_id, new_domain_id,
                             old_operator_id, new_operator_id)
     sim_state.handover_count += 1
+
+    # Count the physical event once, by two-tier level (for the handover-mix figure
+    # and the cross-architecture per-level comparison).
+    level = handover_level(topology, old_upf, new_upf)
+    if level == 1
+        sim_state.ho_l1 += 1
+    elseif level == 2
+        sim_state.ho_l2 += 1
+    else
+        sim_state.ho_l3 += 1
+    end
+
     return new_sessions
 end

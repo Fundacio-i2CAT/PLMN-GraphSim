@@ -84,10 +84,12 @@ coincidence and not an independent simulation result:
 
 - With the mix ~99% intra/Xn, total cost ≈ N_HO × σ_intra/Xn.
 - advantage ≈ 1 − σ_RUPA_intra / σ_5G_Xn = 1 − 200/600 = **0.667**.
-- The 1% N2/inter term (1 − 400/1150 = 0.652) shifts the blend negligibly.
+- The rare N2/inter-domain term (1 − 200/1150 = 0.826) nudges the blend upward
+  only slightly because the event fraction is small.
 
 **Implication.** The magnitude of the advantage rests entirely on the two
-constants σ_Xn = 600 B and σ_intra = 200 B (and secondarily 1150/400). The
+constants σ_Xn = 600 B and σ_intra = 200 B (and secondarily 1150/200 for rare
+N2/inter-domain events). The
 simulation does **not** validate the percentage; it validates:
 1. that realistic national mobility produces an Xn-dominated mix (so the intra
    ratio is what matters), and
