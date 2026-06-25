@@ -75,7 +75,11 @@ function handle_handover_5g!(sim_state::SimGlobalState,
         new_sessions[i] = new_ctx
     end
 
-    sim_state.handover_count += 1
+    # Core forwarding-state churn: every session's per-session tunnel state
+    # (TEID/FAR/PDR) must be (re)written at the UPF for this handover, scaled by
+    # the real user population. This is O(n) — the 5G side of the headline result.
+    sim_state.core_writes_5g += Int64(length(agent_sessions)) * Int64(sim_state.config.scale_factor)
+
     return new_sessions
 end
 
@@ -87,13 +91,15 @@ end
 Handle 6G-RUPA handover, classifying as intra-domain renumbering or inter-domain
 prefix update, and distinguishing roaming from intra-MNO handovers.
 
-σ values (grounded in RINA reference model and access.tex §V-D, formal model §3):
-  - Intra-domain renumbering: 200 bytes
-  - Inter-domain renumbering: 400 bytes
-  - Inter-layer roaming: 300 bytes
+σ values (grounded in RINA RM l.1408-1410, Grasa et al. 2017 §III, formal model §3.4):
+  - Renumbering: FLAT 200 bytes at every level (intra- and inter-domain alike).
+    The destination domain's aggregate prefix already exists in the topology, so
+    the UE just adopts an address under it — same procedure regardless of move
+    distance. intra/inter are kept only as EVENT CLASSIFIERS, charged equally.
+  - Inter-layer roaming: 300 bytes (flat renumber + N+1 advertisement).
 
-In 6G-RUPA, forwarding state remains topology-bounded (O(1) per domain)
-regardless of handover type.
+In 6G-RUPA, core forwarding state is invariant to handovers at EVERY level
+(ΔS_core = 0); only the local neighbourhood routing reconverges.
 """
 function handle_handover_6grupa!(sim_state::SimGlobalState,
                                  topology::NetworkTopology,
@@ -111,24 +117,66 @@ function handle_handover_6grupa!(sim_state::SimGlobalState,
     is_operator_change = (old_operator_id != new_operator_id)
     is_domain_change = (old_domain_id != new_domain_id)
 
-    # Determine σ cost and increment appropriate counter
+    # Renumbering cost is FLAT across levels (mobility-formal-model.md §3.4): a
+    # moving UE adopts an address under the destination domain's pre-existing
+    # aggregate prefix — same procedure (new synonym + local routing advertisement
+    # + per-active-flow update) regardless of move distance, and ΔS_core = 0 at
+    # every level. We still CLASSIFY intra vs inter (event classifier feeding the
+    # 5G-N2 / state-churn comparison), but charge the same flat 200 B.
+    # Grounded in RINA RM l.1408-1410 and Grasa et al. 2017 §III.
+    const_RENUMBER = Int64(200)
     sigma_bytes = if is_operator_change
-        # Roaming (inter-layer, N+1 internetwork layer crossing)
-        # 300 bytes per formal model §3.6 (intra-visited renumbering + optional home notification)
+        # Inter-layer roaming (N+1 internetwork DIF): flat renumber + small N+1
+        # advertisement. Kept slightly higher to reflect the extra layer hop.
         sim_state.sigma_roam_rupa += Int64(300)
         300
     elseif is_domain_change
-        # Inter-domain renumbering (prefix change at core)
-        # 400 bytes per formal model §3.4 (intra-domain renumbering + aggregate prefix withdrawal/advertisement)
-        sim_state.sigma_rupa_inter += Int64(400)
-        400
+        # Cross-domain renumber: classified as inter, charged flat renumber.
+        sim_state.sigma_rupa_inter += const_RENUMBER
+        const_RENUMBER
     else
-        # Intra-domain renumbering (prefix unchanged at core)
-        # 200 bytes per formal model §3.3 (EFCP rebinding + local GUPF update)
-        sim_state.sigma_rupa_intra += Int64(200)
-        200
+        # Intra-domain renumber.
+        sim_state.sigma_rupa_intra += const_RENUMBER
+        const_RENUMBER
     end
 
-    sim_state.handover_count += 1
+    # Core forwarding-state churn = 0 at every level: the UE renumbers into a
+    # destination domain whose aggregate prefix already exists in the topology, so
+    # no per-session host route is written at the core (ΔS_core = 0). Only the
+    # local neighbourhood routing reconverges. This is the O(1) side of the result.
+    sim_state.core_writes_rupa += Int64(0)
+
     return
+end
+
+"""
+    dispatch_handover!(sim_state, topology, agent_sessions,
+                       old_gnb, new_gnb, old_upf, new_upf,
+                       old_domain_id, new_domain_id, old_operator_id, new_operator_id)
+
+Single entry point for a physical handover (one serving-gNB change). Drives both
+the 5G and 6G-RUPA state machines with the SAME pre-handover old/new context, and
+counts the physical event exactly once.
+
+This wraps the two `handle_handover_*!` functions so callers cannot (a) mutate the
+old domain/UPF before the 6G-RUPA classification runs, or (b) double-count the
+event by incrementing `handover_count` in each handler — both were latent bugs
+when the dispatch was inlined per-call. Returns the updated 5G session vector.
+"""
+function dispatch_handover!(sim_state::SimGlobalState,
+                            topology::NetworkTopology,
+                            agent_sessions::Vector{SessionContext5G},
+                            old_gnb::Int, new_gnb::Int,
+                            old_upf::Int, new_upf::Int,
+                            old_domain_id::Int, new_domain_id::Int,
+                            old_operator_id::Int, new_operator_id::Int)
+    new_sessions = handle_handover_5g!(sim_state, topology, agent_sessions,
+                                       old_upf, new_upf,
+                                       old_domain_id, new_domain_id,
+                                       old_operator_id, new_operator_id)
+    handle_handover_6grupa!(sim_state, topology, old_gnb, new_gnb,
+                            old_domain_id, new_domain_id,
+                            old_operator_id, new_operator_id)
+    sim_state.handover_count += 1
+    return new_sessions
 end

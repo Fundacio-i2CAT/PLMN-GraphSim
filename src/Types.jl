@@ -170,8 +170,8 @@ mutable struct SimGlobalState
     # --- Mobility / Handover Counters (grounded in formal model) ---
     # Cumulative byte counts per handover procedure type (from mobility-formal-model.md).
     handover_count::Int                  # total cell-change events detected
-    sigma_5g_xn::Int64                   # 5G Xn handover signaling bytes (500 B/handover)
-    sigma_5g_n2::Int64                   # 5G N2 handover signaling bytes (1080 B/handover)
+    sigma_5g_xn::Int64                   # 5G Xn handover signaling bytes (600 B/handover)
+    sigma_5g_n2::Int64                   # 5G N2 handover signaling bytes (1150 B/handover)
     sigma_rupa_intra::Int64              # 6G-RUPA intra-domain renumbering bytes (200 B/handover)
     sigma_rupa_inter::Int64              # 6G-RUPA inter-domain renumbering bytes (400 B/handover)
     sigma_roam_5g::Int64                 # 5G Home-Routed roaming bytes (1180 B/handover)
@@ -184,6 +184,14 @@ mutable struct SimGlobalState
     history_sigma_rupa_inter::Vector{Int64}
     history_sigma_roam_5g::Vector{Int64}
     history_sigma_roam_rupa::Vector{Int64}
+
+    # --- Core forwarding-state churn under mobility (the O(n) vs O(1) headline) ---
+    # Cumulative per-session forwarding-state write operations at core/UPF nodes
+    # caused by handovers, scaled by scale_factor (real users). 5G: O(n); RUPA: 0.
+    core_writes_5g::Int64
+    core_writes_rupa::Int64
+    history_core_writes_5g::Vector{Int64}
+    history_core_writes_rupa::Vector{Int64}
 end
 
 # Backward-compatible constructor: all σ counters and histories initialized to 0/empty.
@@ -200,7 +208,8 @@ SimGlobalState(config, upf_sessions_5g, forwarding_tables_6grupa,
                    history_per_gupf_6grupa_fwd_state_info_size_mb,
                    history_per_gupf_entries_6grupa,
                    0, Int64(0), Int64(0), Int64(0), Int64(0), Int64(0), Int64(0),
-                   Int[], Int64[], Int64[], Int64[], Int64[], Int64[], Int64[])
+                   Int[], Int64[], Int64[], Int64[], Int64[], Int64[], Int64[],
+                   Int64(0), Int64(0), Int64[], Int64[])
 
 struct GUPFState6GRUPA
     forwarding_table::Vector{ForwardingEntry6GRUPA}

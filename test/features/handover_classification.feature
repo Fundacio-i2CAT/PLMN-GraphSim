@@ -10,7 +10,7 @@ Feature: 5G/6G-RUPA Handover Classification and Signaling Cost Tracking
   Scenario: Xn handover - UE moves between gNBs sharing same anchor UPF
     When UE hands over from gNB 1 to gNB 2 (both with anchor UPF 1)
     Then handover is classified as Xn (same anchor)
-    And sigma_5g_xn counter increments by 500 bytes
+    And sigma_5g_xn counter increments by 600 bytes
     And sigma_5g_n2 counter does not change
     And session anchor_upf_index remains UPF 1
     And handover_count increments to 1
@@ -19,7 +19,7 @@ Feature: 5G/6G-RUPA Handover Classification and Signaling Cost Tracking
   Scenario: N2 handover - UE moves to gNB served by different anchor UPF
     When UE hands over from gNB 1 (anchor UPF 1) to gNB 3 (anchor UPF 2)
     Then handover is classified as N2 (anchor change)
-    And sigma_5g_n2 counter increments by 1080 bytes
+    And sigma_5g_n2 counter increments by 1150 bytes
     And sigma_5g_xn counter does not change
     And session anchor_upf_index changes from UPF 1 to UPF 2
     And handover_count increments to 1
@@ -35,15 +35,19 @@ Feature: 5G/6G-RUPA Handover Classification and Signaling Cost Tracking
     And handover_count increments to 1
 
   # ============ 5G Local Breakout Roaming (inter-PLMN, LBO) ============
+  # OUT OF SCOPE (not implemented). The model deliberately simulates Home-Routed
+  # only: operators default to HR for billing/CDR tracking (see plan §6b and
+  # mobility-formal-model.md §3.5). LBO is discussed in the paper background as
+  # the contrast operators avoid, not simulated. No sigma_roam_5g_lbo counter
+  # exists. Kept here as a documented future-work scenario, not an active spec.
+  @future @not-implemented
   Scenario: Local Breakout roaming - UE roams with data breaking out locally
     When UE hands over from home PLMN gNB to visited PLMN gNB
     And roaming mode is Local Breakout (data exits at V-UPF)
     Then handover is classified as LBO roaming
-    And sigma_roam_5g_lbo increments by 800 bytes
     And V-SMF in visited PLMN establishes V-UPF anchor for data plane
     And H-SMF in home PLMN maintains only control plane context
     And traffic does not backhaul through home network
-    And handover_count increments to 1
 
   # ============ 6G-RUPA Intra-domain Handover ============
   Scenario: 6G-RUPA intra-domain handover - UE renumbered within same GUPF
@@ -84,14 +88,12 @@ Feature: 5G/6G-RUPA Handover Classification and Signaling Cost Tracking
   Scenario: Multiple handovers accumulate correct sigma costs
     When sequence of handovers occurs:
       | type | count | cost_per | total |
-      | Xn   | 5     | 500      | 2500  |
-      | N2   | 3     | 1080     | 3240  |
+      | Xn   | 5     | 600      | 3000  |
+      | N2   | 3     | 1150     | 3450  |
       | HR   | 1     | 1180     | 1180  |
-      | LBO  | 2     | 800      | 1600  |
-    Then history_sigma_5g_xn tracks cumulative bytes (2500)
-    And history_sigma_5g_n2 tracks cumulative bytes (3240)
-    And history_sigma_roam_5g_hr tracks cumulative bytes (1180)
-    And history_sigma_roam_5g_lbo tracks cumulative bytes (1600)
+    Then history_sigma_5g_xn tracks cumulative bytes (3000)
+    And history_sigma_5g_n2 tracks cumulative bytes (3450)
+    And history_sigma_roam_5g tracks cumulative bytes (1180)
     And mobility_evolution_*.csv includes all sigma columns
     And CSV rows match timestamped history snapshots
 

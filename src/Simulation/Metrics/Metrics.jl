@@ -45,4 +45,8 @@ function update_history!(sim_state, current_time, metrics_5g, metrics_6grupa)
     push!(sim_state.history_sigma_rupa_inter, sim_state.sigma_rupa_inter)
     push!(sim_state.history_sigma_roam_5g, sim_state.sigma_roam_5g)
     push!(sim_state.history_sigma_roam_rupa, sim_state.sigma_roam_rupa)
+
+    # Core forwarding-state churn over time (O(n) vs O(1) headline).
+    push!(sim_state.history_core_writes_5g, sim_state.core_writes_5g)
+    push!(sim_state.history_core_writes_rupa, sim_state.core_writes_rupa)
 end

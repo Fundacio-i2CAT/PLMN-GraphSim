@@ -8,11 +8,10 @@ using ..Types
 using ..AgentGeneration
 using Logging
 
-function find_serving_gnb(topology::NetworkTopology, user_location::GeoPoint)
+# Reference O(#gNB) nearest-gNB (kept for testing the spatial index against).
+function find_serving_gnb_brute(topology::NetworkTopology, user_location::GeoPoint)
     min_dist = Inf
     best_idx = 0
-    # Optimization: We could use a spatial index, but for 40k points and 2k agents, 
-    # brute force is ~80M ops. In Julia this is < 1s :D.
     for (i, gnb) in enumerate(topology.gnb_locations)
         # Euclidean distance approximation is fine for finding nearest neighbor locally
         d2 = (gnb.lat - user_location.lat)^2 + (gnb.lon - user_location.lon)^2
@@ -22,6 +21,13 @@ function find_serving_gnb(topology::NetworkTopology, user_location::GeoPoint)
         end
     end
     return best_idx
+end
+
+# Fast nearest-gNB via a per-topology grid index (built once, cached). Returns the
+# same result as the brute-force version; needed because mobility re-queries every
+# agent every tick at national scale (tens of thousands of agents × 46k–113k gNBs).
+function find_serving_gnb(topology::NetworkTopology, user_location::GeoPoint)
+    return nearest_gnb(get_gnb_grid(topology.gnb_locations), topology.gnb_locations, user_location)
 end
 
 function is_simulation_time_over(env, sim_state)
@@ -147,18 +153,16 @@ reproduce bit-for-bit when `mobility.enabled = false`.
         d = haversine_distance(current_loc, topology.gnb_locations[new_gnb])
         add_edge!(topology.graph, (:Agent, user_id), (:gNB, new_gnb), d)
 
-        # 5G: handle handover (Xn same-UPF or N2 different-UPF), classify and record σ cost
-        agent_sessions = handle_handover_5g!(sim_state, topology,
-                                              agent_sessions,
-                                              current_upf, new_upf,
-                                              current_domain, new_domain,
-                                              current_operator, new_operator)
+        # Drive both 5G (Xn/N2) and 6G-RUPA (intra/inter-domain) state machines
+        # with the SAME pre-handover context, counting the event once. Must run
+        # before mutating current_* so the 6G-RUPA path sees the real old domain.
+        agent_sessions = dispatch_handover!(sim_state, topology, agent_sessions,
+                                            current_gnb, new_gnb,
+                                            current_upf, new_upf,
+                                            current_domain, new_domain,
+                                            current_operator, new_operator)
         current_upf = new_upf
         current_domain = new_domain
-        # 6G-RUPA: local renumbering on every cell change, regardless of UPF.
-        handle_handover_6grupa!(sim_state, topology, current_gnb, new_gnb,
-                                current_domain, new_domain,
-                                current_operator, new_operator)
         current_gnb = new_gnb
         @debug "User $user_id handover: gNB $(current_gnb) -> $(new_gnb), UPF -> $(new_upf) at $(now(env))"
     end
