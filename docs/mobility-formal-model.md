@@ -9,7 +9,7 @@ cited inline.
 
 ---
 
-## 0. Summary — two distinct results, do not conflate them
+## 0. Summary — three distinct results, do not conflate them
 
 1. **Forwarding-state churn under mobility — O(n) vs O(1) (the headline).**
    In 5G, any handover that changes the serving UPF installs/moves **per-session**
@@ -27,14 +27,23 @@ cited inline.
    routing advertisement + per-active-flow update), grounded in the RINA reference
    model and Grasa et al. 2017.
 
-3. **Deferred (open question).** Location-management cost beyond the handover
+3. **Billing orthogonality (§6) — the reduction costs no billing fidelity.**
+   5G accounting (URR) is bound to the session PDRs at the anchor (TS 29.244). Under
+   SSC-1 the anchor is pinned, so intra-PLMN neither architecture churns accounting
+   (granularity proven identical); the coupling *cost* surfaces where the anchor must
+   move — SSC 2/3 re-anchor and Home-Routed roaming — and as intra-PLMN **path-stretch**
+   (§3.5). 6G-RUPA keys accounting on the location-independent Application-Process-Name
+   (RINA RM l.206/226), so it renumbers freely with ΔS_ctx,churn = 0 while keeping
+   per-UE granularity. Decoupling, not elimination (S_ctx is O(N) in both).
+
+4. **Deferred (open question).** Location-management cost beyond the handover
    procedure itself: the RINA **directory** (name→address) maintenance, which is a
    per-DIF *policy* (Grasa et al.), and its 5G counterpart (UDM/UDR + anchor
    maintenance). Deferred **symmetrically** on both architectures.
 
-The advantage magnitude in result (1) is structural (O(n) vs O(1)); the advantage
-in result (2) rests on the per-event constants and is reported with a sensitivity
-analysis.
+The advantage magnitude in result (1) is structural (O(n) vs O(1)); result (2) rests
+on the per-event constants and is reported with a sensitivity analysis; result (3) is
+a structural decoupling (billing key location-independent) verified in-sim.
 
 ---
 
@@ -58,16 +67,24 @@ mirrors it (edge domain ⊂ regional/PSA domain).
 
 ## 2. Handover taxonomy (two-tier topology)
 
+**Baseline = SSC mode 1** (TS 23.501 §5.6.9): *"the UPF acting as PDU Session Anchor
+at the establishment of the PDU Session is maintained regardless of the access
+technology (e.g. Access Type and cells) a UE is"* using. So the anchor (PSA) is
+**pinned for the session lifetime** — the routine handover levels are only L1/L2:
+
 | Level | Trigger | 5G procedure | 6G-RUPA |
 |---|---|---|---|
 | L0 | same gNB | none | none |
 | L1 | gNB→gNB, **same edge UPF** | **Xn** (RAN-local, AMF path-switch) | local renumber |
-| L2 | gNB→gNB, **diff edge UPF, same PSA** | **N2, UL-CL relocation** (anchor/IP preserved) | renumber into new edge domain |
-| L3 | gNB→gNB, **diff PSA** | **N2, PSA/anchor relocation** (SSC mode 2/3) | renumber into new PSA domain |
+| L2 | gNB→gNB, **diff edge UPF** (incl. into another PSA *region*) | **N2, UL-CL relocation** — **PSA/IP preserved** (anchor pinned) | renumber into new edge domain |
+| (opt) | deliberate re-anchor | **N2, PSA relocation** (SSC mode 2/3) — new PSA, **IP changes** | renumber into new PSA domain |
 
-The same physical move is classified per architecture: 5G by UPF/PSA change,
-6G-RUPA by which level of the topological address changes. **Crucially, the 5G
-column escalates in cost and state impact; the 6G-RUPA column does not** (§3.4, §4).
+**Crucially, even a move into a different PSA *region* is L2 in SSC mode 1**: the
+anchor is not relocated, the UE keeps its IP and its (now farther) PSA — paying
+*path-stretch*, not a relocation (§3.5). Actual PSA relocation is the optional SSC
+mode 2/3 scenario (deliberate, policy-driven), not a per-crossing geometric event.
+The 5G column escalates in cost/state impact across these; the 6G-RUPA column does
+not (§3.4, §4).
 
 ---
 
@@ -92,14 +109,28 @@ Modify (path) at both; the PSA anchor (UE IP) is preserved.
 
 $$\sigma_{5G}^{\mathrm{N2,UL\text{-}CL}} = 1150\ \text{bytes}$$
 
-### 3.3 5G L3 — N2 handover, PSA / anchor relocation
-PDU Session Anchor relocation (SSC mode 2/3): new PSA establishment, old PSA
-release, SMF/AMF coordination, and a new UE IP / additional PDU session — the
-heaviest terrestrial handover [TS 23-501 §5.6.9; TS 23-502 §4.3.5].
+### 3.3 5G PSA / anchor relocation — *optional SSC mode 2/3 scenario, not routine*
+PSA relocation (SSC mode 2/3): new PSA establishment, old PSA release, SMF/AMF
+coordination, and a new UE IP / additional PDU session — the heaviest terrestrial
+handover [TS 23-501 §5.6.9; TS 23-502 §4.3.5]. **This does not happen on routine
+intra-PLMN mobility** (SSC-1 pins the anchor); it is a deliberate re-anchoring
+(e.g. edge-compute proximity) modelled as a separate scenario, not charged per
+PSA-region crossing.
 - NGAP 450 B + new-PSA Establish 350 B + old-PSA Release 150 B + extra
   SMF/AMF session-management + N9 path setup ≈ 550 B.
 
-$$\sigma_{5G}^{\mathrm{N2,PSA}} \approx 1500\ \text{bytes}\quad\textit{(approx — to ground in TS 23-502 §4.3.5)}$$
+$$\sigma_{5G}^{\mathrm{PSA\text{-}reloc}} \approx 1500\ \text{bytes}\quad\textit{(approx — to ground in TS 23-502 §4.3.5; SSC 2/3 only)}$$
+
+### 3.5 SSC-1 anchor path-stretch (the real intra-PLMN cost of pinning)
+With the anchor pinned, 5G traffic hairpins from the current serving edge UPF to the
+**original** PSA; the optimal egress (what 6G-RUPA achieves by renumbering into the
+local domain) is the **nearest** PSA. The excess
+$\Delta d = d(\text{serving},\text{pinned PSA}) - d(\text{serving},\text{nearest PSA}) \ge 0$
+is the price 5G pays to avoid re-anchoring. **Intra-PLMN this is small** (a UE rarely
+leaves its home PSA region in a session — measured Spain mean excess ≤ 0.3 km), which
+is exactly *why* SSC-1 pinning is acceptable intra-PLMN. It grows large only when the
+anchor is far from the user: **roaming** (hairpin to the home country) and edge-compute
+(motivating SSC 2/3). Measured in-sim: `anchor_dist_5g_sum` / `anchor_dist_opt_sum`.
 
 ### 3.4 6G-RUPA — renumbering (all levels, flat)
 **Mechanism (Grasa et al. 2017 §III; RINA RM lines 1814–1828):** the moving IPCP
@@ -193,29 +224,89 @@ $\Delta S_{\mathrm{core}}^{5G} = c_f \cdot M \in \mathcal{O}(N)$.
 
 ---
 
-## 6. Billing / context independence
+## 6. Billing orthogonality (accounting is independent of the forwarding path)
 
-Per-session billing/context $S_{\mathrm{ctx}}$ (URR/CDR) is orthogonal to where
-$S_{\mathrm{fwd}}$ lives. 5G Home-Routed keeps $S_{\mathrm{ctx}}$ at the home
-anchor; 6G-RUPA keeps per-layer accounting. RUPA's lower $\sigma$ and ΔS_core do not
-reduce billing granularity — both can produce per-UE CDRs. (Detailed accounting
-signaling is part of the deferred location-management question, §8.)
+This is the third result, and it converts a potential weakness ("does RUPA's
+zero-churn forwarding cost us billing?") into a strength. The claim is **decoupling,
+not elimination**: per-flow accounting state $S_{\mathrm{ctx}}$ remains $O(N)$ in
+*both* architectures (same granularity — RUPA does not magically remove billing).
+What differs is whether $S_{\mathrm{ctx}}$ is *bound to the forwarding path*.
+
+### 6.1 5G — accounting is coupled to the anchor
+
+In 5G the **URR** (Usage Reporting Rule) is installed **at the UPF** and
+**associated with the session's PDRs** — the same per-session forwarding rules —
+keyed by Charging keys (TS 29.244 §5.2.2; usage reports → SMF → CHF, TS 32.255).
+So the accounting context is *co-located and co-keyed* with the forwarding state at
+the anchor. Define the billing key
+
+$$k_{5G} = (\text{session},\ \text{anchor PSA}).$$
+
+In the **SSC mode 1** baseline the anchor is pinned, so $k_{5G}$ is constant across
+routine intra-PLMN handovers ⇒ **no accounting relocation intra-PLMN**. The coupling
+*cost* surfaces exactly where the anchor must move: a deliberate **PSA relocation**
+(SSC 2/3) changes $k_{5G}$ and relocates the per-session accounting context; and
+inter-PLMN roaming defaults to **Home-Routed** specifically to keep $S_{\mathrm{ctx}}$
+at the home anchor — billing dictates the data path (the hairpin of §3.5 at country scale).
+
+$$\Delta S_{\mathrm{ctx}}^{5G} = \begin{cases} 0 & \text{routine L1/L2 (SSC-1, anchor pinned)} \\ \text{per-session} \times \texttt{scale} & \text{SSC 2/3 re-anchor, or HR roaming} \end{cases}$$
+
+### 6.2 6G-RUPA — accounting is keyed on identity, not location
+
+A RUPA address is a mutable, location-dependent **synonym** for an IPC process
+(RINA RM ~l.1114). The **stable** identity is the location-independent
+**Application-Process-Name** (RM l.206/226), and accounting/management is a
+**separate task** (DAF/DIF Management + RIB, RM l.450/496), not part of EFCP data
+transfer. So the billing key
+
+$$k_{RUPA} = \text{Application-Process-Name (flow identity)}$$
+
+is **invariant under renumbering**: a handover changes the address synonym, never
+$k_{RUPA}$. Hence
+
+$$\Delta S_{\mathrm{ctx}}^{RUPA}(\text{handover}) = 0 \quad \text{at every level.}$$
+
+### 6.3 Orthogonality theorem
+
+Let $\mathrm{bill}(f)$ be the bytes attributed to flow $f$. In RUPA,
+$\mathrm{bill}$ is a function of $(\,\text{flow-identity},\ \text{bytes}\,)$ **only**,
+independent of the forwarding address or its location. Therefore:
+
+1. **Granularity is preserved** — every flow is fully attributable to one UE; the
+   per-UE ledger is complete and equal to 5G's (verified: `test/AccountingTests.jl`,
+   "granularity preserved").
+2. **Accounting does not churn** — $\Delta S_{\mathrm{ctx}}^{RUPA}=0$ under any
+   handover, while 5G relocates it on PSA changes.
+3. **Placement is free** — $S_{\mathrm{ctx}}$ can be centralized / replicated
+   independent of forwarding topology, so RUPA can route optimally (LBO) and still
+   bill, where 5G must Home-Route. (The roaming payoff; §3.5 / future §7.)
+
+**Corollary.** RUPA's $\Delta S_{\mathrm{core}}=0$ and lower $\sigma$ cost **zero**
+billing fidelity. The reduction is in *where state lives and churns*, not in *what
+can be billed*.
+
+Measured in-sim: intra-PLMN SSC-1 `acct_reloc_5g = acct_reloc_rupa = 0` (anchor
+pinned); the intra-PLMN coupling shows instead as **path-stretch** (§3.5,
+`anchor_dist_*`). `acct_reloc_5g` becomes nonzero only under SSC 2/3 re-anchor or
+HR roaming (separate scenarios). Granularity equality holds regardless.
 
 ---
 
 ## 7. Summary table
 
-| Handover | 5G σ (B) | 5G ΔS_core | RUPA σ (B) | RUPA ΔS_core |
-|---|---|---|---|---|
-| L1 Xn / intra-edge | 600 | per-session N3 mod | 200 | **0** |
-| L2 N2 UL-CL reloc | 1150 | per-session install/move | 200 | **0** |
-| L3 N2 PSA reloc | ~1500* | per-session re-anchor | 200 | **0** |
-| Roaming | ~1180 (HR) | per-session anchor | ~200 | **0** |
+| Handover | 5G σ (B) | 5G ΔS_core | 5G ΔS_ctx (billing) | RUPA σ (B) | RUPA ΔS_core | RUPA ΔS_ctx |
+|---|---|---|---|---|---|---|
+| L1 Xn / same edge | 600 | per-session N3 mod | 0 | 200 | **0** | **0** |
+| L2 N2 UL-CL reloc (incl. cross-PSA-region) | 1150 | per-session install/move | 0 (anchor pinned) | 200 | **0** | **0** |
+| *opt* PSA reloc (SSC 2/3) | ~1500* | per-session re-anchor | per-session reloc | 200 | **0** | **0** |
+| Roaming (HR) | ~1180 | home-anchored | home-anchored | ~200 | **0** | **0** |
 
-\* approx — to ground in TS 23-502 §4.3.5.
+\* approx — SSC 2/3 only, to ground in TS 23-502 §4.3.5. The intra-PLMN SSC-1 cost of
+pinning is **path-stretch** (§3.5), not a relocation.
 
-Per-event advantage grows with severity: 67% (L1) → 83% (L2) → ~87% (L3). The
-state result is structural: O(n) vs O(1), independent of σ.
+Routine per-event advantage: 67% (L1) → 83% (L2). The state result is structural:
+O(n) vs O(1), independent of σ. Billing (ΔS_ctx) is orthogonal: RUPA churns 0 **and**
+preserves per-UE granularity (§6); intra-PLMN SSC-1 it is 0 for both.
 
 ---
 

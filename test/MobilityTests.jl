@@ -250,11 +250,13 @@ using MetaGraphsNext
         @test state.handover_count == 2
     end
 
-    # Two-tier handover taxonomy (mobility-formal-model.md §2): a move is L1 (same
-    # edge UPF), L2 (diff edge UPF, same PSA), or L3 (diff PSA). 5G charges a graded
-    # cost per level (Xn 600 / N2 UL-CL 1150 / N2 PSA-reloc 1500); 6G-RUPA renumbers
-    # flat (200) at every level with ΔS_core = 0; per-level event counts feed the mix.
-    @testset "two-tier L1/L2/L3 classification + graded 5G / flat RUPA σ" begin
+    # Two-tier handover taxonomy under the realistic SSC mode 1 baseline (TS 23.501
+    # §5.6.9): the PSA is PINNED for the session, so the only routine levels are L1
+    # (same edge UPF, Xn 600) and L2 (diff edge UPF, N2 1150) — even a move into a
+    # different PSA *region* stays L2 (anchor not relocated). 6G-RUPA renumbers flat
+    # (200) with ΔS_core = 0. PSA-region crossings are tracked (ho_l3) only as a
+    # geometric marker for path-stretch; they are NOT charged as PSA relocations.
+    @testset "SSC-1 two-tier: L1/L2 only, anchor pinned, path-stretch" begin
         # 3 edge UPFs over 2 PSAs: edge1,edge2 -> PSA1 ; edge3 -> PSA2.
         gnb_locs = [GeoPoint(0.0,0.0), GeoPoint(0.1,0.1), GeoPoint(0.2,0.2), GeoPoint(0.3,0.3)]
         upf_locs = [GeoPoint(0.0,0.0), GeoPoint(0.1,0.1), GeoPoint(0.3,0.3)]
@@ -268,48 +270,55 @@ using MetaGraphsNext
                       vertex_data_type = GeoPoint, edge_data_type = Float64),
         )
 
-        # Pure classification.
-        @test Simulation.handover_level(topology, 1, 1) == 1   # same edge
-        @test Simulation.handover_level(topology, 1, 2) == 2   # diff edge, PSA1==PSA1
-        @test Simulation.handover_level(topology, 2, 3) == 3   # PSA1 -> PSA2
-        @test Simulation.handover_level(topology, 1, 3) == 3   # PSA1 -> PSA2
+        # Classification: routine level is binary; PSA-region crossing is a separate marker.
+        @test Simulation.handover_level(topology, 1, 1) == 1            # same edge → L1
+        @test Simulation.handover_level(topology, 1, 2) == 2            # diff edge → L2
+        @test Simulation.handover_level(topology, 2, 3) == 2            # diff edge → L2 (still!)
+        @test Simulation.crosses_psa_region(topology, 1, 2) == false    # both PSA1
+        @test Simulation.crosses_psa_region(topology, 2, 3) == true     # PSA1 → PSA2
+        @test Simulation.crosses_psa_region(topology, 1, 3) == true
 
         scale = 1000
         config = SimConfig(1, 1, scale, 10.0, 5.0, 5.0, :two_tier, 2, 1.0,
                            MobilityConfig(true, 1.0, RandomWaypoint(5.0, 0.0, 1.0)))
         state = Simulation.init_global_state_for_simulation(topology, config)
 
-        ctx = Simulation.create_session_context(1, topology)
+        ctx = Simulation.create_session_context(1, topology)   # serving edge 1 → anchor = PSA1
+        @test ctx.metadata.anchor_upf_index == 1               # pinned PSA = parent[1] = 1
         push!(state.upf_sessions_5g[1], ctx)
         sessions = [ctx]
 
-        # L1: edge1->edge1 (gNB hop within edge UPF 1). Xn 600, RUPA flat 200.
-        sessions = Simulation.dispatch_handover!(state, topology, sessions,
-                                                 1, 2, 1, 1, 1, 1, 1, 1)
-        @test state.sigma_5g_xn == 600
-        @test state.sigma_5g_n2 == 0
-        @test state.sigma_5g_psa == 0
+        # L1: same edge UPF 1. Xn 600, RUPA flat 200.
+        sessions = Simulation.dispatch_handover!(state, topology, sessions, 1,2, 1,1, 1,1, 1,1)
+        @test state.sigma_5g_xn == 600 && state.sigma_5g_n2 == 0 && state.sigma_5g_psa == 0
         @test state.sigma_rupa_intra == 200
         @test state.ho_l1 == 1 && state.ho_l2 == 0 && state.ho_l3 == 0
 
-        # L2: edge1->edge2, both under PSA1. N2 UL-CL 1150, RUPA flat 200.
-        sessions = Simulation.dispatch_handover!(state, topology, sessions,
-                                                 2, 3, 1, 2, 1, 2, 1, 1)
-        @test state.sigma_5g_n2 == 1150
-        @test state.sigma_5g_psa == 0
-        @test state.sigma_rupa_inter == 200            # flat, classified inter
-        @test state.ho_l2 == 1
+        # L2 same PSA: edge1 → edge2 (both PSA1). N2 1150, no PSA crossing.
+        sessions = Simulation.dispatch_handover!(state, topology, sessions, 2,3, 1,2, 1,2, 1,1)
+        @test state.sigma_5g_n2 == 1150 && state.sigma_5g_psa == 0
+        @test state.ho_l2 == 1 && state.ho_l3 == 0
 
-        # L3: edge2->edge3, PSA1 -> PSA2. N2 PSA-reloc 1500, RUPA STILL flat 200.
-        sessions = Simulation.dispatch_handover!(state, topology, sessions,
-                                                 3, 4, 2, 3, 2, 3, 1, 1)
-        @test state.sigma_5g_psa == 1500               # graded up at L3
-        @test state.sigma_rupa_inter == 400            # +200 flat (now 2 inter events)
-        @test state.ho_l3 == 1
+        # L2 cross-PSA region: edge2 → edge3 (PSA1 → PSA2). STILL N2 1150 (anchor pinned),
+        # NOT a PSA relocation: sigma_5g_psa stays 0, acct churn stays 0. ho_l3 marker++.
+        sessions = Simulation.dispatch_handover!(state, topology, sessions, 3,4, 2,3, 2,3, 1,1)
+        @test state.sigma_5g_n2 == 2300 && state.sigma_5g_psa == 0
+        @test state.ho_l2 == 2 && state.ho_l3 == 1
 
-        # ΔS_core = 0 for RUPA across all three levels; 5G wrote per-session each time.
+        # Anchor PINNED throughout (SSC-1): still PSA1 after roaming into PSA2's region.
+        @test sessions[1].metadata.anchor_upf_index == 1
+
+        # No accounting churn intra-PLMN in SSC-1, either architecture.
+        @test state.acct_reloc_5g == 0 && state.acct_reloc_rupa == 0
+
+        # Path-stretch accumulated: after the cross-PSA move the pinned PSA (PSA1) is
+        # farther than the nearest PSA (PSA2) → 5G distance > optimal.
+        @test state.anchor_stretch_samples == 3
+        @test state.anchor_dist_5g_sum > state.anchor_dist_opt_sum
+
+        # ΔS_core = 0 for RUPA; 5G wrote per-session every handover (serving changed).
         @test state.core_writes_rupa == 0
-        @test state.core_writes_5g == 3 * scale        # 1 session x scale x 3 handovers
+        @test state.core_writes_5g == 3 * scale
         @test state.handover_count == 3
     end
 end

@@ -201,6 +201,26 @@ mutable struct SimGlobalState
     ho_l1::Int64                         # L1 event count (same edge UPF)
     ho_l2::Int64                         # L2 event count (diff edge UPF, same PSA)
     ho_l3::Int64                         # L3 event count (diff PSA)
+
+    # --- Accounting-state churn under mobility (billing orthogonality) ---
+    # 5G: the URR (Usage Reporting Rule) is installed at the UPF and bound to the
+    # session's PDRs at the anchor/PSA (TS 29.244), so on a PSA-relocating handover
+    # (L3) the per-session accounting context must relocate with the anchor — O(n).
+    # 6G-RUPA: accounting keys on the location-independent Application-Process-Name
+    # (RINA RM l.206/226), handled by a separate management task (RM l.450/496), so a
+    # renumber never touches it — ΔS_ctx,churn = 0. Billing is ORTHOGONAL to the
+    # forwarding path; granularity is identical (per-flow in both), only the churn differs.
+    acct_reloc_5g::Int64                 # 5G accounting relocations (SSC2/3 + roaming only; 0 in SSC1)
+    acct_reloc_rupa::Int64               # 6G-RUPA accounting relocations (always 0)
+
+    # --- Anchor path-stretch (the SSC mode 1 user-plane cost) ---
+    # 5G pins the PSA (TS 23.501 §5.6.9), so traffic hairpins from the current serving
+    # edge UPF back to the ORIGINAL PSA; 6G-RUPA renumbers into the local domain, so it
+    # egresses at the NEAREST PSA (topologically optimal). Sums over handover samples,
+    # km; the mean excess (5g - opt) is the price 5G pays to avoid re-anchoring.
+    anchor_dist_5g_sum::Float64          # Σ dist(serving edge UPF, pinned PSA)
+    anchor_dist_opt_sum::Float64         # Σ dist(serving edge UPF, nearest PSA)
+    anchor_stretch_samples::Int64        # number of handover samples accumulated
 end
 
 # Backward-compatible constructor: all σ counters and histories initialized to 0/empty.
@@ -219,7 +239,9 @@ SimGlobalState(config, upf_sessions_5g, forwarding_tables_6grupa,
                    0, Int64(0), Int64(0), Int64(0), Int64(0), Int64(0), Int64(0),
                    Int[], Int64[], Int64[], Int64[], Int64[], Int64[], Int64[],
                    Int64(0), Int64(0), Int64[], Int64[],
-                   Int64(0), Int64(0), Int64(0), Int64(0))
+                   Int64(0), Int64(0), Int64(0), Int64(0),
+                   Int64(0), Int64(0),
+                   0.0, 0.0, Int64(0))
 
 struct GUPFState6GRUPA
     forwarding_table::Vector{ForwardingEntry6GRUPA}

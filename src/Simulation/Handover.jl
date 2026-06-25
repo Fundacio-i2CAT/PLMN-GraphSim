@@ -5,22 +5,58 @@ using ..Types
 """
     handover_level(topology, old_upf, new_upf) -> Int
 
-Classify a handover by the two-tier taxonomy (mobility-formal-model.md §2):
-  - L1: same edge UPF                       (5G Xn; RUPA same-edge renumber)
-  - L2: different edge UPF, **same PSA**     (5G N2 UL-CL relocation)
-  - L3: different PSA (anchor relocation)    (5G N2 PSA reloc, SSC mode 2/3)
+Classify a routine handover under the realistic **SSC mode 1** baseline
+(mobility-formal-model.md §2), where the PDU Session Anchor (PSA) is *pinned for the
+session lifetime* regardless of which cells/edge UPFs the UE moves through
+(TS 23.501 §5.6.9). So the only routine levels are:
+  - L1: same edge UPF                 (5G Xn, RAN-local path switch)
+  - L2: different edge UPF            (5G N2 UL-CL relocation; **PSA preserved**)
 
-PSA of an edge UPF is `topology.edge_upf_parent_map[edge_upf]`. In single-tier
-deployments (`edge_upf_parent_map` empty) there is no PSA distinction, so any
-edge-UPF change is L2.
+Crucially, moving into a *different PSA region* does **not** relocate the anchor in
+SSC mode 1 — it is still an L2 N2 handover with the original PSA kept (at the price
+of a longer anchor path; see `anchor_path_stretch`). Actual PSA relocation happens
+only under SSC mode 2/3 (deliberate re-anchoring), modelled as a separate optional
+scenario, not a per-crossing event.
 """
 function handover_level(topology::NetworkTopology, old_upf::Int, new_upf::Int)
-    old_upf == new_upf && return 1
+    return old_upf == new_upf ? 1 : 2
+end
+
+"""
+    crosses_psa_region(topology, old_upf, new_upf) -> Bool
+
+Geometric marker: did the move cross into a different PSA *region* (the parent of the
+serving edge UPF changed)? Under SSC mode 1 this does **not** relocate the anchor —
+it just means the pinned PSA is now farther away (anchor path-stretch grows), and it
+flags where an SSC mode 2/3 deployment *would* consider re-anchoring. Not charged as
+a PSA relocation in the routine model.
+"""
+function crosses_psa_region(topology::NetworkTopology, old_upf::Int, new_upf::Int)
     pm = topology.edge_upf_parent_map
-    isempty(pm) && return 2
-    old_psa = old_upf <= length(pm) ? pm[old_upf] : old_upf
-    new_psa = new_upf <= length(pm) ? pm[new_upf] : new_upf
-    return old_psa == new_psa ? 2 : 3
+    (isempty(pm) || old_upf == new_upf) && return false
+    op = old_upf <= length(pm) ? pm[old_upf] : old_upf
+    np = new_upf <= length(pm) ? pm[new_upf] : new_upf
+    return op != np
+end
+
+"""
+    anchor_path_stretch(topology, serving_upf, pinned_psa) -> (d_pinned, d_optimal)
+
+The SSC mode 1 user-plane cost. With the anchor pinned, 5G traffic hairpins from the
+current serving edge UPF to the **original** PSA (`d_pinned`); the topologically
+optimal egress (what 6G-RUPA achieves by renumbering into the local domain) is the
+**nearest** PSA (`d_optimal`). The excess `d_pinned - d_optimal ≥ 0` is the path
+stretch 5G pays to avoid re-anchoring. Distances in km (haversine). Single-tier or
+unknown PSA ⇒ (0, 0).
+"""
+function anchor_path_stretch(topology::NetworkTopology, serving_upf::Int, pinned_psa::Int)
+    psas = topology.centralized_upf_locations
+    (isempty(psas) || serving_upf < 1 || serving_upf > length(topology.upf_locations)) && return (0.0, 0.0)
+    sloc = topology.upf_locations[serving_upf]
+    d_pinned = (pinned_psa >= 1 && pinned_psa <= length(psas)) ?
+               haversine_distance(sloc, psas[pinned_psa]) : 0.0
+    d_optimal = minimum(haversine_distance(sloc, p) for p in psas)
+    return (d_pinned, d_optimal)
 end
 
 """
@@ -50,8 +86,7 @@ function handle_handover_5g!(sim_state::SimGlobalState,
         return agent_sessions
     end
 
-    # Classify handover type
-    is_anchor_change = (old_upf != new_upf)
+    # Classify handover type (SSC mode 1 baseline: PSA pinned, only L1/L2 routine).
     is_operator_change = (old_operator_id != new_operator_id)
     level = handover_level(topology, old_upf, new_upf)
 
@@ -61,15 +96,10 @@ function handle_handover_5g!(sim_state::SimGlobalState,
         # 1180 bytes per formal model §3.5 (inter-visited-PLMN coordination)
         sim_state.sigma_roam_5g += Int64(1180)
         1180
-    elseif level == 3
-        # L3 — N2 PSA/anchor relocation (SSC mode 2/3): old session torn down at the
-        # old PSA, new one established at the new PSA, IP address changes.
-        # ~1500 bytes (NGAP 450B + PFCP Release/Establish/Mod across two PSAs).
-        # NOTE: approximate, pending TS 23-502 §4.3.5 grounding (supervisor item).
-        sim_state.sigma_5g_psa += Int64(1500)
-        1500
     elseif level == 2
-        # L2 — N2 UL-CL relocation: edge UPF changes, PSA/IP preserved.
+        # L2 — N2 UL-CL relocation: serving edge UPF changes, **PSA/IP preserved**
+        # (SSC mode 1, TS 23.501 §5.6.9). Even a move into a different PSA region is
+        # this case — the anchor stays put (longer path), it is not re-anchored.
         # 1150 bytes per formal model §3.2 (NGAP 450B + PFCP Release/Establish/Mod 700B)
         # Grounded in TS 38-413 v17.2.0 + TS 29-244 § 7.5.2/7.5.4/7.5.6 (PFCP Session procedures)
         sim_state.sigma_5g_n2 += Int64(1150)
@@ -90,9 +120,11 @@ function handle_handover_5g!(sim_state::SimGlobalState,
     new_sessions = Vector{SessionContext5G}(undef, length(agent_sessions))
     for i in eachindex(agent_sessions)
         ctx = agent_sessions[i]
-        # Create new session context at the new UPF, preserving or updating metadata as needed
-        new_anchor = is_anchor_change ? new_upf : ctx.metadata.anchor_upf_index
-        new_metadata = SessionSimMetadata(new_upf, new_anchor, new_domain_id, new_operator_id)
+        # SSC mode 1: the PSA anchor is PINNED for the session lifetime — it does NOT
+        # change when the serving edge UPF changes (TS 23.501 §5.6.9). Only the
+        # serving UPF (new_upf) and domain update; the anchor stays as established.
+        pinned_anchor = ctx.metadata.anchor_upf_index
+        new_metadata = SessionSimMetadata(new_upf, pinned_anchor, new_domain_id, new_operator_id)
         new_forwarding = ForwardingState5G(
             rand(UInt32), rand(UInt32),  # New TEIDs
             ctx.forwarding.ul_far,
@@ -104,9 +136,16 @@ function handle_handover_5g!(sim_state::SimGlobalState,
     end
 
     # Core forwarding-state churn: every session's per-session tunnel state
-    # (TEID/FAR/PDR) must be (re)written at the UPF for this handover, scaled by
-    # the real user population. This is O(n) — the 5G side of the headline result.
+    # (TEID/FAR/PDR) is (re)written at the serving UPF for this handover (L1 N3
+    # tunnel update / L2 UL-CL re-establish), scaled by the real user population.
+    # This is O(n) — the 5G side of the headline result, and it holds at SSC mode 1
+    # because the *serving* UPF still changes even though the anchor is pinned.
     sim_state.core_writes_5g += Int64(length(agent_sessions)) * Int64(sim_state.config.scale_factor)
+
+    # Accounting-state churn is 0 for routine intra-PLMN handovers in SSC mode 1: the
+    # URR is bound to the session PDRs at the *pinned* anchor (TS 29.244), which does
+    # not move (acct_reloc charged only on SSC mode 2/3 re-anchor or roaming, modelled
+    # separately). The intra-PLMN cost of pinning is path-stretch, not accounting churn.
 
     return new_sessions
 end
@@ -174,6 +213,13 @@ function handle_handover_6grupa!(sim_state::SimGlobalState,
     # local neighbourhood routing reconverges. This is the O(1) side of the result.
     sim_state.core_writes_rupa += Int64(0)
 
+    # Accounting-state churn = 0 at every level: the charging record keys on the
+    # location-independent Application-Process-Name (RINA RM l.206/226), handled by a
+    # separate management task — a renumber changes the address synonym, not the
+    # billing key, so the accounting context never relocates. Billing is ORTHOGONAL
+    # to forwarding; per-flow granularity is unchanged (see AccountingTests).
+    sim_state.acct_reloc_rupa += Int64(0)
+
     return
 end
 
@@ -207,15 +253,28 @@ function dispatch_handover!(sim_state::SimGlobalState,
                             old_operator_id, new_operator_id)
     sim_state.handover_count += 1
 
-    # Count the physical event once, by two-tier level (for the handover-mix figure
-    # and the cross-architecture per-level comparison).
+    # Count the physical event once, by routine SSC-1 level (L1 Xn / L2 N2). A move
+    # into a different PSA region is still L2 (anchor pinned); we track those crossings
+    # separately in ho_l3 as a geometric marker for path-stretch / SSC-2/3 analysis.
     level = handover_level(topology, old_upf, new_upf)
     if level == 1
         sim_state.ho_l1 += 1
-    elseif level == 2
-        sim_state.ho_l2 += 1
     else
-        sim_state.ho_l3 += 1
+        sim_state.ho_l2 += 1
+        crosses_psa_region(topology, old_upf, new_upf) && (sim_state.ho_l3 += 1)
+    end
+
+    # Anchor path-stretch sample: with the anchor pinned (5G SSC-1) traffic hairpins
+    # from the new serving edge UPF to the original PSA; RUPA egresses at the nearest
+    # PSA. Use the (preserved) anchor from the agent's session metadata as the pin.
+    if !isempty(agent_sessions)
+        pinned_psa = agent_sessions[1].metadata.anchor_upf_index
+        d5, dopt = anchor_path_stretch(topology, new_upf, pinned_psa)
+        if d5 > 0.0 || dopt > 0.0
+            sim_state.anchor_dist_5g_sum  += d5
+            sim_state.anchor_dist_opt_sum += dopt
+            sim_state.anchor_stretch_samples += 1
+        end
     end
 
     return new_sessions

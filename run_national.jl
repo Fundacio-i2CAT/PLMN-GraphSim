@@ -54,28 +54,34 @@ function run_scenario(topology, nupf, name, model; n_agents, duration, dt)
     end
     run(env, config.duration)
 
-    xn, n2, psa = s.sigma_5g_xn, s.sigma_5g_n2, s.sigma_5g_psa
+    xn, n2 = s.sigma_5g_xn, s.sigma_5g_n2
     intra, inter = s.sigma_rupa_intra, s.sigma_rupa_inter
-    t5 = xn + n2 + psa                       # L1 + L2 + L3
+    t5 = xn + n2                             # SSC-1: L1 Xn + L2 N2 (PSA pinned)
     t6 = intra + inter                       # σ_rupa flat 200 at every level
     rate = s.handover_count / n_agents / (duration/3600)
     adv = t5 > 0 ? (1 - t6/t5)*100 : 0.0
     ho = s.handover_count
     pct(x) = ho > 0 ? round(100x/ho, digits=1) : 0.0
+    ns = s.anchor_stretch_samples
+    d5  = ns > 0 ? s.anchor_dist_5g_sum/ns  : 0.0    # mean 5G hairpin (pinned PSA)
+    dop = ns > 0 ? s.anchor_dist_opt_sum/ns : 0.0    # mean optimal (nearest PSA, RUPA)
 
     println("\n", "="^70)
     println("SCENARIO: $name   [$(uppercase(COUNTRY)), $nupf edge UPFs / $NUM_PSA PSAs]")
     println("  agents=$n_agents duration=$(duration)s dt=$(dt)s")
     println("="^70)
     println("Handovers: $ho  ($(round(rate,digits=1)) HO/user/hr)")
-    println("Level mix: L1=$(s.ho_l1) ($(pct(s.ho_l1))%)  L2=$(s.ho_l2) ($(pct(s.ho_l2))%)  L3=$(s.ho_l3) ($(pct(s.ho_l3))%)")
-    println("5G σ: Xn(L1) $(xn)B  N2(L2) $(n2)B  PSA(L3) $(psa)B  total $(t5)B")
+    println("Level mix: L1(Xn)=$(s.ho_l1) ($(pct(s.ho_l1))%)  L2(N2)=$(s.ho_l2) ($(pct(s.ho_l2))%)   [PSA-region crossings=$(s.ho_l3), anchor pinned]")
+    println("5G σ: Xn(L1) $(xn)B  N2(L2) $(n2)B  total $(t5)B")
     println("6G σ: flat-renumber $(t6÷200)ev=$(t6)B (σ=200/event, all levels)")
-    println("Core writes: 5G=$(s.core_writes_5g)  6G-RUPA=$(s.core_writes_rupa) (ΔS_core=0)")
+    println("Core writes:  5G=$(s.core_writes_5g)  6G-RUPA=$(s.core_writes_rupa) (ΔS_core=0)")
+    println("Anchor path:  5G(pinned)=$(round(d5,digits=1))km  RUPA(optimal)=$(round(dop,digits=1))km  excess=$(round(d5-dop,digits=1))km (SSC-1 hairpin)")
+    println("Acct reloc:   5G=$(s.acct_reloc_5g)  6G-RUPA=$(s.acct_reloc_rupa) (SSC-1 intra-PLMN: 0 both; billing orthogonal, granularity equal)")
     println("6G-RUPA σ advantage: $(round(adv,digits=1))% ($t5 vs $t6 B)")
     return (; name, ho, rate, t5, t6, adv,
-            l1=s.ho_l1, l2=s.ho_l2, l3=s.ho_l3,
-            cw5=s.core_writes_5g, cw6=s.core_writes_rupa)
+            l1=s.ho_l1, l2=s.ho_l2, psaX=s.ho_l3,
+            cw5=s.core_writes_5g, cw6=s.core_writes_rupa,
+            d5, dop)
 end
 
 println("Building $(uppercase(COUNTRY)) topology...")
@@ -97,6 +103,7 @@ println("SUMMARY ($(uppercase(COUNTRY)), $nupf edge UPFs / $NUM_PSA PSAs, $NAG a
 println("#"^70)
 for r in res
     println(rpad(r.name,32), " HO=", r.ho, " rate=", round(r.rate,digits=1),
-            "/u/hr  5G=", r.t5, "B 6G=", r.t6, "B adv=", round(r.adv,digits=1),
-            "%  CW:5G=", r.cw5, " 6G=", r.cw6)
+            "/u/hr  adv=", round(r.adv,digits=1),
+            "%  CW:5G=", r.cw5, " 6G=", r.cw6,
+            "  stretch:5G=", round(r.d5,digits=1), "km opt=", round(r.dop,digits=1), "km")
 end
