@@ -110,7 +110,7 @@ using MetaGraphsNext
         # Mock State
         state = SimGlobalState(
             config,
-            [[SessionContext5G(ForwardingState5G(1, 1, FAR(1, 1), FAR(1, 1)), SessionSimMetadata(1, 1))]], # 1 UPF, 1 Session
+            [[SessionContext5G(ForwardingState5G(1, 1, FAR(1, 1), FAR(1, 1)), SessionSimMetadata(1, 1, 1, 1))]], # 1 UPF, 1 Session
             [[ForwardingEntry6GRUPA(10, 0xFFFFFF00, 1)]],     # 1 UPF, 1 Entry
             Vector{ForwardingEntry6GRUPA}[], # centralized_forwarding_tables_6grupa
             [1.0], # history_time

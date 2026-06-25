@@ -102,12 +102,13 @@ function init_global_state_for_simulation(topology::NetworkTopology, config::Sim
     )
 end
 
-function create_session_context(serving_upf_index::Int, topology::NetworkTopology)
+function create_session_context(serving_upf_index::Int, topology::NetworkTopology,
+                                domain_id::Int=serving_upf_index, operator_id::Int=1)
     ul_teid = rand(UInt32)
     dl_teid = rand(UInt32)
     far_ul = FAR(0x01, rand(UInt32))
     far_dl = FAR(0x01, rand(UInt32))
-    
+
     forwarding_state = ForwardingState5G(ul_teid, dl_teid, far_ul, far_dl)
 
     # Determine Anchor UPF (PSA)
@@ -121,6 +122,6 @@ function create_session_context(serving_upf_index::Int, topology::NetworkTopolog
         end
     end
 
-    metadata = SessionSimMetadata(serving_upf_index, anchor_upf_index)
+    metadata = SessionSimMetadata(serving_upf_index, anchor_upf_index, domain_id, operator_id)
     return SessionContext5G(forwarding_state, metadata)
 end

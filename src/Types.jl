@@ -10,7 +10,7 @@ using GeometryBasics
 export FAR, SessionContext5G, ForwardingEntry6GRUPA, ForwardingState5G, SessionSimMetadata
 export SimGlobalState, GeoPoint, NetworkTopology, GUPFState6GRUPA, Municipality, SimConfig
 export haversine_distance, UserType, eMBB, mMTC, URLLC
-export MobilityConfig, MobilityModel, NoMobility, RandomWaypoint
+export MobilityConfig, MobilityModel, NoMobility, RandomWaypoint, GaussMarkov, MobilityState
 
 @enum UserType begin
     eMBB
@@ -56,6 +56,8 @@ end
 struct SessionSimMetadata
     serving_upf_index::Int # The UPF currently serving the gNB (UL-CL)
     anchor_upf_index::Int  # The UPF acting as PDU Session Anchor (PSA)
+    domain_id::Int         # Attachment domain for inter-domain handover classification
+    operator_id::Int       # Operator/layer ID for roaming scenarios (1=primary, 2+=visited/satellite)
 end
 
 struct SessionContext5G
@@ -70,19 +72,18 @@ struct ForwardingEntry6GRUPA
 end
 
 # --- Mobility Models ---
-# Abstract type so future models (Gauss-Markov, trajectory replay, population-aware
-# random walk, ...) can be added without touching the lifecycle code.
+# Abstract type so future models (trajectory replay, population-aware, ...) can be added without touching lifecycle code.
 abstract type MobilityModel end
 
 "Stationary user. Equivalent to legacy behaviour (single-shot location)."
 struct NoMobility <: MobilityModel end
 
 """
-Random Waypoint mobility model.
+Stateful Random Waypoint mobility model.
 
-At each waypoint the agent picks a new destination uniformly inside a square
-of side `2*max_jump_km` centred on its current position, walks toward it at
-`speed_kmh`, then pauses for `pause_time` simulated seconds before repeating.
+Agents pick explicit waypoint destinations and move toward them at `speed_kmh`,
+honoring `pause_time` at each waypoint before picking the next. Tracks per-agent
+state: current waypoint, time-to-arrival, pause countdown.
 
 Speeds in km/h, pause time in simulation time units (assumed seconds).
 """
@@ -90,6 +91,28 @@ struct RandomWaypoint <: MobilityModel
     speed_kmh::Float64
     pause_time::Float64
     max_jump_km::Float64
+end
+
+"""
+Gauss-Markov mobility model.
+
+Smoother than Random Waypoint. Velocity autocorrelates over time, avoiding
+sharp turns and sudden speed changes. Parameter `alpha` controls correlation
+(0 = independent per tick, 1 = perfectly correlated, typically 0.5-0.7).
+"""
+struct GaussMarkov <: MobilityModel
+    speed_kmh::Float64
+    alpha::Float64         # Velocity autocorrelation coefficient
+    max_acceleration::Float64  # m/s^2, bounds rate of velocity change
+end
+
+# Per-agent mobility state (used by step_position to track waypoint, velocity history)
+mutable struct MobilityState
+    current_waypoint::GeoPoint
+    time_to_arrival::Float64  # seconds until reaching waypoint (RWP)
+    pause_countdown::Float64  # seconds remaining in pause (RWP)
+    velocity_x::Float64       # km/h, eastward (Gauss-Markov)
+    velocity_y::Float64       # km/h, northward (Gauss-Markov)
 end
 
 """
@@ -144,19 +167,63 @@ mutable struct SimGlobalState
     history_per_gupf_6grupa_fwd_state_info_size_mb::Vector{Vector{Float64}}
     history_per_gupf_entries_6grupa::Vector{Vector{Int}}
 
-    # --- Mobility / Handover Counters (PoC) ---
-    # Cumulative totals over the whole run.
-    handover_count::Int                  # cell-change events detected
-    signaling_events_5g::Int             # generic 5G handover signaling events (Phase 1: split Xn vs N2)
-    signaling_events_6grupa::Int         # 6G-RUPA local renumbering events
+    # --- Mobility / Handover Counters (grounded in formal model) ---
+    # Cumulative byte counts per handover procedure type (from mobility-formal-model.md).
+    handover_count::Int                  # total cell-change events detected
+    sigma_5g_xn::Int64                   # 5G Xn handover signaling bytes (600 B/handover)
+    sigma_5g_n2::Int64                   # 5G N2 handover signaling bytes (1150 B/handover)
+    sigma_rupa_intra::Int64              # 6G-RUPA intra-domain renumbering bytes (200 B/handover)
+    sigma_rupa_inter::Int64              # 6G-RUPA inter-domain renumbering bytes (flat 200 B/handover)
+    sigma_roam_5g::Int64                 # 5G Home-Routed roaming bytes (1180 B/handover)
+    sigma_roam_rupa::Int64               # 6G-RUPA inter-layer roaming bytes (300 B/handover)
     # Per-sampling-tick history (parallel to history_time).
     history_handovers::Vector{Int}
-    history_signaling_events_5g::Vector{Int}
-    history_signaling_events_6grupa::Vector{Int}
+    history_sigma_5g_xn::Vector{Int64}
+    history_sigma_5g_n2::Vector{Int64}
+    history_sigma_rupa_intra::Vector{Int64}
+    history_sigma_rupa_inter::Vector{Int64}
+    history_sigma_roam_5g::Vector{Int64}
+    history_sigma_roam_rupa::Vector{Int64}
+
+    # --- Core forwarding-state churn under mobility (the O(n) vs O(1) headline) ---
+    # Cumulative per-session forwarding-state write operations at core/UPF nodes
+    # caused by handovers, scaled by scale_factor (real users). 5G: O(n); RUPA: 0.
+    core_writes_5g::Int64
+    core_writes_rupa::Int64
+    history_core_writes_5g::Vector{Int64}
+    history_core_writes_rupa::Vector{Int64}
+
+    # --- Per-level handover classification (two-tier taxonomy) ---
+    # L1: same edge UPF (5G Xn).  L2: diff edge UPF, same PSA (5G N2 UL-CL reloc).
+    # L3: diff PSA (5G N2 PSA/anchor reloc, SSC mode 2/3). 6G-RUPA renumbers flat
+    # at every level. sigma_5g_psa holds L3 bytes; ho_l* are per-level event counts.
+    sigma_5g_psa::Int64                  # 5G L3 PSA-relocation bytes (~1500 B/handover)
+    ho_l1::Int64                         # L1 event count (same edge UPF)
+    ho_l2::Int64                         # L2 event count (diff edge UPF, same PSA)
+    ho_l3::Int64                         # L3 event count (diff PSA)
+
+    # --- Accounting-state churn under mobility (billing orthogonality) ---
+    # 5G: the URR (Usage Reporting Rule) is installed at the UPF and bound to the
+    # session's PDRs at the anchor/PSA (TS 29.244), so on a PSA-relocating handover
+    # (L3) the per-session accounting context must relocate with the anchor — O(n).
+    # 6G-RUPA: accounting keys on the location-independent Application-Process-Name
+    # (RINA RM l.206/226), handled by a separate management task (RM l.450/496), so a
+    # renumber never touches it — ΔS_ctx,churn = 0. Billing is ORTHOGONAL to the
+    # forwarding path; granularity is identical (per-flow in both), only the churn differs.
+    acct_reloc_5g::Int64                 # 5G accounting relocations (SSC2/3 + roaming only; 0 in SSC1)
+    acct_reloc_rupa::Int64               # 6G-RUPA accounting relocations (always 0)
+
+    # --- Anchor path-stretch (the SSC mode 1 user-plane cost) ---
+    # 5G pins the PSA (TS 23.501 §5.6.9), so traffic hairpins from the current serving
+    # edge UPF back to the ORIGINAL PSA; 6G-RUPA renumbers into the local domain, so it
+    # egresses at the NEAREST PSA (topologically optimal). Sums over handover samples,
+    # km; the mean excess (5g - opt) is the price 5G pays to avoid re-anchoring.
+    anchor_dist_5g_sum::Float64          # Σ dist(serving edge UPF, pinned PSA)
+    anchor_dist_opt_sum::Float64         # Σ dist(serving edge UPF, nearest PSA)
+    anchor_stretch_samples::Int64        # number of handover samples accumulated
 end
 
-# Backward-compatible constructor used by existing tests and call sites
-# (no mobility counters supplied -> initialised to zero/empty).
+# Backward-compatible constructor: all σ counters and histories initialized to 0/empty.
 SimGlobalState(config, upf_sessions_5g, forwarding_tables_6grupa,
                centralized_forwarding_tables_6grupa, history_time,
                history_per_upf_5g_fwd_state_info_size_mb,
@@ -169,7 +236,12 @@ SimGlobalState(config, upf_sessions_5g, forwarding_tables_6grupa,
                    history_per_upf_entries_5g,
                    history_per_gupf_6grupa_fwd_state_info_size_mb,
                    history_per_gupf_entries_6grupa,
-                   0, 0, 0, Int[], Int[], Int[])
+                   0, Int64(0), Int64(0), Int64(0), Int64(0), Int64(0), Int64(0),
+                   Int[], Int64[], Int64[], Int64[], Int64[], Int64[], Int64[],
+                   Int64(0), Int64(0), Int64[], Int64[],
+                   Int64(0), Int64(0), Int64(0), Int64(0),
+                   Int64(0), Int64(0),
+                   0.0, 0.0, Int64(0))
 
 struct GUPFState6GRUPA
     forwarding_table::Vector{ForwardingEntry6GRUPA}

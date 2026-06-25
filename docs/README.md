@@ -1,10 +1,8 @@
 # Documentation Guide
 
-This directory contains the source documentation for the project. The documentation is built using [MkDocs](https://www.mkdocs.org/) and the [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/) theme.
-
 ## Prerequisites
 
-- Python 3
+- Python 3.10+
 - The virtual environment located at `docs/.venv` (created automatically if you followed the setup).
 
 ## Setup
@@ -23,7 +21,7 @@ To preview the documentation as you write, serve it locally. The site will autom
 
 ```bash
 # From the project root
-docs/.venv/bin/mkdocs serve
+docs/.venv/bin/zensical serve
 ```
 
 Open your browser to `http://127.0.0.1:8000/`.
@@ -34,5 +32,5 @@ To build the static site (output to `public/`):
 
 ```bash
 # From the project root
-docs/.venv/bin/mkdocs build
+docs/.venv/bin/zensical build
 ```

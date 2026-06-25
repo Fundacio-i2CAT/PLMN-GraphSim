@@ -18,23 +18,90 @@ using MetaGraphsNext
         @test sc.mobility.model isa NoMobility
     end
 
-    @testset "step_position" begin
+    # Helper: walk an agent for T ticks of dt seconds, return (total_path_km, net_km).
+    function _walk(model, start, T, dt)
+        st = MobilityState(start, 0.0, 0.0, 0.0, 0.0)
+        cur = start
+        path = 0.0
+        for _ in 1:T
+            nl = Simulation.step_position(model, cur, st, dt)
+            path += Types.haversine_distance(cur, nl)
+            cur = nl
+        end
+        return path, Types.haversine_distance(start, cur)
+    end
+
+    @testset "spatial index matches brute-force nearest gNB" begin
+        # Property check: grid query == O(n) reference. 150 random points over a
+        # 500-gNB field is plenty to catch ring/boundary bugs (was 1000×2000 —
+        # overkill that dominated the assertion count).
+        gnbs = [GeoPoint(40.0 + 3*rand(), -5.0 + 6*rand()) for _ in 1:500]
+        topo = NetworkTopology(
+            gnbs, [GeoPoint(41.0,-3.0)], fill(1, length(gnbs)),
+            GeoPoint[], Int[],
+            Municipality[], Dict{String,Vector{Int}}(), Float64[],
+            MetaGraph(Graph(), label_type=Tuple{Symbol,Int}, vertex_data_type=GeoPoint, edge_data_type=Float64),
+        )
+        grid = Simulation.build_gnb_grid(gnbs)
+        mismatches = 0
+        for _ in 1:150
+            q = GeoPoint(40.0 + 3*rand(), -5.0 + 6*rand())
+            Simulation.nearest_gnb(grid, gnbs, q) == Simulation.find_serving_gnb_brute(topo, q) || (mismatches += 1)
+        end
+        @test mismatches == 0
+        # the cached fast path used by the sim must also agree
+        q = GeoPoint(41.5, -2.5)
+        @test Simulation.find_serving_gnb(topo, q) == Simulation.find_serving_gnb_brute(topo, q)
+    end
+
+    @testset "step_position: NoMobility is a no-op" begin
         loc = GeoPoint(40.0, -3.7)
+        state = MobilityState(loc, 0.0, 0.0, 0.0, 0.0)
+        @test Simulation.step_position(NoMobility(), loc, state, 10.0) === loc
+    end
 
-        # NoMobility is a no-op.
-        @test Simulation.step_position(NoMobility(), loc, 10.0) === loc
-
-        # RandomWaypoint stays within the configured per-step bound.
+    @testset "step_position: per-step jump cap respected" begin
+        loc = GeoPoint(40.0, -3.7)
         m = RandomWaypoint(5.0, 0.0, 1.0)  # 5 km/h, 1 km cap per jump
-        # 10 simulation seconds at 5 km/h => ~13.9 m, well under 1 km cap.
-        new_loc = Simulation.step_position(m, loc, 10.0)
-        d_km = Types.haversine_distance(loc, new_loc)
-        @test d_km <= 5.0 / 3600.0 * 10.0 + 1e-6
+        state = MobilityState(loc, 0.0, 0.0, 0.0, 0.0)
+        d = Types.haversine_distance(loc, Simulation.step_position(m, loc, state, 100_000.0))
+        @test d <= m.max_jump_km + 1e-6
+    end
 
-        # With a long dt the cap kicks in.
-        new_loc2 = Simulation.step_position(m, loc, 100_000.0)
-        d_km2 = Types.haversine_distance(loc, new_loc2)
-        @test d_km2 <= m.max_jump_km + 1e-6
+    # Regression for the frozen-agent bug: the old RWP state machine re-entered
+    # pause after every waypoint pick and returned `loc` forever, so an agent
+    # never translated. The previous test only checked an UPPER bound
+    # (`d <= cap`), which a zero-displacement no-op trivially satisfied. These
+    # assert the agent ACTUALLY travels at its configured speed.
+    @testset "step_position: RWP travels at configured speed (no pause)" begin
+        loc = GeoPoint(40.0, -3.7)
+        T, dt = 600, 1.0
+        for v in (5.0, 50.0)
+            path, net = _walk(RandomWaypoint(v, 0.0, 20.0), loc, T, dt)
+            expected = v * (T * dt) / 3600.0          # km covered at speed v
+            @test isapprox(path, expected; rtol = 0.02)
+            @test net > 0.1                            # not stuck in place
+        end
+    end
+
+    @testset "step_position: GaussMarkov travels (ballistic) at configured speed" begin
+        loc = GeoPoint(40.0, -3.7)
+        T, dt = 600, 1.0
+        path, net = _walk(GaussMarkov(80.0, 0.85, 5.0), loc, T, dt)
+        @test isapprox(path, 80.0 * (T * dt) / 3600.0; rtol = 0.02)
+        @test net > 1.0                                # sustained direction, covers ground
+    end
+
+    @testset "step_position: RWP pause halts then resumes (no permanent freeze)" begin
+        loc = GeoPoint(40.0, -3.7)
+        # Small jumps (0.5 km) so the agent actually REACHES waypoints and pauses
+        # repeatedly within the horizon; with large jumps it never arrives and the
+        # pause never engages (the assumption the first draft of this test missed).
+        path, _ = _walk(RandomWaypoint(50.0, 10.0, 0.5), loc, 600, 1.0)
+        @test path > 1.0                               # frozen-agent bug => exactly 0.0
+        # Pausing must reduce distance vs free-running (pause=0) at the same speed.
+        free, _ = _walk(RandomWaypoint(50.0, 0.0, 0.5), loc, 600, 1.0)
+        @test path < free
     end
 
     @testset "handle_handover_5g! migrates sessions and bumps counter" begin
@@ -59,19 +126,19 @@ using MetaGraphsNext
 
         @test length(state.upf_sessions_5g[1]) == 1
         @test length(state.upf_sessions_5g[2]) == 0
-        @test state.signaling_events_5g == 0
+        @test state.sigma_5g_n2 == 0
 
         new_sessions = Simulation.handle_handover_5g!(state, topology,
-                                                      agent_sessions, 1, 2)
+                                                      agent_sessions, 1, 2, 1, 2, 1, 1)
 
         @test length(state.upf_sessions_5g[1]) == 0
         @test length(state.upf_sessions_5g[2]) == 1
         @test length(new_sessions) == 1
-        @test state.signaling_events_5g == 1
+        @test state.sigma_5g_n2 == 1150
 
         # Same-UPF call is a no-op.
-        Simulation.handle_handover_5g!(state, topology, new_sessions, 2, 2)
-        @test state.signaling_events_5g == 1
+        Simulation.handle_handover_5g!(state, topology, new_sessions, 2, 2, 2, 2, 1, 1)
+        @test state.sigma_5g_n2 == 1150
     end
 
     @testset "handle_handover_6grupa! counts local renumbering events" begin
@@ -86,11 +153,172 @@ using MetaGraphsNext
                            MobilityConfig(true, 1.0, RandomWaypoint(5.0, 0.0, 1.0)))
         state = Simulation.init_global_state_for_simulation(topology, config)
 
-        @test state.signaling_events_6grupa == 0
-        Simulation.handle_handover_6grupa!(state, topology, 1, 2)
-        @test state.signaling_events_6grupa == 1
+        # Renumbering is FLAT across levels (mobility-formal-model.md §3.4): the
+        # destination domain's aggregate prefix already exists in the topology, so
+        # a moving UE just adopts an address under it — same procedure cost
+        # regardless of how far it moves. No core prefix op (that was the old,
+        # wrong 400 B inter-domain model).
+        @test state.sigma_rupa_intra == 0
+        Simulation.handle_handover_6grupa!(state, topology, 1, 2, 1, 1, 1, 1)
+        @test state.sigma_rupa_intra == 200          # local renumber
         # Same gNB -> no-op.
-        Simulation.handle_handover_6grupa!(state, topology, 2, 2)
-        @test state.signaling_events_6grupa == 1
+        Simulation.handle_handover_6grupa!(state, topology, 2, 2, 1, 1, 1, 1)
+        @test state.sigma_rupa_intra == 200
+
+        # Cross-domain renumber: classified as inter (event classifier) but charged
+        # the SAME flat 200 B, not 400.
+        Simulation.handle_handover_6grupa!(state, topology, 2, 3, 1, 2, 1, 1)
+        @test state.sigma_rupa_inter == 200          # flat renumber, not 400
+        @test state.sigma_rupa_intra == 200          # intra untouched
+    end
+
+    @testset "core forwarding-state churn: 5G O(n) per-session, RUPA 0" begin
+        # The headline mobility result: a 5G handover must (re)write per-session
+        # forwarding state at the UPF, scaled by the real user population
+        # (scale_factor) -> O(n). A 6G-RUPA renumber touches NO core forwarding
+        # state at any level (ΔS_core = 0) -> 0 writes.
+        gnb_locs = [GeoPoint(0.0, 0.0), GeoPoint(0.1, 0.1)]
+        upf_locs = [GeoPoint(0.0, 0.0), GeoPoint(0.1, 0.1)]
+        topology = NetworkTopology(
+            gnb_locs, upf_locs, [1, 2],
+            GeoPoint[], Int[],
+            Municipality[], Dict{String,Vector{Int}}(), Float64[],
+            MetaGraph(Graph(), label_type = Tuple{Symbol, Int},
+                      vertex_data_type = GeoPoint, edge_data_type = Float64),
+        )
+        scale = 1000
+        config = SimConfig(1, 2, scale, 10.0, 5.0, 5.0, :single_tier, 0, 1.0,
+                           MobilityConfig(true, 1.0, RandomWaypoint(5.0, 0.0, 1.0)))
+        state = Simulation.init_global_state_for_simulation(topology, config)
+
+        ctx1 = Simulation.create_session_context(1, topology)
+        ctx2 = Simulation.create_session_context(1, topology)
+        push!(state.upf_sessions_5g[1], ctx1); push!(state.upf_sessions_5g[1], ctx2)
+        agent_sessions = [ctx1, ctx2]
+
+        @test state.core_writes_5g == 0
+        @test state.core_writes_rupa == 0
+
+        # N2 handover, 2 sessions, scale_factor 1000 => 2*1000 per-session writes.
+        Simulation.handle_handover_5g!(state, topology, agent_sessions, 1, 2, 1, 2, 1, 1)
+        @test state.core_writes_5g == 2 * scale
+
+        # 6G-RUPA renumber: zero core writes, at any level.
+        Simulation.handle_handover_6grupa!(state, topology, 1, 2, 1, 2, 1, 1)
+        @test state.core_writes_rupa == 0
+    end
+
+    # Integration test for the wired-together dispatch. The unit tests above pass
+    # each handler in isolation, but two bugs lived only in how Core.jl combined
+    # them: (1) it mutated current_domain BEFORE the 6G-RUPA call, so inter-domain
+    # renumbering never fired; (2) both handlers bumped handover_count, doubling it.
+    # dispatch_handover! is the single entry point Core uses; these assertions fail
+    # on either regression.
+    @testset "dispatch_handover! drives 5G+6G consistently, counts once" begin
+        gnb_locs = [GeoPoint(0.0, 0.0), GeoPoint(0.05, 0.05), GeoPoint(0.1, 0.1)]
+        upf_locs = [GeoPoint(0.0, 0.0), GeoPoint(0.1, 0.1)]
+        topology = NetworkTopology(
+            gnb_locs, upf_locs, [1, 1, 2],
+            GeoPoint[], Int[],
+            Municipality[], Dict{String,Vector{Int}}(), Float64[],
+            MetaGraph(Graph(), label_type = Tuple{Symbol, Int},
+                      vertex_data_type = GeoPoint, edge_data_type = Float64),
+        )
+        config = SimConfig(1, 1, 1000, 10.0, 5.0, 5.0, :single_tier, 0, 1.0,
+                           MobilityConfig(true, 1.0, RandomWaypoint(5.0, 0.0, 1.0)))
+        state = Simulation.init_global_state_for_simulation(topology, config)
+
+        ctx = Simulation.create_session_context(1, topology)
+        push!(state.upf_sessions_5g[1], ctx)
+        sessions = [ctx]
+
+        # Intra-domain hop: gNB 1->2, same UPF/domain 1 => Xn + RUPA intra, one HO.
+        sessions = Simulation.dispatch_handover!(state, topology, sessions,
+                                                 1, 2, 1, 1, 1, 1, 1, 1)
+        @test state.sigma_5g_xn == 600
+        @test state.sigma_rupa_intra == 200
+        @test state.sigma_5g_n2 == 0
+        @test state.sigma_rupa_inter == 0
+        @test state.handover_count == 1               # counted once, not twice
+
+        # Inter-domain hop: gNB 2->3, UPF/domain 1->2 => N2 (graded, 1150) + RUPA
+        # inter classified but charged flat renumber (200), one HO.
+        sessions = Simulation.dispatch_handover!(state, topology, sessions,
+                                                 2, 3, 1, 2, 1, 2, 1, 1)
+        @test state.sigma_5g_n2 == 1150
+        @test state.sigma_rupa_inter == 200           # flat renumber (was wrongly 400)
+        @test state.handover_count == 2
+    end
+
+    # Two-tier handover taxonomy under the realistic SSC mode 1 baseline (TS 23.501
+    # §5.6.9): the PSA is PINNED for the session, so the only routine levels are L1
+    # (same edge UPF, Xn 600) and L2 (diff edge UPF, N2 1150) — even a move into a
+    # different PSA *region* stays L2 (anchor not relocated). 6G-RUPA renumbers flat
+    # (200) with ΔS_core = 0. PSA-region crossings are tracked (ho_l3) only as a
+    # geometric marker for path-stretch; they are NOT charged as PSA relocations.
+    @testset "SSC-1 two-tier: L1/L2 only, anchor pinned, path-stretch" begin
+        # 3 edge UPFs over 2 PSAs: edge1,edge2 -> PSA1 ; edge3 -> PSA2.
+        gnb_locs = [GeoPoint(0.0,0.0), GeoPoint(0.1,0.1), GeoPoint(0.2,0.2), GeoPoint(0.3,0.3)]
+        upf_locs = [GeoPoint(0.0,0.0), GeoPoint(0.1,0.1), GeoPoint(0.3,0.3)]
+        parent_map = [1, 1, 2]                          # edge -> PSA
+        psa_locs = [GeoPoint(0.05,0.05), GeoPoint(0.3,0.3)]
+        topology = NetworkTopology(
+            gnb_locs, upf_locs, [1, 2, 3, 3],
+            psa_locs, parent_map,
+            Municipality[], Dict{String,Vector{Int}}(), Float64[],
+            MetaGraph(Graph(), label_type = Tuple{Symbol, Int},
+                      vertex_data_type = GeoPoint, edge_data_type = Float64),
+        )
+
+        # Classification: routine level is binary; PSA-region crossing is a separate marker.
+        @test Simulation.handover_level(topology, 1, 1) == 1            # same edge → L1
+        @test Simulation.handover_level(topology, 1, 2) == 2            # diff edge → L2
+        @test Simulation.handover_level(topology, 2, 3) == 2            # diff edge → L2 (still!)
+        @test Simulation.crosses_psa_region(topology, 1, 2) == false    # both PSA1
+        @test Simulation.crosses_psa_region(topology, 2, 3) == true     # PSA1 → PSA2
+        @test Simulation.crosses_psa_region(topology, 1, 3) == true
+
+        scale = 1000
+        config = SimConfig(1, 1, scale, 10.0, 5.0, 5.0, :two_tier, 2, 1.0,
+                           MobilityConfig(true, 1.0, RandomWaypoint(5.0, 0.0, 1.0)))
+        state = Simulation.init_global_state_for_simulation(topology, config)
+
+        ctx = Simulation.create_session_context(1, topology)   # serving edge 1 → anchor = PSA1
+        @test ctx.metadata.anchor_upf_index == 1               # pinned PSA = parent[1] = 1
+        push!(state.upf_sessions_5g[1], ctx)
+        sessions = [ctx]
+
+        # L1: same edge UPF 1. Xn 600, RUPA flat 200.
+        sessions = Simulation.dispatch_handover!(state, topology, sessions, 1,2, 1,1, 1,1, 1,1)
+        @test state.sigma_5g_xn == 600 && state.sigma_5g_n2 == 0 && state.sigma_5g_psa == 0
+        @test state.sigma_rupa_intra == 200
+        @test state.ho_l1 == 1 && state.ho_l2 == 0 && state.ho_l3 == 0
+
+        # L2 same PSA: edge1 → edge2 (both PSA1). N2 1150, no PSA crossing.
+        sessions = Simulation.dispatch_handover!(state, topology, sessions, 2,3, 1,2, 1,2, 1,1)
+        @test state.sigma_5g_n2 == 1150 && state.sigma_5g_psa == 0
+        @test state.ho_l2 == 1 && state.ho_l3 == 0
+
+        # L2 cross-PSA region: edge2 → edge3 (PSA1 → PSA2). STILL N2 1150 (anchor pinned),
+        # NOT a PSA relocation: sigma_5g_psa stays 0, acct churn stays 0. ho_l3 marker++.
+        sessions = Simulation.dispatch_handover!(state, topology, sessions, 3,4, 2,3, 2,3, 1,1)
+        @test state.sigma_5g_n2 == 2300 && state.sigma_5g_psa == 0
+        @test state.ho_l2 == 2 && state.ho_l3 == 1
+
+        # Anchor PINNED throughout (SSC-1): still PSA1 after roaming into PSA2's region.
+        @test sessions[1].metadata.anchor_upf_index == 1
+
+        # No accounting churn intra-PLMN in SSC-1, either architecture.
+        @test state.acct_reloc_5g == 0 && state.acct_reloc_rupa == 0
+
+        # Path-stretch accumulated: after the cross-PSA move the pinned PSA (PSA1) is
+        # farther than the nearest PSA (PSA2) → 5G distance > optimal.
+        @test state.anchor_stretch_samples == 3
+        @test state.anchor_dist_5g_sum > state.anchor_dist_opt_sum
+
+        # ΔS_core = 0 for RUPA; 5G wrote per-session every handover (serving changed).
+        @test state.core_writes_rupa == 0
+        @test state.core_writes_5g == 3 * scale
+        @test state.handover_count == 3
     end
 end
