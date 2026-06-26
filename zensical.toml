@@ -22,12 +22,12 @@ site_description = "Julia-based Discrete Event Simulator for evaluating scalabil
 
 # The canonical URL for the site. Required for instant navigation and sitemap.
 # Read more: https://zensical.org/docs/setup/basics/#site_url
-site_url = "https://plmn-graphsim-7935d4.pages.i2cat.net/"
+site_url = "https://fundacio-i2cat.github.io/PLMN-GraphSim/"
 
 # Repository information rendered next to the search bar.
 # Read more: https://zensical.org/docs/setup/repository/
-repo_url = "https://gitlab.i2cat.net/sergio.gimenez/PLMN-GraphSim"
-repo_name = "sergio.gimenez/PLMN-GraphSim"
+repo_url = "https://github.com/Fundacio-i2CAT/PLMN-GraphSim"
+repo_name = "Fundacio-i2CAT/PLMN-GraphSim"
 
 # Copyright notice rendered in the page footer.
 # Read more: https://zensical.org/docs/setup/basics/#copyright
