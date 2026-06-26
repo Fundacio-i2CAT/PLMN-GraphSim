@@ -121,7 +121,7 @@ PSA-region crossing.
 
 $$\sigma_{5G}^{\mathrm{PSA\text{-}reloc}} \approx 1500\ \text{bytes}\quad\textit{(approx — to ground in TS 23-502 §4.3.5; SSC 2/3 only)}$$
 
-### 3.5 SSC-1 anchor path-stretch (the real intra-PLMN cost of pinning)
+### 3.4 SSC-1 anchor path-stretch (the real intra-PLMN cost of pinning)
 With the anchor pinned, 5G traffic hairpins from the current serving edge UPF to the
 **original** PSA; the optimal egress (what 6G-RUPA achieves by renumbering into the
 local domain) is the **nearest** PSA. The excess
@@ -132,7 +132,7 @@ is exactly *why* SSC-1 pinning is acceptable intra-PLMN. It grows large only whe
 anchor is far from the user: **roaming** (hairpin to the home country) and edge-compute
 (motivating SSC 2/3). Measured in-sim: `anchor_dist_5g_sum` / `anchor_dist_opt_sum`.
 
-### 3.4 6G-RUPA — renumbering (all levels, flat)
+### 3.5 6G-RUPA — renumbering (all levels, flat)
 **Mechanism (Grasa et al. 2017 §III; RINA RM lines 1814–1828):** the moving IPCP
 (UE) obtains a new synonym (address) reflecting its new location and then:
 1. **advertises the new address via routing** to its direct neighbours
@@ -166,7 +166,7 @@ $$\sigma_{\mathrm{RUPA}}^{\mathrm{renumber}} \approx 200\ \text{bytes (flat acro
 > domain's aggregate prefix is fixed by topology and already present; the UE merely
 > adopts an address under it. No core prefix is added or removed at any level.
 
-### 3.5 Roaming
+### 3.6 Roaming
 - **5G Home-Routed** (inter-PLMN): visited UPF anchors back to the home PLMN over
   N9; per-roaming-session inter-PLMN coordination.
   $\sigma_{\mathrm{roam}}^{5G,HR} \approx 1180$ B [TS 23-501 §4.2.8.2.3; TS 29-244 §8].
@@ -289,6 +289,62 @@ Measured in-sim: intra-PLMN SSC-1 `acct_reloc_5g = acct_reloc_rupa = 0` (anchor
 pinned); the intra-PLMN coupling shows instead as **path-stretch** (§3.5,
 `anchor_dist_*`). `acct_reloc_5g` becomes nonzero only under SSC 2/3 re-anchor or
 HR roaming (separate scenarios). Granularity equality holds regardless.
+
+---
+
+## 6b. Service continuity & in-flight packet loss (the "what about packets in flight?" result)
+
+**Claim: 6G-RUPA renumbering loses no in-flight packets at the core; 5G's
+tunnel teardown/re-establish opens a loss window on anchor-affecting handovers.**
+
+Decompose a handover into a **radio leg** (RRC reconfiguration + random access to the
+target cell) and a **core leg** (data-path update):
+
+- **Radio leg is architecture-agnostic.** 5G and 6G-RUPA use the *same* NG-RAN; the
+  radio interruption time, radio-link-failure and ping-pong behaviour are identical
+  and **out of scope** for an addressing-layer comparison. (This is exactly where the
+  WCNC experiments saw their only loss — an IRATI↔WiFi WPA-supplicant artifact, not
+  the renumbering — `rina-mobility-wcnc.md` §IV.)
+- **Core leg is where the architectures differ.**
+  - **5G:** an anchor-affecting handover (L2 N2/UL-CL reloc, and SSC 2/3 re-anchor)
+    **tears down and re-establishes UPF tunnel state** (PFCP Release/Establish). During
+    that window in-flight packets on the old path are lost or reordered unless masked
+    by data-forwarding/end-markers; an L3/SSC-2 break-before-make additionally changes
+    the UE IP. Xn (L1) is the mild case (end-marker forwarding).
+  - **6G-RUPA:** the flow is **never torn down** — the address is a *synonym*, EFCP is
+    keyed on port-ids, and the renumber is **make-before-break** (new synonym advertised
+    + flow-update sent to correspondents *while the old address still forwards*, retired
+    only after a policy timeout; RM l.1814–1828). So **ΔS_ctx and the flow survive with
+    zero core-side loss** — *"there are no tunnels to set up and tear down; packet loss
+    can only occur if there was no physical communication"* (`rina-mobility-wcnc.md` §III;
+    0-loss renumbering, Grasa et al. EUCNC 2017).
+
+$$\text{in-flight core loss} = \begin{cases} >0 \text{ window} & \text{5G anchor-affecting (tunnel re-establish)} \\ 0 & \text{6G-RUPA (make-before-break renumber)} \end{cases}$$
+
+We argue this **architecturally** (not via per-packet simulation): the result is a
+property of *whether the data path is torn down*, which the σ/state model already
+captures (5G re-establishes per-session state; RUPA does not).
+
+## 6c. Metrics mapping — what the literature measures vs what we isolate
+
+Standard 5G handover KPIs (surveys): handover interruption time (HOIT), handover
+delay/execution time, **packet loss**, throughput, **signaling overhead**, handover
+rate (HOR), success/failure rate (HOSR/HOFR), radio-link-failure (RLF), ping-pong.
+
+| KPI | Layer | In this paper? |
+|---|---|---|
+| Signaling overhead (σ) | core/CP | **Yes — central** (Xn/N2 vs flat renumber) |
+| Forwarding/core-state size & churn | core/UP | **Yes — headline** (our contribution; not a classic mobility KPI) |
+| In-flight loss / service continuity | core/UP | **Yes — architectural** (§6b: 5G window vs RUPA 0) |
+| Handover rate (HOR) | radio geom. | **Yes** (validated vs Voronoi geometry) |
+| Anchor path-stretch | core/UP | **Yes** (§3.4; our addition) |
+| HOIT, HOD, RLF, ping-pong, throughput | **radio/RAN** | **No — architecture-agnostic** (same NG-RAN), out of scope |
+
+The framing for reviewers: classic mobility KPIs are dominated by the **radio** leg,
+which is identical for 5G and 6G-RUPA; we deliberately **isolate the core/addressing
+leg**, where the architectures actually differ, and contribute two metrics the radio-
+centric literature does not track — **core forwarding-state churn** and **anchor
+path-stretch**.
 
 ---
 

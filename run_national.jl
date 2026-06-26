@@ -21,18 +21,23 @@ const SCALE = 1000
 const NUM_PSA = 5                 # centralized PSAs (config.toml num_centralized_upfs)
 const ADOPTION = 0.82             # mobile_adoption_rate (config.toml)
 
-# (data subdir, mcc csv files, OpenCellID operator net id, #edge UPFs, population)
+# (data subdir, gNB csv files relative to data/<sub>, operator net id, #edge UPFs, population)
+#   usa     = OpenCellID Verizon (operator-tagged, sparse — lower density bound)
+#   usa_asr = FCC ASR all macro structures (operator-agnostic, complete — upper bound;
+#             net=999 synthetic tag so no operator filter applies). Density-invariance
+#             cross-check: same σ advantage on both real datasets.
 const PROFILES = Dict(
-    "spain" => ("spain", ["214.csv"],            7,   52,  49_442_844),
-    "usa"   => ("usa",   ["310.csv","311.csv"], 480, 817, 335_000_000),
+    "spain"   => ("spain", ["opencellid/214.csv"],                  7,   52,  49_442_844),
+    "usa"     => ("usa",   ["opencellid/310.csv","opencellid/311.csv"], 480, 817, 335_000_000),
+    "usa_asr" => ("usa",   ["asr/310.csv"],                        999, 817, 335_000_000),
 )
 
 function build_topology()
     haskey(PROFILES, COUNTRY) || error("unknown country $COUNTRY")
     sub, files, opid, nedge, _pop = PROFILES[COUNTRY]
-    base = joinpath(@__DIR__, "data", sub, "opencellid")
+    base = joinpath(@__DIR__, "data", sub)
     paths = filter(isfile, [joinpath(base, f) for f in files])
-    isempty(paths) && error("no OpenCellID data under $base")
+    isempty(paths) && error("no gNB data under $base for $files")
     # two_tier: nedge edge UPFs (UL-CL) clustered under NUM_PSA centralized PSAs
     cfg = SimConfig(1, 2, SCALE, 1, 1, 1, :two_tier, NUM_PSA, 1)
     topo = DSim.load_and_deploy_network(paths, opid, nedge, joinpath(@__DIR__, "data", sub), cfg)
