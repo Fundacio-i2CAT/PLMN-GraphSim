@@ -5,7 +5,8 @@
 # under the chosen mobility model, and records its path + handover events
 # (classified L1/L2/L3). Writes viz/data/{trajectories,gnbs,meta}.json.
 #
-#   julia --project gen_trajectories.jl [n_agents] [duration_s] [dt_s] [speed_kmh]
+#   julia --project gen_trajectories.jl [country] [n_agents] [duration_s] [dt_s] [speed_kmh]
+#     country = spain | usa | usa_asr   (default spain; agent count defaults to national)
 #
 # No full DES needed: we just iterate step_position + find_serving_gnb per agent,
 # exactly the per-tick handover check Core.jl does, so levels match the national run.
@@ -14,18 +15,34 @@ using DesJulia6gRupa, DesJulia6gRupa.Types
 import DesJulia6gRupa.Simulation as DSim
 import DesJulia6gRupa: select_agent_location
 
-const NAG      = length(ARGS) >= 1 ? parse(Int,   ARGS[1]) : 1500
-const DURATION = length(ARGS) >= 2 ? parse(Float64,ARGS[2]) : 600.0
-const DT       = length(ARGS) >= 3 ? parse(Float64,ARGS[3]) : 4.0
-const SPEED    = length(ARGS) >= 4 ? parse(Float64,ARGS[4]) : 50.0
+# (data subdir, gNB csv files rel to data/<sub>, operator net id, #edge UPFs, population)
+# Mirrors run_national.jl PROFILES so trajectory levels match the national run.
+const PROFILES = Dict(
+    "spain"   => ("spain", ["opencellid/214.csv"],                      7,  52,  49_442_844),
+    "usa"     => ("usa",   ["opencellid/310.csv","opencellid/311.csv"], 480, 817, 335_000_000),
+    "usa_asr" => ("usa",   ["asr/310.csv"],                             999, 817, 335_000_000),
+)
+const SCALE    = 1000
+const ADOPTION = 0.82
+const NUM_PSA  = 5
+
+const COUNTRY  = lowercase(get(ARGS, 1, "spain"))
+haskey(PROFILES, COUNTRY) || error("unknown country $COUNTRY (spain|usa|usa_asr)")
+const SUB, FILES, OPID, NEDGE, POP = PROFILES[COUNTRY]
+const NAG      = length(ARGS) >= 2 ? parse(Int,   ARGS[2]) : ceil(Int, POP*ADOPTION/SCALE)
+const DURATION = length(ARGS) >= 3 ? parse(Float64,ARGS[3]) : 600.0
+const DT       = length(ARGS) >= 4 ? parse(Float64,ARGS[4]) : 4.0
+const SPEED    = length(ARGS) >= 5 ? parse(Float64,ARGS[5]) : 50.0
 const NSTEPS   = floor(Int, DURATION / DT)
 
 r5(x) = round(x, digits=5)      # coord rounding to shrink the file
 
-println("Building Spain topology (52 edge / 5 PSA, two_tier)...")
-paths = filter(isfile, [joinpath(@__DIR__,"data","spain","opencellid","214.csv")])
-topo = DSim.load_and_deploy_network(paths, 7, 52, joinpath(@__DIR__,"data","spain"),
-                                    SimConfig(1,2,1000,1,1,1,:two_tier,5,1))
+println("Building $(uppercase(COUNTRY)) topology ($NEDGE edge / $NUM_PSA PSA, two_tier)...")
+base = joinpath(@__DIR__, "data", SUB)
+paths = filter(isfile, [joinpath(base, f) for f in FILES])
+isempty(paths) && error("no gNB data under $base for $FILES")
+topo = DSim.load_and_deploy_network(paths, OPID, NEDGE, base,
+                                    SimConfig(1,2,SCALE,1,1,1,:two_tier,NUM_PSA,1))
 println("gNBs=$(length(topo.gnb_locations)) edgeUPF=$(length(topo.upf_locations)) PSA=$(length(topo.centralized_upf_locations))")
 
 model = RandomWaypoint(SPEED, 0.0, SPEED*DT/3600*2)   # max jump ~2 steps of travel
@@ -74,15 +91,15 @@ end
 return nho
 end
 
-io = open(joinpath(outdir, "trajectories.json"), "w")
+io = open(joinpath(outdir, "trajectories-$COUNTRY.json"), "w")
 print(io, "[")
 nho = gen_trips(io, topo, model)
 print(io, "]")
 close(io)
-println("Wrote trajectories.json  ($NAG agents, $nho handovers)")
+println("Wrote trajectories-$COUNTRY.json  ($NAG agents, $nho handovers)")
 
 # gNB sites (rounded). 46k points render fine in deck.gl.
-open(joinpath(outdir, "gnbs.json"), "w") do f
+open(joinpath(outdir, "gnbs-$COUNTRY.json"), "w") do f
     print(f, "[")
     for (i, g) in enumerate(topo.gnb_locations)
         i > 1 && print(f, ",")
@@ -90,11 +107,11 @@ open(joinpath(outdir, "gnbs.json"), "w") do f
     end
     print(f, "]")
 end
-println("Wrote gnbs.json  ($(length(topo.gnb_locations)) sites)")
+println("Wrote gnbs-$COUNTRY.json  ($(length(topo.gnb_locations)) sites)")
 
-open(joinpath(outdir, "meta.json"), "w") do f
-    print(f, "{\"country\":\"spain\",\"agents\":$NAG,\"duration\":$(round(Int,DURATION)),",
+open(joinpath(outdir, "meta-$COUNTRY.json"), "w") do f
+    print(f, "{\"country\":\"$COUNTRY\",\"agents\":$NAG,\"duration\":$(round(Int,DURATION)),",
             "\"dt\":$(round(Int,DT)),\"speed_kmh\":$SPEED,\"nsteps\":$NSTEPS,",
-            "\"edge_upfs\":52,\"psas\":5,\"handovers\":$nho}")
+            "\"edge_upfs\":$NEDGE,\"psas\":$NUM_PSA,\"handovers\":$nho}")
 end
 println("Done. Output in $outdir")
