@@ -14,3 +14,7 @@ public
 data/spain/
 data/usa/
 data.zip
+
+# Static frontend generated bundles
+/frontend/data/*.json
+!/frontend/data/manifest.json

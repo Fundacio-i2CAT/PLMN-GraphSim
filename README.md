@@ -104,7 +104,7 @@ Data follows this layout:
 | Spain national evaluation | `run_national_spain.jl`, `run_spain_focused.jl`, `run_spain_forced_handover.jl` |
 | Mobility evaluation matrix | `run_mobility_eval.jl`, `run_mobility_eval_v3.jl` |
 | Deployment sweep | `run_deployment_sweep.jl` |
-| Browser visualization sample | `viz/index.html` |
+| Static mobility frontend | `frontend/index.html` |
 
 ## Documentation
 

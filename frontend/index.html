@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>6G-RUPA vs 5G - mobility signaling</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://unpkg.com/deck.gl@9.0.0/dist.min.js"></script>
+  <style>
+    html, body { margin: 0; height: 100%; background: #000; overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #e8e8e8; }
+    #map { position: absolute; inset: 0; }
+    .panel { background: rgba(20,22,28,0.86); border: 1px solid #333; border-radius: 9px; }
+    #title { position: absolute; top: 14px; left: 14px; z-index: 3; padding: 10px 13px; min-width: 330px; }
+    #title h1 { font-size: 14px; margin: 0; letter-spacing: .3px; }
+    #title p { font-size: 11px; margin: 5px 0 0; color: #9aa; }
+    #selectors { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+    label { display: grid; gap: 3px; font-size: 10px; color: #9aa; text-transform: uppercase; letter-spacing: .5px; }
+    select { width: 100%; background: #111923; color: #e8e8e8; border: 1px solid #3a4452; border-radius: 6px; padding: 6px 8px; font-size: 12px; }
+    #status { color: #d9b56d; }
+    #warning { color: #ffb86b; }
+    #boxes { position: absolute; top: 14px; right: 14px; z-index: 3; display: flex; gap: 10px; }
+    .box { padding: 10px 14px; min-width: 150px; }
+    .box .lbl { font-size: 10px; letter-spacing: .5px; text-transform: uppercase; color: #9aa; }
+    .box .tag { font-size: 12px; font-weight: 600; margin-bottom: 4px; }
+    .box.g5 .tag { color: #ff7b7b; }
+    .box.gr .tag { color: #5fd08a; }
+    .box .big { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .box .sub { font-size: 11px; color: #9aa; margin-top: 3px; }
+    #adv { position: absolute; top: 120px; right: 14px; z-index: 3; text-align: right;
+      border-color: #2f5; padding: 8px 14px; }
+    #adv .v { font-size: 22px; font-weight: 700; color: #5fd08a; font-variant-numeric: tabular-nums; }
+    #adv .l { font-size: 10px; color: #9aa; text-transform: uppercase; letter-spacing: .5px; }
+    .legend { position: absolute; bottom: 60px; left: 14px; z-index: 3; font-size: 11px; padding: 8px 11px; }
+    .legend .it { display: flex; align-items: center; gap: 7px; margin: 3px 0; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    #ctrl { position: absolute; bottom: 0; left: 0; right: 0; z-index: 5;
+      background: rgba(14,16,20,0.92); border-top: 1px solid #2a2a2a;
+      display: flex; align-items: center; gap: 16px; padding: 9px 16px; }
+    #ctrl .grp { display: flex; align-items: center; gap: 7px; font-size: 12px; color: #bcc; }
+    input[type=range] { accent-color: #4ea3ff; }
+    #time { flex: 1; }
+    button { background: #2a3340; color: #e8e8e8; border: 1px solid #3a4452;
+      border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: 12px; }
+    button:hover { background: #344150; }
+    #clock { font-variant-numeric: tabular-nums; color: #fff; font-size: 13px; min-width: 64px; }
+    @media (max-width: 760px) {
+      #title { left: 8px; right: 8px; min-width: 0; }
+      #boxes { top: auto; left: 8px; right: 8px; bottom: 108px; }
+      .box { min-width: 0; flex: 1; padding: 8px 10px; }
+      .box .big { font-size: 20px; }
+      #adv { display: none; }
+      .legend { display: none; }
+      #selectors { grid-template-columns: 1fr; }
+      #ctrl { gap: 8px; padding: 8px; }
+      #ctrl .grp { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <section id="title" class="panel">
+    <h1>6G-RUPA vs 5G - terrestrial mobility</h1>
+    <p id="meta">loading manifest...</p>
+    <p id="status"></p>
+    <p id="warning"></p>
+    <div id="selectors">
+      <label>Country<select id="country"></select></label>
+      <label>Operator<select id="operator"></select></label>
+      <label>Mobility<select id="mobility"></select></label>
+      <label>Agent scale<select id="scale"></select></label>
+    </div>
+  </section>
+
+  <div id="boxes">
+    <div class="box g5 panel"><div class="lbl">handover signaling</div><div class="tag">5G - GTP-U / N2</div>
+      <div class="big" id="b5g">0 B</div><div class="sub" id="s5g">0 handovers</div></div>
+    <div class="box gr panel"><div class="lbl">handover signaling</div><div class="tag">6G-RUPA - renumber</div>
+      <div class="big" id="brupa">0 B</div><div class="sub">flat 200 B / event</div></div>
+  </div>
+  <div id="adv" class="panel"><div class="v" id="advv">0%</div><div class="l">6G-RUPA saves</div></div>
+
+  <div class="legend panel">
+    <div class="it"><span class="dot" style="background:#37d67a"></span> L1 Xn - 5G 600 B / RUPA 200</div>
+    <div class="it"><span class="dot" style="background:#ff9f43"></span> L2 N2 - 5G 1150 B / RUPA 200</div>
+    <div class="it"><span class="dot" style="background:#ff5b5b"></span> L3 PSA - 5G 1500 B / RUPA 200</div>
+    <div class="it"><span class="dot" style="background:#4ea3ff"></span> moving agents - faint = gNB sites</div>
+  </div>
+
+  <div id="ctrl">
+    <button id="play">pause</button>
+    <span id="clock">0 s</span>
+    <input id="time" type="range" min="0" max="600" value="0" step="1">
+    <div class="grp">speed x<input id="rate" type="range" min="1" max="60" value="20"></div>
+    <div class="grp">trail<input id="trail" type="range" min="5" max="120" value="40"></div>
+  </div>
+
+  <script>
+  const {DeckGL, TileLayer, BitmapLayer, ScatterplotLayer, TripsLayer} = deck;
+  const COST5G = {1: 600, 2: 1150, 3: 1500};
+  const COSTRUPA = 200;
+  const LVLCOL = {1: [55,214,122], 2: [255,159,67], 3: [255,91,91]};
+  const DEFAULT_VIEW = {longitude: 0, latitude: 20, zoom: 2, pitch: 0, bearing: 0};
+  const DEFAULT_SCALES = [100000, 50000, 25000, 10000, 5000, 1000];
+  const DEFAULT_MOBILITY = [
+    {id: 'pedestrian_5', label: 'Pedestrian 5 km/h (Random Waypoint)', short_label: 'Pedestrian 5'},
+    {id: 'urban_50', label: 'Urban 50 km/h (Random Waypoint)', short_label: 'Urban 50'},
+    {id: 'highway_120', label: 'Highway 120 km/h (Gauss-Markov)', short_label: 'Highway 120'},
+  ];
+  const DEFAULT_DURATION = 1200;
+  const DEFAULT_DT = 2;
+  const FLASH = 9;
+
+  const el = id => document.getElementById(id);
+  const fmtB = b => b >= 1e9 ? (b/1e9).toFixed(2) + ' GB'
+    : b >= 1e6 ? (b/1e6).toFixed(2) + ' MB'
+    : b >= 1e3 ? (b/1e3).toFixed(1) + ' kB' : Math.round(b) + ' B';
+  const fmtInt = n => Number(n || 0).toLocaleString();
+  const scaleLabel = s => `1 agent = ${fmtInt(s)} users`;
+
+  let manifest = null;
+  let meta = null;
+  let gnbs = [];
+  let trips = [];
+  let hos = [];
+  let tArr = [];
+  let pre5 = new Float64Array(1);
+  let preR = new Float64Array(1);
+  let currentTime = 0;
+  let duration = 600;
+  let playing = true;
+  let rate = 20;
+  let trail = 40;
+  let deckgl = null;
+  let viewState = {...DEFAULT_VIEW};
+  let loadSeq = 0;
+  let previousScale = null;
+
+  function lowerBound(arr, value) {
+    let lo = 0, hi = arr.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (arr[mid] < value) lo = mid + 1; else hi = mid;
+    }
+    return lo;
+  }
+
+  function upperBound(arr, value) {
+    let lo = 0, hi = arr.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (arr[mid] <= value) lo = mid + 1; else hi = mid;
+    }
+    return lo;
+  }
+
+  function datasetMobility(d) {
+    return d.mobility_id || 'urban_50';
+  }
+
+  function datasetsFor(country, operator, mobility) {
+    return (manifest.datasets || []).filter(d =>
+      (!country || d.country === country) &&
+      (!operator || d.operator === operator) &&
+      (!mobility || datasetMobility(d) === mobility));
+  }
+
+  function countryInfo(country) {
+    return (manifest.countries || []).find(c => c.id === country) || {id: country, label: country, viewState: DEFAULT_VIEW};
+  }
+
+  function mobilityProfiles() {
+    const declared = (manifest.mobility_profiles && manifest.mobility_profiles.length) ? manifest.mobility_profiles : DEFAULT_MOBILITY;
+    const generatedIds = [...new Set((manifest.datasets || []).map(datasetMobility))];
+    const rows = [...declared];
+    for (const id of generatedIds) {
+      if (!rows.some(p => p.id === id)) rows.push({id, label: id, short_label: id});
+    }
+    return rows;
+  }
+
+  function mobilityInfo(id) {
+    return mobilityProfiles().find(p => p.id === id) || {id, label: id, short_label: id};
+  }
+
+  function allScaleValues() {
+    const declared = (manifest.scales || []).map(s => Number(s.scale_factor || s));
+    const generated = (manifest.datasets || []).map(d => Number(d.scale_factor));
+    const scales = [...new Set([...declared, ...generated].filter(Boolean))].sort((a, b) => b - a);
+    return scales.length ? scales : DEFAULT_SCALES;
+  }
+
+  function maxScale() {
+    return Math.max(...allScaleValues());
+  }
+
+  function selectedScale() {
+    return Number(el('scale').value);
+  }
+
+  function readyScalesFor(country, operator, mobility) {
+    return datasetsFor(country, operator, mobility).map(d => Number(d.scale_factor));
+  }
+
+  function showScaleWarning(scale) {
+    if (!scale || scale >= maxScale()) {
+      el('warning').textContent = '';
+      return;
+    }
+    el('warning').textContent = 'Warning: lower scale means more simulated agents and larger JSON. This can slow down or freeze your computer, especially for USA.';
+  }
+
+  function fillSelect(select, rows, value) {
+    select.innerHTML = '';
+    if (rows.length === 0) {
+      const opt = document.createElement('option');
+      opt.value = '';
+      opt.textContent = 'none available';
+      select.appendChild(opt);
+      return;
+    }
+    for (const row of rows) {
+      const opt = document.createElement('option');
+      opt.value = row.value;
+      opt.textContent = row.label;
+      select.appendChild(opt);
+    }
+    if (rows.some(r => r.value === value)) select.value = value;
+  }
+
+  function populateCountries() {
+    const declared = (manifest.countries || []).map(c => c.id);
+    const generated = (manifest.datasets || []).map(d => d.country);
+    const ids = [...new Set([...declared, ...generated])].filter(Boolean).sort();
+    const rows = ids.map(id => ({value: id, label: countryInfo(id).label || id}));
+    fillSelect(el('country'), rows, el('country').value || rows[0]?.value);
+  }
+
+  function populateOperators() {
+    const country = el('country').value;
+    const byOp = new Map();
+    const ready = new Set(datasetsFor(country, null, null).map(d => d.operator));
+    for (const op of (countryInfo(country).operators || [])) byOp.set(op.id, op.label || op.id);
+    for (const d of datasetsFor(country, null, null)) byOp.set(d.operator, d.operator_label || d.operator);
+    const rows = [...byOp.entries()]
+      .sort((a, b) => (ready.has(b[0]) - ready.has(a[0])) || a[1].localeCompare(b[1]))
+      .map(([value, label]) => ({
+        value,
+        label: `${label} ${ready.has(value) ? '(ready)' : '(precompute first)'}`
+      }));
+    const current = el('operator').value;
+    const preferred = rows.some(r => r.value === current) ? current : (rows.find(r => ready.has(r.value))?.value || rows[0]?.value);
+    fillSelect(el('operator'), rows, preferred);
+  }
+
+  function populateMobility() {
+    const country = el('country').value;
+    const operator = el('operator').value;
+    const ready = new Set(datasetsFor(country, operator, null).map(datasetMobility));
+    const profiles = mobilityProfiles();
+    const rows = profiles.map(p => ({
+      value: p.id,
+      label: `${p.short_label || p.label} ${ready.has(p.id) ? '(ready)' : '(precompute first)'}`
+    }));
+    const current = el('mobility').value;
+    const preferred = ready.size ? profiles.find(p => ready.has(p.id))?.id : (current || rows[0]?.value);
+    fillSelect(el('mobility'), rows, profiles.some(p => p.id === current) ? current : preferred);
+  }
+
+  function populateScales() {
+    const country = el('country').value;
+    const operator = el('operator').value;
+    const mobility = el('mobility').value;
+    const scales = allScaleValues();
+    const ready = new Set(readyScalesFor(country, operator, mobility));
+    const rows = scales.map(s => ({
+      value: String(s),
+      label: `${scaleLabel(s)} ${ready.has(s) ? '(ready)' : '(precompute first)'}`
+    }));
+    const current = selectedScale();
+    const preferred = ready.size ? String(Math.max(...ready)) : (el('scale').value || rows[0]?.value);
+    fillSelect(el('scale'), rows, scales.includes(current) ? String(current) : preferred);
+    previousScale = selectedScale();
+    showScaleWarning(previousScale);
+  }
+
+  function selectedDataset() {
+    const country = el('country').value;
+    const operator = el('operator').value;
+    const mobility = el('mobility').value;
+    const scale = Number(el('scale').value);
+    return datasetsFor(country, operator, mobility).find(d => d.scale_factor === scale);
+  }
+
+  function baseLayer() {
+    return new TileLayer({
+      id: 'base',
+      data: 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+      minZoom: 0,
+      maxZoom: 19,
+      tileSize: 256,
+      renderSubLayers: p => {
+        const b = p.tile.boundingBox;
+        return new BitmapLayer(p, {data: null, image: p.data, bounds: [b[0][0], b[0][1], b[1][0], b[1][1]]});
+      }
+    });
+  }
+
+  function layers() {
+    const gnb = new ScatterplotLayer({
+      id: 'gnb',
+      data: gnbs,
+      getPosition: d => d,
+      getRadius: 120,
+      radiusMinPixels: 0.3,
+      radiusMaxPixels: 1.4,
+      getFillColor: [120,140,170,55]
+    });
+    const tl = new TripsLayer({
+      id: 'trips',
+      data: trips,
+      getPath: d => d.path,
+      getTimestamps: d => d.ts,
+      getColor: [70,150,230],
+      opacity: 0.8,
+      widthMinPixels: 1.2,
+      rounded: true,
+      trailLength: trail,
+      currentTime,
+      fadeTrail: true
+    });
+    const from = lowerBound(tArr, currentTime - FLASH);
+    const to = upperBound(tArr, currentTime);
+    const lit = hos.slice(from, to);
+    const fl = new ScatterplotLayer({
+      id: 'ho',
+      data: lit,
+      getPosition: d => [d.lon, d.lat],
+      getRadius: d => {
+        const k = 1 - (currentTime - d.t) / FLASH;
+        return (COST5G[d.lvl] || 600) / 2.5 * k + 150;
+      },
+      radiusMinPixels: 1.5,
+      radiusMaxPixels: 14,
+      getFillColor: d => [...(LVLCOL[d.lvl] || LVLCOL[1]), 225],
+      stroked: false,
+      updateTriggers: {getRadius: currentTime}
+    });
+    return [baseLayer(), gnb, tl, fl];
+  }
+
+  function ensureDeck() {
+    if (deckgl) return;
+    deckgl = new DeckGL({
+      container: 'map',
+      viewState,
+      controller: true,
+      onViewStateChange: ({viewState: vs}) => {
+        viewState = vs;
+        deckgl.setProps({viewState});
+      },
+      layers: [baseLayer()]
+    });
+  }
+
+  function rebuildCounters() {
+    hos = [];
+    for (const tr of trips) {
+      for (const h of tr.ho) hos.push({lon: h[0], lat: h[1], t: h[2], lvl: h[3]});
+    }
+    hos.sort((a, b) => a.t - b.t);
+    tArr = hos.map(h => h.t);
+    pre5 = new Float64Array(hos.length + 1);
+    preR = new Float64Array(hos.length + 1);
+    for (let i = 0; i < hos.length; i++) {
+      pre5[i + 1] = pre5[i] + (COST5G[hos[i].lvl] || COST5G[1]);
+      preR[i + 1] = preR[i] + COSTRUPA;
+    }
+  }
+
+  function render() {
+    ensureDeck();
+    deckgl.setProps({viewState, layers: layers()});
+    const i = upperBound(tArr, currentTime);
+    const b5 = pre5[i] || 0;
+    const br = preR[i] || 0;
+    el('b5g').textContent = fmtB(b5);
+    el('brupa').textContent = fmtB(br);
+    el('s5g').textContent = fmtInt(i) + ' handovers';
+    el('advv').textContent = b5 > 0 ? (100 * (1 - br / b5)).toFixed(1) + '%' : '0%';
+    el('clock').textContent = Math.round(currentTime) + ' s';
+    el('time').value = Math.round(currentTime);
+  }
+
+  async function fetchJson(path) {
+    const res = await fetch(path);
+    if (!res.ok) throw new Error(`${path}: HTTP ${res.status}`);
+    return res.json();
+  }
+
+  async function loadDataset() {
+    const ds = selectedDataset();
+    const country = el('country').value;
+    const operator = el('operator').value;
+    const mobility = el('mobility').value;
+    const scale = selectedScale();
+    showScaleWarning(scale);
+    if (!ds) {
+      meta = null;
+      gnbs = [];
+      trips = [];
+      rebuildCounters();
+      el('meta').textContent = `${countryInfo(country).label || country} / ${operator || 'operator'} / ${mobilityInfo(mobility).short_label || mobility} - ${scaleLabel(scale)}`;
+      el('status').textContent = `bundle not precomputed. Run: julia --project=. gen_trajectories.jl ${country} ${operator} ${scale} ${mobility} ${DEFAULT_DURATION} ${DEFAULT_DT}`;
+      render();
+      return;
+    }
+    const seq = ++loadSeq;
+    el('status').textContent = 'loading precomputed bundle...';
+    try {
+      const [m, g, t] = await Promise.all([
+        fetchJson(ds.files.meta),
+        fetchJson(ds.files.gnbs),
+        fetchJson(ds.files.trajectories),
+      ]);
+      if (seq !== loadSeq) return;
+      meta = m;
+      gnbs = g;
+      trips = t;
+      duration = meta.duration;
+      currentTime = 0;
+      el('time').max = duration;
+      const cInfo = countryInfo(meta.country);
+      viewState = {...DEFAULT_VIEW, ...(cInfo.viewState || {})};
+      rebuildCounters();
+      const mobilityLabel = meta.mobility_label || mobilityInfo(datasetMobility(ds)).label;
+      el('meta').textContent = `${meta.country_label} / ${meta.operator_label} / ${mobilityLabel} - ${fmtInt(meta.agents)} agents ` +
+        `(scale ${fmtInt(meta.scale_factor)}) - ${fmtInt(gnbs.length)} real gNB sites - ` +
+        `${meta.edge_upfs} edge UPFs / ${meta.psas} PSAs - ${meta.speed_kmh} km/h`;
+      el('status').textContent = meta.agents > 50000 ? 'heavy bundle: browser may stutter' : '';
+      render();
+    } catch (err) {
+      el('status').textContent = `missing bundle: ${err.message}`;
+      console.error(err);
+    }
+  }
+
+  function bindSelectors() {
+    el('country').onchange = () => { populateOperators(); populateMobility(); populateScales(); loadDataset(); };
+    el('operator').onchange = () => { populateMobility(); populateScales(); loadDataset(); };
+    el('mobility').onchange = () => { populateScales(); loadDataset(); };
+    el('scale').onchange = () => {
+      const scale = selectedScale();
+      showScaleWarning(scale);
+      previousScale = scale;
+      loadDataset();
+    };
+  }
+
+  async function main() {
+    ensureDeck();
+    manifest = await fetchJson('data/manifest.json');
+    populateCountries();
+    populateOperators();
+    populateMobility();
+    populateScales();
+    bindSelectors();
+    await loadDataset();
+  }
+
+  let last = performance.now();
+  (function tick(now) {
+    const dt = (now - last) / 1000;
+    last = now;
+    if (playing && meta) {
+      currentTime = (currentTime + dt * rate) % duration;
+      render();
+    }
+    requestAnimationFrame(tick);
+  })(last);
+
+  el('play').onclick = e => { playing = !playing; e.target.textContent = playing ? 'pause' : 'play'; };
+  el('time').oninput = e => { currentTime = +e.target.value; render(); };
+  el('rate').oninput = e => { rate = +e.target.value; };
+  el('trail').oninput = e => { trail = +e.target.value; render(); };
+
+  main().catch(err => {
+    el('meta').textContent = 'failed to load frontend manifest';
+    el('status').textContent = err.message;
+    console.error(err);
+  });
+  </script>
+</body>
+</html>
