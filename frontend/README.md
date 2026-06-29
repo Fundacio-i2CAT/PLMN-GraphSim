@@ -37,3 +37,19 @@ python3 -m http.server 8000
 ```
 
 Open `http://localhost:8000/frontend/`.
+
+## Current Precomputed Matrix
+
+Tracked `frontend/data/manifest.json` references these generated bundle families:
+
+| Topology | Operator | Scales |
+| --- | --- | --- |
+| Spain | Movistar | `100000`, `50000`, `25000`, `10000`, `5000` |
+| USA | Verizon OpenCellID | `100000`, `50000`, `25000`, `10000` |
+| USA ASR | FCC ASR macro structures | `100000`, `50000`, `25000`, `10000` |
+
+Each family has all three paper mobility profiles. The generated JSON assets are
+ignored by git; keep them beside the manifest when deploying the static frontend.
+
+USA ASR is operator-agnostic and should be interpreted as a macro-structure
+sensitivity check, not a real Verizon-equivalent network.
