@@ -43,6 +43,16 @@
       border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: 12px; }
     button:hover { background: #344150; }
     #clock { font-variant-numeric: tabular-nums; color: #fff; font-size: 13px; min-width: 64px; }
+    #heavyModal { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center;
+      background: rgba(0,0,0,0.62); }
+    #heavyModal.hidden { display: none; }
+    .modal-card { width: min(460px, calc(100vw - 32px)); padding: 18px; background: rgba(18,21,28,0.97);
+      border: 1px solid #5a3b1f; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.55); }
+    .modal-card h2 { margin: 0 0 9px; color: #ffb86b; font-size: 18px; }
+    .modal-card p { margin: 8px 0; color: #cbd5df; font-size: 13px; line-height: 1.45; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+    #heavyCancel { background: #171d26; }
+    #heavyContinue { background: #6b3d15; border-color: #a96422; }
     @media (max-width: 760px) {
       #title { left: 8px; right: 8px; min-width: 0; }
       #boxes { top: auto; left: 8px; right: 8px; bottom: 108px; }
@@ -53,6 +63,7 @@
       #selectors { grid-template-columns: 1fr; }
       #ctrl { gap: 8px; padding: 8px; }
       #ctrl .grp { display: none; }
+      .modal-actions { flex-direction: column-reverse; }
     }
   </style>
 </head>
@@ -95,6 +106,18 @@
     <div class="grp">trail<input id="trail" type="range" min="5" max="120" value="40"></div>
   </div>
 
+  <div id="heavyModal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="heavyTitle">
+    <div class="modal-card">
+      <h2 id="heavyTitle">Large animation bundle</h2>
+      <p id="heavyText"></p>
+      <p>This can slow down the browser or the whole computer, especially during JSON parsing. Prefer a higher agent scale for live demos.</p>
+      <div class="modal-actions">
+        <button id="heavyCancel" type="button">Cancel</button>
+        <button id="heavyContinue" type="button">Load anyway</button>
+      </div>
+    </div>
+  </div>
+
   <script>
   const {DeckGL, TileLayer, BitmapLayer, ScatterplotLayer, TripsLayer} = deck;
   const COST5G = {1: 600, 2: 1150, 3: 1500};
@@ -109,6 +132,8 @@
   ];
   const DEFAULT_DURATION = 1200;
   const DEFAULT_DT = 2;
+  const HEAVY_BUNDLE_BYTES = 75 * 1024 * 1024;
+  const HEAVY_AGENT_COUNT = 10000;
   const FLASH = 9;
 
   const el = id => document.getElementById(id);
@@ -117,6 +142,9 @@
     : b >= 1e3 ? (b/1e3).toFixed(1) + ' kB' : Math.round(b) + ' B';
   const fmtInt = n => Number(n || 0).toLocaleString();
   const scaleLabel = s => `1 agent = ${fmtInt(s)} users`;
+  const fmtBytes = bytes => bytes >= 1e9 ? (bytes / 1e9).toFixed(2) + ' GB'
+    : bytes >= 1e6 ? (bytes / 1e6).toFixed(0) + ' MB'
+    : bytes >= 1e3 ? (bytes / 1e3).toFixed(0) + ' kB' : `${bytes || 0} B`;
 
   let manifest = null;
   let meta = null;
@@ -135,6 +163,8 @@
   let viewState = {...DEFAULT_VIEW};
   let loadSeq = 0;
   let previousScale = null;
+  let heavyResolve = null;
+  const approvedHeavyBundles = new Set();
 
   function lowerBound(arr, value) {
     let lo = 0, hi = arr.length;
@@ -200,6 +230,28 @@
 
   function readyScalesFor(country, operator, mobility) {
     return datasetsFor(country, operator, mobility).map(d => Number(d.scale_factor));
+  }
+
+  function datasetBytes(ds) {
+    return Number(ds?.total_bytes || ds?.file_bytes?.trajectories || 0);
+  }
+
+  function needsHeavyConfirm(ds) {
+    return ds && (datasetBytes(ds) >= HEAVY_BUNDLE_BYTES || Number(ds.agents || 0) >= HEAVY_AGENT_COUNT);
+  }
+
+  function confirmHeavyBundle(ds) {
+    if (!needsHeavyConfirm(ds) || approvedHeavyBundles.has(ds.id)) return Promise.resolve(true);
+    const bytes = datasetBytes(ds);
+    el('heavyText').textContent = `${ds.country_label || ds.country} / ${ds.operator_label || ds.operator} / ${ds.mobility_label || ds.mobility_id}, ${scaleLabel(ds.scale_factor)}: ${fmtInt(ds.agents)} agents, ${fmtBytes(bytes)} JSON.`;
+    el('heavyModal').classList.remove('hidden');
+    return new Promise(resolve => { heavyResolve = resolve; });
+  }
+
+  function closeHeavyModal(accepted) {
+    el('heavyModal').classList.add('hidden');
+    if (heavyResolve) heavyResolve(accepted);
+    heavyResolve = null;
   }
 
   function showScaleWarning(scale) {
@@ -415,6 +467,15 @@
       render();
       return;
     }
+    const confirmed = await confirmHeavyBundle(ds);
+    if (!confirmed) {
+      el('status').textContent = 'large bundle load cancelled';
+      return;
+    }
+    approvedHeavyBundles.add(ds.id);
+    if (selectedDataset()?.id !== ds.id) {
+      return loadDataset();
+    }
     const seq = ++loadSeq;
     el('status').textContent = 'loading precomputed bundle...';
     try {
@@ -483,6 +544,8 @@
   el('time').oninput = e => { currentTime = +e.target.value; render(); };
   el('rate').oninput = e => { rate = +e.target.value; };
   el('trail').oninput = e => { trail = +e.target.value; render(); };
+  el('heavyCancel').onclick = () => closeHeavyModal(false);
+  el('heavyContinue').onclick = () => closeHeavyModal(true);
 
   main().catch(err => {
     el('meta').textContent = 'failed to load frontend manifest';

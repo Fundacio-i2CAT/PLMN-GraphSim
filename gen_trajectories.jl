@@ -13,6 +13,7 @@
 #   julia --project=. gen_trajectories.jl spain movistar 10000 urban_50 1200 2
 #   julia --project=. gen_trajectories.jl usa verizon 50000,25000,10000 all 1200 2
 #   julia --project=. gen_trajectories.jl all all 100000,50000 paper 1200 2
+#   julia --project=. gen_trajectories.jl manifest
 
 using Dates
 using JSON
@@ -424,8 +425,15 @@ function write_manifest(toml_data)
             scale_factor = Int(meta["scale_factor"])
             traj_file = String(meta["trajectories_file"])
             gnb_file = String(meta["gnbs_file"])
-            isfile(joinpath(OUTDIR, traj_file)) || continue
-            isfile(joinpath(OUTDIR, gnb_file)) || continue
+            traj_path = joinpath(OUTDIR, traj_file)
+            gnb_path = joinpath(OUTDIR, gnb_file)
+            isfile(traj_path) || continue
+            isfile(gnb_path) || continue
+            file_bytes = Dict(
+                "meta" => filesize(meta_path),
+                "gnbs" => filesize(gnb_path),
+                "trajectories" => filesize(traj_path),
+            )
 
             key = "$(country)|$(operator)|$(mobility_id)|$(scale_factor)"
             dataset = Dict(
@@ -450,6 +458,8 @@ function write_manifest(toml_data)
                     "gnbs" => "data/$gnb_file",
                     "trajectories" => "data/$traj_file",
                 ),
+                "file_bytes" => file_bytes,
+                "total_bytes" => sum(values(file_bytes)),
             )
             if !haskey(dataset_by_key, key) || (explicit_mobility && !explicit_mobility_by_key[key])
                 dataset_by_key[key] = dataset
@@ -478,6 +488,10 @@ end
 function main()
     toml_data = TOML.parsefile(CONFIG_PATH)
     country_arg = length(ARGS) >= 1 ? ARGS[1] : DEFAULT_COUNTRY
+    if lowercase(strip(country_arg)) in ("manifest", "manifest_only", "index")
+        write_manifest(toml_data)
+        return
+    end
     operator_arg = length(ARGS) >= 2 ? ARGS[2] : DEFAULT_OPERATOR
     scales = length(ARGS) >= 3 ? parse_scales(ARGS[3]) : DEFAULT_SCALES
     profiles = length(ARGS) >= 4 ? parse_mobility_profiles(ARGS[4]) : [mobility_profile(id) for id in DEFAULT_MOBILITY_IDS]
