@@ -197,8 +197,8 @@ mutable struct SimGlobalState
     sigma_5g_n2::Int64                   # 5G N2 handover signaling bytes (1150 B/handover)
     sigma_rupa_intra::Int64              # 6G-RUPA intra-domain renumbering bytes (200 B/handover)
     sigma_rupa_inter::Int64              # 6G-RUPA inter-domain renumbering bytes (flat 200 B/handover)
-    sigma_roam_5g::Int64                 # 5G Home-Routed roaming bytes (1180 B/handover)
-    sigma_roam_rupa::Int64               # 6G-RUPA inter-layer roaming bytes (300 B/handover)
+    sigma_roam_5g::Int64                 # 5G Home-Routed roaming bytes (3250 B entry; 1300 B ideal HO)
+    sigma_roam_rupa::Int64               # 6G-RUPA inter-layer roaming bytes (450 B first entry)
     # Per-sampling-tick history (parallel to history_time).
     history_handovers::Vector{Int}
     history_sigma_5g_xn::Vector{Int64}

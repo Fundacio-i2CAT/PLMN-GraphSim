@@ -183,7 +183,9 @@ prefix update, and distinguishing roaming from intra-MNO handovers.
     The destination domain's aggregate prefix already exists in the topology, so
     the UE just adopts an address under it — same procedure regardless of move
     distance. intra/inter are kept only as EVENT CLASSIFIERS, charged equally.
-  - Inter-layer roaming: 300 bytes (flat renumber + N+1 advertisement).
+  - Inter-layer roaming: 450 bytes on first entry (CACEP/enrollment + flat
+    renumber + N+1 advertisement); subsequent intra-visited moves return to the
+    ordinary 200 B renumber.
 
 In 6G-RUPA, core forwarding state is invariant to handovers at EVERY level
 (ΔS_core = 0); only the local neighbourhood routing reconverges.

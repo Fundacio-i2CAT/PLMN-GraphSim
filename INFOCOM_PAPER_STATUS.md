@@ -66,9 +66,9 @@ integrated dispatch. Replaced with motion assertions (path ≈ speed × time) an
 
 ## Artifacts
 
-- `docs/mobility-formal-model.md` — σ derivation (Xn 600 / N2 1150 / intra 200 /
-  inter 400 / roam HR 1180 / roam RUPA 300 B), generalized mobility theorem,
-  3GPP/RINA grounding.
+- `docs/scenarios/mobility/analysis.md` — σ derivation and diagrams (Xn 600 /
+  N2 1150 / RUPA renumber 200 / HR entry 3250 / RUPA entry 450 B), generalized
+  mobility theorem, 3GPP/RINA grounding.
 - `docs/mechanism-and-evaluation-strategy.md` — mechanism + national results.
 - `infocom-mobility-paper/outline.md` — living 8-section outline (national-scale
   results in §5–6).
