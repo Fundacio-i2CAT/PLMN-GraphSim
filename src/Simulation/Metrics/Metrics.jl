@@ -49,4 +49,10 @@ function update_history!(sim_state, current_time, metrics_5g, metrics_6grupa)
     # Core forwarding-state churn over time (O(n) vs O(1) headline).
     push!(sim_state.history_core_writes_5g, sim_state.core_writes_5g)
     push!(sim_state.history_core_writes_rupa, sim_state.core_writes_rupa)
+
+    # Roaming counters (§7.4): border entries, 5G session breaks (re-establishment
+    # semantics), and the HR transit-state gauge (RUPA-side is an architectural 0).
+    push!(sim_state.history_roam_entries, sim_state.roam_entries)
+    push!(sim_state.history_session_breaks_5g, sim_state.session_breaks_5g)
+    push!(sim_state.history_roam_sessions_5g, sim_state.roam_sessions_5g)
 end
