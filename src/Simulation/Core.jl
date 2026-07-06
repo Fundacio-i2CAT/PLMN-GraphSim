@@ -147,11 +147,48 @@ reproduce bit-for-bit when `mobility.enabled = false`.
     # Initialize mobility state for this agent
     mobility_state = MobilityState(agent_location, 0.0, 0.0, 0.0, 0.0)
 
+    ntn = sim_state.ntn                  # Constellation or nothing (§7.5.2)
+    serving_sat = 0                      # 0 = terrestrial-served
+
     while !is_simulation_time_over(env, sim_state)
         @yield timeout(env, update_dt)
         is_simulation_time_over(env, sim_state) && break
         current_loc = step_position(model, current_loc, mobility_state, update_dt)
         new_gnb = find_serving_gnb(topology, current_loc)
+
+        # NTN member (§7.5.2): no terrestrial signal within r_terr_km → the UE roams
+        # to the satellite member. While satellite-served the network moves under the
+        # UE: satellite switches are charged as N2-class handovers (5G) vs renumbers
+        # (RUPA). Sessions stay anchored at the terrestrial PSA (satellite = RAN;
+        # the anchor remains on the ground via the feeder link).
+        if ntn !== nothing
+            sim_state.ntn_total_ticks += 1
+            d_terr = new_gnb == 0 ? Inf :
+                haversine_distance(current_loc, topology.gnb_locations[new_gnb])
+            if d_terr > ntn.r_terr_km
+                positions_at!(ntn, Float64(now(env)))
+                sat, _ = best_satellite(ntn, current_loc)
+                if sat != 0
+                    if serving_sat == 0
+                        charge_ntn_crossing!(sim_state, num_sessions)
+                        sim_state.ntn_attach_events += 1
+                    elseif sat != serving_sat
+                        charge_ntn_sat_handover!(sim_state)
+                    end
+                    serving_sat = sat
+                    sim_state.ntn_serving_ticks += 1
+                    continue
+                end
+            end
+            if serving_sat != 0
+                # Back under terrestrial coverage (or no satellite visible):
+                # NTN → terrestrial crossing, then normal terrestrial handling.
+                charge_ntn_crossing!(sim_state, num_sessions)
+                sim_state.ntn_return_events += 1
+                serving_sat = 0
+            end
+        end
+
         if new_gnb == 0 || new_gnb == current_gnb
             continue
         end

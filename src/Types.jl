@@ -273,6 +273,25 @@ mutable struct SimGlobalState
     roam_dist_5g_sum::Float64
     roam_dist_opt_sum::Float64
     roam_stretch_samples::Int64
+
+    # --- NTN member (§7.5.2): satellite constellation as a federation member ---
+    # ntn: Union{Nothing, Simulation.Constellation} (Any to avoid a module cycle);
+    # nothing = NTN disabled. Crossings terrestrial↔NTN follow the same B7a
+    # semantics as any member crossing but live in their OWN buckets so §7.4 roam
+    # counters stay clean. Satellite→satellite switches (the network moving under
+    # the UE) are N2-class for 5G (NG-RAN node change, TS 23.501 §5.4.10) vs one
+    # renumber for RUPA.
+    ntn::Any
+    ntn_attach_events::Int64             # terrestrial → satellite crossings
+    ntn_return_events::Int64             # satellite → terrestrial crossings
+    ntn_sat_handovers::Int64             # satellite → satellite (same member)
+    sigma_ntn_cross_5g::Int64            # crossing bytes, 5G (B7a semantics)
+    sigma_ntn_cross_rupa::Int64          # crossing bytes, RUPA (450 B entry)
+    sigma_ntn_ho_5g::Int64               # sat-switch bytes, 5G (1150 B N2 class)
+    sigma_ntn_ho_rupa::Int64             # sat-switch bytes, RUPA (200 B renumber)
+    ntn_session_breaks_5g::Int64         # breaks at crossings (:reestablish only)
+    ntn_serving_ticks::Int64             # agent-ticks served by the satellite member
+    ntn_total_ticks::Int64               # all mobile agent-ticks (serving fraction)
 end
 
 # Backward-compatible constructor: all σ counters and histories initialized to 0/empty.
@@ -296,7 +315,9 @@ SimGlobalState(config, upf_sessions_5g, forwarding_tables_6grupa,
                    0.0, 0.0, Int64(0),
                    Int64(0), Int64(0), Int64(0),
                    Int64[], Int64[], Int64[],
-                   0.0, 0.0, Int64(0))
+                   0.0, 0.0, Int64(0),
+                   nothing, Int64(0), Int64(0), Int64(0), Int64(0), Int64(0),
+                   Int64(0), Int64(0), Int64(0), Int64(0), Int64(0))
 
 struct GUPFState6GRUPA
     forwarding_table::Vector{ForwardingEntry6GRUPA}
