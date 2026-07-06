@@ -59,11 +59,11 @@ python3 data/processing_scripts/standardize_portugal.py
 | MEO (Altice) | 6 | 6,791 (+4,091 under net 2, MEO's ex-TMN allocation) |
 | NOS | 3 | 4,050 |
 
-`run_national.jl portugal` uses MEO (net 6) with **18 mainland distritos** as the
+`main.jl national portugal` uses MEO (net 6) with **18 mainland distritos** as the
 edge-UPF count (the Spain-provinces analogue): 6,506 mainland gNBs → 18 edge UPFs → 2
 PSAs, all 278 municipalities polygon-matched.
 
-## Iberia scenario (phase 2 — IMPLEMENTED, `run_iberia.jl`)
+## Iberia scenario (phase 2 — IMPLEMENTED, `main.jl iberia` (runs/iberia.jl))
 
 Two operator fields composed into one topology via `DataLoading.compose_topologies`
 (Movistar 52 edge/5 PSA + MEO 18 edge/2 PSA → 52,902 gNBs, 70 edge UPFs, 7 PSAs,
