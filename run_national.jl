@@ -16,7 +16,9 @@ using DesJulia6gRupa.Types
 using ConcurrentSim
 import DesJulia6gRupa.Simulation as DSim
 
+#   julia --project run_national.jl spain 0.05   # 5% inbound roamers (§7.4 phase-1)
 const COUNTRY = lowercase(get(ARGS, 1, "spain"))
+const ROAM = parse(Float64, get(ARGS, 2, "0.0"))  # roamer fraction (0 = legacy intra-PLMN run)
 const SCALE = 1000
 const NUM_PSA = 5                 # centralized PSAs (config.toml num_centralized_upfs)
 const ADOPTION = 0.82             # mobile_adoption_rate (config.toml)
@@ -50,7 +52,8 @@ national_agents() = ceil(Int, PROFILES[COUNTRY][5] * ADOPTION / SCALE)
 function run_scenario(topology, nupf, name, model; n_agents, duration, dt)
     config = SimConfig(1, 2, SCALE, Float64(duration), Float64(duration)-5, 5.0,
                        :two_tier, NUM_PSA, 10.0,
-                       MobilityConfig(true, Float64(dt), model))
+                       MobilityConfig(true, Float64(dt), model),
+                       RoamingConfig(:reestablish, ROAM))
     s = DSim.init_global_state_for_simulation(topology, config)
     env = ConcurrentSim.Simulation()
     @process DSim.monitor_metrics(env, s, topology, config.scale_factor)
@@ -83,6 +86,13 @@ function run_scenario(topology, nupf, name, model; n_agents, duration, dt)
     println("Anchor path:  5G(pinned)=$(round(d5,digits=1))km  RUPA(optimal)=$(round(dop,digits=1))km  excess=$(round(d5-dop,digits=1))km (SSC-1 hairpin)")
     println("Acct reloc:   5G=$(s.acct_reloc_5g)  6G-RUPA=$(s.acct_reloc_rupa) (SSC-1 intra-PLMN: 0 both; billing orthogonal, granularity equal)")
     println("6G-RUPA σ advantage: $(round(adv,digits=1))% ($t5 vs $t6 B)")
+    if ROAM > 0
+        radv = s.sigma_roam_5g > 0 ? (1 - s.sigma_roam_rupa/s.sigma_roam_5g)*100 : 0.0
+        println("Roaming ($(round(100ROAM,digits=1))% inbound, entry semantics :reestablish):")
+        println("  entries=$(s.roam_entries)  σ_roam: 5G=$(s.sigma_roam_5g)B  6G=$(s.sigma_roam_rupa)B  adv=$(round(radv,digits=1))%")
+        println("  HR transit sessions (V-UPF+IPUPS×2+H-UPF held per roamer): $(s.roam_sessions_5g)  [RUPA: 0]")
+        println("  session breaks at border: 5G=$(s.session_breaks_5g)  [RUPA: 0, make-before-break]")
+    end
     return (; name, ho, rate, t5, t6, adv,
             l1=s.ho_l1, l2=s.ho_l2, psaX=s.ho_l3,
             cw5=s.core_writes_5g, cw6=s.core_writes_rupa,
