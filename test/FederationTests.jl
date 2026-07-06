@@ -66,6 +66,26 @@ using MetaGraphsNext
         @test t.psa_operator == [1, 2, 3]
     end
 
+    @testset "cross-country code collision is NOT deduped" begin
+        # Int-normalized codes collide across countries (Spain INE vs Portugal
+        # DICO share numeric ranges): same code, different name = different
+        # place, both population weights must survive (Iberia regression:
+        # 8322 municipalities, not 8310).
+        es = NetworkTopology(
+            [GeoPoint(40.0, -4.0)], [GeoPoint(40.0, -4.0)], [1],
+            [GeoPoint(40.0, -4.0)], [1],
+            [Municipality("1001", "Alegría-Dulantzi", 3000, GeoPoint(42.8, -2.5), 0.0, nothing)],
+            Dict{String,Vector{Int}}(), [1.0], _graph())
+        pt = NetworkTopology(
+            [GeoPoint(41.0, -8.0)], [GeoPoint(41.0, -8.0)], [1],
+            [GeoPoint(41.0, -8.0)], [1],
+            [Municipality("1001", "Aveiro", 1000, GeoPoint(40.6, -8.6), 0.0, nothing)],
+            Dict{String,Vector{Int}}(), [1.0], _graph())
+        t = DataLoading.compose_topologies([es, pt])
+        @test length(t.municipalities) == 2
+        @test isapprox(t.municipality_probs, [0.75, 0.25]; atol = 1e-9)
+    end
+
     @testset "K-ary compose: custom operator ids" begin
         t = DataLoading.compose_topologies([_field(1, -4.0, 100, "a"), _field(1, -7.0, 100, "b")];
                                            operators = [7, 6])

@@ -139,13 +139,16 @@ function compose_topologies(members::Vector{NetworkTopology};
     centralized = reduce(vcat, (m.centralized_upf_locations for m in members))
 
     # Overlapping members (two operators covering the same country) share
-    # municipalities: dedupe by code so population weight counts each place once,
-    # while every member's infrastructure stays in.
+    # municipalities: dedupe so population weight counts each place once, while
+    # every member's infrastructure stays in. Key is (code, name), not code
+    # alone — Int-normalized codes collide across countries (Spain INE vs
+    # Portugal DICO share numeric ranges), and those are different places.
     municipalities = Municipality[]
-    seen = Set{String}()
+    seen = Set{Tuple{String,String}}()
     for m in members, muni in m.municipalities
-        muni.code in seen && continue
-        push!(seen, muni.code)
+        key = (muni.code, muni.name)
+        key in seen && continue
+        push!(seen, key)
         push!(municipalities, muni)
     end
 
