@@ -9,6 +9,7 @@ using DesJulia6gRupa
         Aqua.test_all(DesJulia6gRupa; 
             ambiguities=false,
             deps_compat=false, # Disable compat bounds check for now
+            stale_deps=(ignore=[:Plots, :StatsPlots],), # Plotting extension/scripts are intentionally opt-in.
             persistent_tasks=false # Disable persistent tasks check for now
         )
     end
