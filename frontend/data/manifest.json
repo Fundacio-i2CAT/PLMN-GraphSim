@@ -147,16 +147,16 @@
       "mobility_id": "pedestrian_5",
       "country_label": "Portugal",
       "file_bytes": {
-        "meta": 516,
+        "meta": 521,
         "gnbs": 115656,
-        "trajectories": 58955
+        "trajectories": 1166476
       },
       "scale_factor": 100000,
       "dt": 2.0,
       "mobility_label": "Pedestrian 5 km/h (Random Waypoint)",
       "mobility_model": "random_waypoint",
       "agents": 81,
-      "duration": 60,
+      "duration": 1200,
       "files": {
         "meta": "data/meta-portugal-meo-pedestrian_5-s100000.json",
         "gnbs": "data/gnbs-portugal-meo.json",
@@ -167,9 +167,763 @@
       "speed_kmh": 5.0,
       "operator": "meo",
       "psas": 2,
-      "total_bytes": 175127,
+      "total_bytes": 1282653,
       "operator_label": "Meo",
-      "handovers": 2,
+      "handovers": 122,
+      "edge_upfs": 18
+    },
+    {
+      "mobility_id": "pedestrian_5",
+      "country_label": "Portugal",
+      "file_bytes": {
+        "meta": 520,
+        "gnbs": 115656,
+        "trajectories": 2332925
+      },
+      "scale_factor": 50000,
+      "dt": 2.0,
+      "mobility_label": "Pedestrian 5 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 162,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-portugal-meo-pedestrian_5-s50000.json",
+        "gnbs": "data/gnbs-portugal-meo.json",
+        "trajectories": "data/trajectories-portugal-meo-pedestrian_5-s50000.json"
+      },
+      "id": "portugal-meo-pedestrian_5-s50000",
+      "country": "portugal",
+      "speed_kmh": 5.0,
+      "operator": "meo",
+      "psas": 2,
+      "total_bytes": 2449101,
+      "operator_label": "Meo",
+      "handovers": 253,
+      "edge_upfs": 18
+    },
+    {
+      "mobility_id": "pedestrian_5",
+      "country_label": "Portugal",
+      "file_bytes": {
+        "meta": 520,
+        "gnbs": 115656,
+        "trajectories": 4665045
+      },
+      "scale_factor": 25000,
+      "dt": 2.0,
+      "mobility_label": "Pedestrian 5 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 324,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-portugal-meo-pedestrian_5-s25000.json",
+        "gnbs": "data/gnbs-portugal-meo.json",
+        "trajectories": "data/trajectories-portugal-meo-pedestrian_5-s25000.json"
+      },
+      "id": "portugal-meo-pedestrian_5-s25000",
+      "country": "portugal",
+      "speed_kmh": 5.0,
+      "operator": "meo",
+      "psas": 2,
+      "total_bytes": 4781221,
+      "operator_label": "Meo",
+      "handovers": 452,
+      "edge_upfs": 18
+    },
+    {
+      "mobility_id": "urban_50",
+      "country_label": "Portugal",
+      "file_bytes": {
+        "meta": 511,
+        "gnbs": 115656,
+        "trajectories": 1190310
+      },
+      "scale_factor": 100000,
+      "dt": 2.0,
+      "mobility_label": "Urban 50 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 81,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-portugal-meo-urban_50-s100000.json",
+        "gnbs": "data/gnbs-portugal-meo.json",
+        "trajectories": "data/trajectories-portugal-meo-urban_50-s100000.json"
+      },
+      "id": "portugal-meo-urban_50-s100000",
+      "country": "portugal",
+      "speed_kmh": 50.0,
+      "operator": "meo",
+      "psas": 2,
+      "total_bytes": 1306477,
+      "operator_label": "Meo",
+      "handovers": 1048,
+      "edge_upfs": 18
+    },
+    {
+      "mobility_id": "urban_50",
+      "country_label": "Portugal",
+      "file_bytes": {
+        "meta": 510,
+        "gnbs": 115656,
+        "trajectories": 2369049
+      },
+      "scale_factor": 50000,
+      "dt": 2.0,
+      "mobility_label": "Urban 50 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 162,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-portugal-meo-urban_50-s50000.json",
+        "gnbs": "data/gnbs-portugal-meo.json",
+        "trajectories": "data/trajectories-portugal-meo-urban_50-s50000.json"
+      },
+      "id": "portugal-meo-urban_50-s50000",
+      "country": "portugal",
+      "speed_kmh": 50.0,
+      "operator": "meo",
+      "psas": 2,
+      "total_bytes": 2485215,
+      "operator_label": "Meo",
+      "handovers": 1644,
+      "edge_upfs": 18
+    },
+    {
+      "mobility_id": "urban_50",
+      "country_label": "Portugal",
+      "file_bytes": {
+        "meta": 510,
+        "gnbs": 115656,
+        "trajectories": 4749816
+      },
+      "scale_factor": 25000,
+      "dt": 2.0,
+      "mobility_label": "Urban 50 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 324,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-portugal-meo-urban_50-s25000.json",
+        "gnbs": "data/gnbs-portugal-meo.json",
+        "trajectories": "data/trajectories-portugal-meo-urban_50-s25000.json"
+      },
+      "id": "portugal-meo-urban_50-s25000",
+      "country": "portugal",
+      "speed_kmh": 50.0,
+      "operator": "meo",
+      "psas": 2,
+      "total_bytes": 4865982,
+      "operator_label": "Meo",
+      "handovers": 3745,
+      "edge_upfs": 18
+    },
+    {
+      "mobility_id": "highway_120",
+      "country_label": "Portugal",
+      "file_bytes": {
+        "meta": 515,
+        "gnbs": 115656,
+        "trajectories": 1207693
+      },
+      "scale_factor": 100000,
+      "dt": 2.0,
+      "mobility_label": "Highway 120 km/h (Gauss-Markov)",
+      "mobility_model": "gauss_markov",
+      "agents": 81,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-portugal-meo-highway_120-s100000.json",
+        "gnbs": "data/gnbs-portugal-meo.json",
+        "trajectories": "data/trajectories-portugal-meo-highway_120-s100000.json"
+      },
+      "id": "portugal-meo-highway_120-s100000",
+      "country": "portugal",
+      "speed_kmh": 120.0,
+      "operator": "meo",
+      "psas": 2,
+      "total_bytes": 1323864,
+      "operator_label": "Meo",
+      "handovers": 1722,
+      "edge_upfs": 18
+    },
+    {
+      "mobility_id": "highway_120",
+      "country_label": "Portugal",
+      "file_bytes": {
+        "meta": 514,
+        "gnbs": 115656,
+        "trajectories": 2420035
+      },
+      "scale_factor": 50000,
+      "dt": 2.0,
+      "mobility_label": "Highway 120 km/h (Gauss-Markov)",
+      "mobility_model": "gauss_markov",
+      "agents": 162,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-portugal-meo-highway_120-s50000.json",
+        "gnbs": "data/gnbs-portugal-meo.json",
+        "trajectories": "data/trajectories-portugal-meo-highway_120-s50000.json"
+      },
+      "id": "portugal-meo-highway_120-s50000",
+      "country": "portugal",
+      "speed_kmh": 120.0,
+      "operator": "meo",
+      "psas": 2,
+      "total_bytes": 2536205,
+      "operator_label": "Meo",
+      "handovers": 3633,
+      "edge_upfs": 18
+    },
+    {
+      "mobility_id": "highway_120",
+      "country_label": "Portugal",
+      "file_bytes": {
+        "meta": 514,
+        "gnbs": 115656,
+        "trajectories": 4829795
+      },
+      "scale_factor": 25000,
+      "dt": 2.0,
+      "mobility_label": "Highway 120 km/h (Gauss-Markov)",
+      "mobility_model": "gauss_markov",
+      "agents": 324,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-portugal-meo-highway_120-s25000.json",
+        "gnbs": "data/gnbs-portugal-meo.json",
+        "trajectories": "data/trajectories-portugal-meo-highway_120-s25000.json"
+      },
+      "id": "portugal-meo-highway_120-s25000",
+      "country": "portugal",
+      "speed_kmh": 120.0,
+      "operator": "meo",
+      "psas": 2,
+      "total_bytes": 4945965,
+      "operator_label": "Meo",
+      "handovers": 6856,
+      "edge_upfs": 18
+    },
+    {
+      "mobility_id": "pedestrian_5",
+      "country_label": "Portugal",
+      "file_bytes": {
+        "meta": 520,
+        "gnbs": 70174,
+        "trajectories": 1165402
+      },
+      "scale_factor": 100000,
+      "dt": 2.0,
+      "mobility_label": "Pedestrian 5 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 81,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-portugal-nos-pedestrian_5-s100000.json",
+        "gnbs": "data/gnbs-portugal-nos.json",
+        "trajectories": "data/trajectories-portugal-nos-pedestrian_5-s100000.json"
+      },
+      "id": "portugal-nos-pedestrian_5-s100000",
+      "country": "portugal",
+      "speed_kmh": 5.0,
+      "operator": "nos",
+      "psas": 2,
+      "total_bytes": 1236096,
+      "operator_label": "Nos",
+      "handovers": 81,
+      "edge_upfs": 18
+    },
+    {
+      "mobility_id": "pedestrian_5",
+      "country_label": "Portugal",
+      "file_bytes": {
+        "meta": 520,
+        "gnbs": 70174,
+        "trajectories": 2331519
+      },
+      "scale_factor": 50000,
+      "dt": 2.0,
+      "mobility_label": "Pedestrian 5 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 162,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-portugal-nos-pedestrian_5-s50000.json",
+        "gnbs": "data/gnbs-portugal-nos.json",
+        "trajectories": "data/trajectories-portugal-nos-pedestrian_5-s50000.json"
+      },
+      "id": "portugal-nos-pedestrian_5-s50000",
+      "country": "portugal",
+      "speed_kmh": 5.0,
+      "operator": "nos",
+      "psas": 2,
+      "total_bytes": 2402213,
+      "operator_label": "Nos",
+      "handovers": 186,
+      "edge_upfs": 18
+    },
+    {
+      "mobility_id": "pedestrian_5",
+      "country_label": "Portugal",
+      "file_bytes": {
+        "meta": 520,
+        "gnbs": 70174,
+        "trajectories": 4662335
+      },
+      "scale_factor": 25000,
+      "dt": 2.0,
+      "mobility_label": "Pedestrian 5 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 324,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-portugal-nos-pedestrian_5-s25000.json",
+        "gnbs": "data/gnbs-portugal-nos.json",
+        "trajectories": "data/trajectories-portugal-nos-pedestrian_5-s25000.json"
+      },
+      "id": "portugal-nos-pedestrian_5-s25000",
+      "country": "portugal",
+      "speed_kmh": 5.0,
+      "operator": "nos",
+      "psas": 2,
+      "total_bytes": 4733029,
+      "operator_label": "Nos",
+      "handovers": 349,
+      "edge_upfs": 18
+    },
+    {
+      "mobility_id": "urban_50",
+      "country_label": "Portugal",
+      "file_bytes": {
+        "meta": 510,
+        "gnbs": 70174,
+        "trajectories": 1181427
+      },
+      "scale_factor": 100000,
+      "dt": 2.0,
+      "mobility_label": "Urban 50 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 81,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-portugal-nos-urban_50-s100000.json",
+        "gnbs": "data/gnbs-portugal-nos.json",
+        "trajectories": "data/trajectories-portugal-nos-urban_50-s100000.json"
+      },
+      "id": "portugal-nos-urban_50-s100000",
+      "country": "portugal",
+      "speed_kmh": 50.0,
+      "operator": "nos",
+      "psas": 2,
+      "total_bytes": 1252111,
+      "operator_label": "Nos",
+      "handovers": 703,
+      "edge_upfs": 18
+    },
+    {
+      "mobility_id": "urban_50",
+      "country_label": "Portugal",
+      "file_bytes": {
+        "meta": 510,
+        "gnbs": 70174,
+        "trajectories": 2362665
+      },
+      "scale_factor": 50000,
+      "dt": 2.0,
+      "mobility_label": "Urban 50 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 162,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-portugal-nos-urban_50-s50000.json",
+        "gnbs": "data/gnbs-portugal-nos.json",
+        "trajectories": "data/trajectories-portugal-nos-urban_50-s50000.json"
+      },
+      "id": "portugal-nos-urban_50-s50000",
+      "country": "portugal",
+      "speed_kmh": 50.0,
+      "operator": "nos",
+      "psas": 2,
+      "total_bytes": 2433349,
+      "operator_label": "Nos",
+      "handovers": 1387,
+      "edge_upfs": 18
+    },
+    {
+      "mobility_id": "urban_50",
+      "country_label": "Portugal",
+      "file_bytes": {
+        "meta": 510,
+        "gnbs": 70174,
+        "trajectories": 4725925
+      },
+      "scale_factor": 25000,
+      "dt": 2.0,
+      "mobility_label": "Urban 50 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 324,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-portugal-nos-urban_50-s25000.json",
+        "gnbs": "data/gnbs-portugal-nos.json",
+        "trajectories": "data/trajectories-portugal-nos-urban_50-s25000.json"
+      },
+      "id": "portugal-nos-urban_50-s25000",
+      "country": "portugal",
+      "speed_kmh": 50.0,
+      "operator": "nos",
+      "psas": 2,
+      "total_bytes": 4796609,
+      "operator_label": "Nos",
+      "handovers": 2822,
+      "edge_upfs": 18
+    },
+    {
+      "mobility_id": "highway_120",
+      "country_label": "Portugal",
+      "file_bytes": {
+        "meta": 515,
+        "gnbs": 70174,
+        "trajectories": 1207733
+      },
+      "scale_factor": 100000,
+      "dt": 2.0,
+      "mobility_label": "Highway 120 km/h (Gauss-Markov)",
+      "mobility_model": "gauss_markov",
+      "agents": 81,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-portugal-nos-highway_120-s100000.json",
+        "gnbs": "data/gnbs-portugal-nos.json",
+        "trajectories": "data/trajectories-portugal-nos-highway_120-s100000.json"
+      },
+      "id": "portugal-nos-highway_120-s100000",
+      "country": "portugal",
+      "speed_kmh": 120.0,
+      "operator": "nos",
+      "psas": 2,
+      "total_bytes": 1278422,
+      "operator_label": "Nos",
+      "handovers": 1732,
+      "edge_upfs": 18
+    },
+    {
+      "mobility_id": "highway_120",
+      "country_label": "Portugal",
+      "file_bytes": {
+        "meta": 514,
+        "gnbs": 70174,
+        "trajectories": 2395474
+      },
+      "scale_factor": 50000,
+      "dt": 2.0,
+      "mobility_label": "Highway 120 km/h (Gauss-Markov)",
+      "mobility_model": "gauss_markov",
+      "agents": 162,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-portugal-nos-highway_120-s50000.json",
+        "gnbs": "data/gnbs-portugal-nos.json",
+        "trajectories": "data/trajectories-portugal-nos-highway_120-s50000.json"
+      },
+      "id": "portugal-nos-highway_120-s50000",
+      "country": "portugal",
+      "speed_kmh": 120.0,
+      "operator": "nos",
+      "psas": 2,
+      "total_bytes": 2466162,
+      "operator_label": "Nos",
+      "handovers": 2679,
+      "edge_upfs": 18
+    },
+    {
+      "mobility_id": "highway_120",
+      "country_label": "Portugal",
+      "file_bytes": {
+        "meta": 514,
+        "gnbs": 70174,
+        "trajectories": 4800540
+      },
+      "scale_factor": 25000,
+      "dt": 2.0,
+      "mobility_label": "Highway 120 km/h (Gauss-Markov)",
+      "mobility_model": "gauss_markov",
+      "agents": 324,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-portugal-nos-highway_120-s25000.json",
+        "gnbs": "data/gnbs-portugal-nos.json",
+        "trajectories": "data/trajectories-portugal-nos-highway_120-s25000.json"
+      },
+      "id": "portugal-nos-highway_120-s25000",
+      "country": "portugal",
+      "speed_kmh": 120.0,
+      "operator": "nos",
+      "psas": 2,
+      "total_bytes": 4871228,
+      "operator_label": "Nos",
+      "handovers": 5714,
+      "edge_upfs": 18
+    },
+    {
+      "mobility_id": "pedestrian_5",
+      "country_label": "Portugal",
+      "file_bytes": {
+        "meta": 552,
+        "gnbs": 130639,
+        "trajectories": 1164889
+      },
+      "scale_factor": 100000,
+      "dt": 2.0,
+      "mobility_label": "Pedestrian 5 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 81,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-portugal-vodafone_pt-pedestrian_5-s100000.json",
+        "gnbs": "data/gnbs-portugal-vodafone_pt.json",
+        "trajectories": "data/trajectories-portugal-vodafone_pt-pedestrian_5-s100000.json"
+      },
+      "id": "portugal-vodafone_pt-pedestrian_5-s100000",
+      "country": "portugal",
+      "speed_kmh": 5.0,
+      "operator": "vodafone_pt",
+      "psas": 2,
+      "total_bytes": 1296080,
+      "operator_label": "Vodafone Pt",
+      "handovers": 68,
+      "edge_upfs": 18
+    },
+    {
+      "mobility_id": "pedestrian_5",
+      "country_label": "Portugal",
+      "file_bytes": {
+        "meta": 552,
+        "gnbs": 130639,
+        "trajectories": 2332901
+      },
+      "scale_factor": 50000,
+      "dt": 2.0,
+      "mobility_label": "Pedestrian 5 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 162,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-portugal-vodafone_pt-pedestrian_5-s50000.json",
+        "gnbs": "data/gnbs-portugal-vodafone_pt.json",
+        "trajectories": "data/trajectories-portugal-vodafone_pt-pedestrian_5-s50000.json"
+      },
+      "id": "portugal-vodafone_pt-pedestrian_5-s50000",
+      "country": "portugal",
+      "speed_kmh": 5.0,
+      "operator": "vodafone_pt",
+      "psas": 2,
+      "total_bytes": 2464092,
+      "operator_label": "Vodafone Pt",
+      "handovers": 248,
+      "edge_upfs": 18
+    },
+    {
+      "mobility_id": "pedestrian_5",
+      "country_label": "Portugal",
+      "file_bytes": {
+        "meta": 552,
+        "gnbs": 130639,
+        "trajectories": 4665219
+      },
+      "scale_factor": 25000,
+      "dt": 2.0,
+      "mobility_label": "Pedestrian 5 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 324,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-portugal-vodafone_pt-pedestrian_5-s25000.json",
+        "gnbs": "data/gnbs-portugal-vodafone_pt.json",
+        "trajectories": "data/trajectories-portugal-vodafone_pt-pedestrian_5-s25000.json"
+      },
+      "id": "portugal-vodafone_pt-pedestrian_5-s25000",
+      "country": "portugal",
+      "speed_kmh": 5.0,
+      "operator": "vodafone_pt",
+      "psas": 2,
+      "total_bytes": 4796410,
+      "operator_label": "Vodafone Pt",
+      "handovers": 473,
+      "edge_upfs": 18
+    },
+    {
+      "mobility_id": "urban_50",
+      "country_label": "Portugal",
+      "file_bytes": {
+        "meta": 542,
+        "gnbs": 130639,
+        "trajectories": 1188189
+      },
+      "scale_factor": 100000,
+      "dt": 2.0,
+      "mobility_label": "Urban 50 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 81,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-portugal-vodafone_pt-urban_50-s100000.json",
+        "gnbs": "data/gnbs-portugal-vodafone_pt.json",
+        "trajectories": "data/trajectories-portugal-vodafone_pt-urban_50-s100000.json"
+      },
+      "id": "portugal-vodafone_pt-urban_50-s100000",
+      "country": "portugal",
+      "speed_kmh": 50.0,
+      "operator": "vodafone_pt",
+      "psas": 2,
+      "total_bytes": 1319370,
+      "operator_label": "Vodafone Pt",
+      "handovers": 971,
+      "edge_upfs": 18
+    },
+    {
+      "mobility_id": "urban_50",
+      "country_label": "Portugal",
+      "file_bytes": {
+        "meta": 542,
+        "gnbs": 130639,
+        "trajectories": 2382279
+      },
+      "scale_factor": 50000,
+      "dt": 2.0,
+      "mobility_label": "Urban 50 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 162,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-portugal-vodafone_pt-urban_50-s50000.json",
+        "gnbs": "data/gnbs-portugal-vodafone_pt.json",
+        "trajectories": "data/trajectories-portugal-vodafone_pt-urban_50-s50000.json"
+      },
+      "id": "portugal-vodafone_pt-urban_50-s50000",
+      "country": "portugal",
+      "speed_kmh": 50.0,
+      "operator": "vodafone_pt",
+      "psas": 2,
+      "total_bytes": 2513460,
+      "operator_label": "Vodafone Pt",
+      "handovers": 2162,
+      "edge_upfs": 18
+    },
+    {
+      "mobility_id": "urban_50",
+      "country_label": "Portugal",
+      "file_bytes": {
+        "meta": 542,
+        "gnbs": 130639,
+        "trajectories": 4761213
+      },
+      "scale_factor": 25000,
+      "dt": 2.0,
+      "mobility_label": "Urban 50 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 324,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-portugal-vodafone_pt-urban_50-s25000.json",
+        "gnbs": "data/gnbs-portugal-vodafone_pt.json",
+        "trajectories": "data/trajectories-portugal-vodafone_pt-urban_50-s25000.json"
+      },
+      "id": "portugal-vodafone_pt-urban_50-s25000",
+      "country": "portugal",
+      "speed_kmh": 50.0,
+      "operator": "vodafone_pt",
+      "psas": 2,
+      "total_bytes": 4892394,
+      "operator_label": "Vodafone Pt",
+      "handovers": 4192,
+      "edge_upfs": 18
+    },
+    {
+      "mobility_id": "highway_120",
+      "country_label": "Portugal",
+      "file_bytes": {
+        "meta": 547,
+        "gnbs": 130639,
+        "trajectories": 1213569
+      },
+      "scale_factor": 100000,
+      "dt": 2.0,
+      "mobility_label": "Highway 120 km/h (Gauss-Markov)",
+      "mobility_model": "gauss_markov",
+      "agents": 81,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-portugal-vodafone_pt-highway_120-s100000.json",
+        "gnbs": "data/gnbs-portugal-vodafone_pt.json",
+        "trajectories": "data/trajectories-portugal-vodafone_pt-highway_120-s100000.json"
+      },
+      "id": "portugal-vodafone_pt-highway_120-s100000",
+      "country": "portugal",
+      "speed_kmh": 120.0,
+      "operator": "vodafone_pt",
+      "psas": 2,
+      "total_bytes": 1344755,
+      "operator_label": "Vodafone Pt",
+      "handovers": 1953,
+      "edge_upfs": 18
+    },
+    {
+      "mobility_id": "highway_120",
+      "country_label": "Portugal",
+      "file_bytes": {
+        "meta": 546,
+        "gnbs": 130639,
+        "trajectories": 2425202
+      },
+      "scale_factor": 50000,
+      "dt": 2.0,
+      "mobility_label": "Highway 120 km/h (Gauss-Markov)",
+      "mobility_model": "gauss_markov",
+      "agents": 162,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-portugal-vodafone_pt-highway_120-s50000.json",
+        "gnbs": "data/gnbs-portugal-vodafone_pt.json",
+        "trajectories": "data/trajectories-portugal-vodafone_pt-highway_120-s50000.json"
+      },
+      "id": "portugal-vodafone_pt-highway_120-s50000",
+      "country": "portugal",
+      "speed_kmh": 120.0,
+      "operator": "vodafone_pt",
+      "psas": 2,
+      "total_bytes": 2556387,
+      "operator_label": "Vodafone Pt",
+      "handovers": 3821,
+      "edge_upfs": 18
+    },
+    {
+      "mobility_id": "highway_120",
+      "country_label": "Portugal",
+      "file_bytes": {
+        "meta": 546,
+        "gnbs": 130639,
+        "trajectories": 4851783
+      },
+      "scale_factor": 25000,
+      "dt": 2.0,
+      "mobility_label": "Highway 120 km/h (Gauss-Markov)",
+      "mobility_model": "gauss_markov",
+      "agents": 324,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-portugal-vodafone_pt-highway_120-s25000.json",
+        "gnbs": "data/gnbs-portugal-vodafone_pt.json",
+        "trajectories": "data/trajectories-portugal-vodafone_pt-highway_120-s25000.json"
+      },
+      "id": "portugal-vodafone_pt-highway_120-s25000",
+      "country": "portugal",
+      "speed_kmh": 120.0,
+      "operator": "vodafone_pt",
+      "psas": 2,
+      "total_bytes": 4982968,
+      "operator_label": "Vodafone Pt",
+      "handovers": 7720,
       "edge_upfs": 18
     },
     {
@@ -178,7 +932,7 @@
       "file_bytes": {
         "meta": 530,
         "gnbs": 814763,
-        "trajectories": 5799509
+        "trajectories": 5804537
       },
       "scale_factor": 100000,
       "dt": 2.0,
@@ -196,9 +950,9 @@
       "speed_kmh": 5.0,
       "operator": "movistar",
       "psas": 5,
-      "total_bytes": 6614802,
+      "total_bytes": 6619830,
       "operator_label": "Movistar",
-      "handovers": 710,
+      "handovers": 676,
       "edge_upfs": 52
     },
     {
@@ -207,7 +961,7 @@
       "file_bytes": {
         "meta": 529,
         "gnbs": 814763,
-        "trajectories": 11582810
+        "trajectories": 11580494
       },
       "scale_factor": 50000,
       "dt": 2.0,
@@ -225,9 +979,9 @@
       "speed_kmh": 5.0,
       "operator": "movistar",
       "psas": 5,
-      "total_bytes": 12398102,
+      "total_bytes": 12395786,
       "operator_label": "Movistar",
-      "handovers": 1558,
+      "handovers": 1524,
       "edge_upfs": 52
     },
     {
@@ -236,7 +990,7 @@
       "file_bytes": {
         "meta": 530,
         "gnbs": 814763,
-        "trajectories": 23156896
+        "trajectories": 23177586
       },
       "scale_factor": 25000,
       "dt": 2.0,
@@ -254,67 +1008,9 @@
       "speed_kmh": 5.0,
       "operator": "movistar",
       "psas": 5,
-      "total_bytes": 23972189,
+      "total_bytes": 23992879,
       "operator_label": "Movistar",
-      "handovers": 2904,
-      "edge_upfs": 52
-    },
-    {
-      "mobility_id": "pedestrian_5",
-      "country_label": "Spain",
-      "file_bytes": {
-        "meta": 530,
-        "gnbs": 814763,
-        "trajectories": 57918605
-      },
-      "scale_factor": 10000,
-      "dt": 2.0,
-      "mobility_label": "Pedestrian 5 km/h (Random Waypoint)",
-      "mobility_model": "random_waypoint",
-      "agents": 4055,
-      "duration": 1200,
-      "files": {
-        "meta": "data/meta-spain-movistar-pedestrian_5-s10000.json",
-        "gnbs": "data/gnbs-spain-movistar.json",
-        "trajectories": "data/trajectories-spain-movistar-pedestrian_5-s10000.json"
-      },
-      "id": "spain-movistar-pedestrian_5-s10000",
-      "country": "spain",
-      "speed_kmh": 5.0,
-      "operator": "movistar",
-      "psas": 5,
-      "total_bytes": 58733898,
-      "operator_label": "Movistar",
-      "handovers": 7831,
-      "edge_upfs": 52
-    },
-    {
-      "mobility_id": "pedestrian_5",
-      "country_label": "Spain",
-      "file_bytes": {
-        "meta": 529,
-        "gnbs": 814763,
-        "trajectories": 115841053
-      },
-      "scale_factor": 5000,
-      "dt": 2.0,
-      "mobility_label": "Pedestrian 5 km/h (Random Waypoint)",
-      "mobility_model": "random_waypoint",
-      "agents": 8109,
-      "duration": 1200,
-      "files": {
-        "meta": "data/meta-spain-movistar-pedestrian_5-s5000.json",
-        "gnbs": "data/gnbs-spain-movistar.json",
-        "trajectories": "data/trajectories-spain-movistar-pedestrian_5-s5000.json"
-      },
-      "id": "spain-movistar-pedestrian_5-s5000",
-      "country": "spain",
-      "speed_kmh": 5.0,
-      "operator": "movistar",
-      "psas": 5,
-      "total_bytes": 116656345,
-      "operator_label": "Movistar",
-      "handovers": 15476,
+      "handovers": 3158,
       "edge_upfs": 52
     },
     {
@@ -323,7 +1019,7 @@
       "file_bytes": {
         "meta": 520,
         "gnbs": 814763,
-        "trajectories": 5929731
+        "trajectories": 5941655
       },
       "scale_factor": 100000,
       "dt": 2.0,
@@ -341,9 +1037,9 @@
       "speed_kmh": 50.0,
       "operator": "movistar",
       "psas": 5,
-      "total_bytes": 6745014,
+      "total_bytes": 6756938,
       "operator_label": "Movistar",
-      "handovers": 5690,
+      "handovers": 6349,
       "edge_upfs": 52
     },
     {
@@ -352,7 +1048,7 @@
       "file_bytes": {
         "meta": 519,
         "gnbs": 814763,
-        "trajectories": 11836163
+        "trajectories": 11856304
       },
       "scale_factor": 50000,
       "dt": 2.0,
@@ -370,9 +1066,9 @@
       "speed_kmh": 50.0,
       "operator": "movistar",
       "psas": 5,
-      "total_bytes": 12651445,
+      "total_bytes": 12671586,
       "operator_label": "Movistar",
-      "handovers": 11619,
+      "handovers": 12197,
       "edge_upfs": 52
     },
     {
@@ -381,7 +1077,7 @@
       "file_bytes": {
         "meta": 520,
         "gnbs": 814763,
-        "trajectories": 23697719
+        "trajectories": 23715707
       },
       "scale_factor": 25000,
       "dt": 2.0,
@@ -399,67 +1095,9 @@
       "speed_kmh": 50.0,
       "operator": "movistar",
       "psas": 5,
-      "total_bytes": 24513002,
+      "total_bytes": 24530990,
       "operator_label": "Movistar",
-      "handovers": 24015,
-      "edge_upfs": 52
-    },
-    {
-      "mobility_id": "urban_50",
-      "country_label": "Spain",
-      "file_bytes": {
-        "meta": 520,
-        "gnbs": 814763,
-        "trajectories": 59246553
-      },
-      "scale_factor": 10000,
-      "dt": 2.0,
-      "mobility_label": "Urban 50 km/h (Random Waypoint)",
-      "mobility_model": "random_waypoint",
-      "agents": 4055,
-      "duration": 1200,
-      "files": {
-        "meta": "data/meta-spain-movistar-urban_50-s10000.json",
-        "gnbs": "data/gnbs-spain-movistar.json",
-        "trajectories": "data/trajectories-spain-movistar-urban_50-s10000.json"
-      },
-      "id": "spain-movistar-urban_50-s10000",
-      "country": "spain",
-      "speed_kmh": 50.0,
-      "operator": "movistar",
-      "psas": 5,
-      "total_bytes": 60061836,
-      "operator_label": "Movistar",
-      "handovers": 60103,
-      "edge_upfs": 52
-    },
-    {
-      "mobility_id": "urban_50",
-      "country_label": "Spain",
-      "file_bytes": {
-        "meta": 519,
-        "gnbs": 814763,
-        "trajectories": 118466001
-      },
-      "scale_factor": 5000,
-      "dt": 2.0,
-      "mobility_label": "Urban 50 km/h (Random Waypoint)",
-      "mobility_model": "random_waypoint",
-      "agents": 8109,
-      "duration": 1200,
-      "files": {
-        "meta": "data/meta-spain-movistar-urban_50-s5000.json",
-        "gnbs": "data/gnbs-spain-movistar.json",
-        "trajectories": "data/trajectories-spain-movistar-urban_50-s5000.json"
-      },
-      "id": "spain-movistar-urban_50-s5000",
-      "country": "spain",
-      "speed_kmh": 50.0,
-      "operator": "movistar",
-      "psas": 5,
-      "total_bytes": 119281283,
-      "operator_label": "Movistar",
-      "handovers": 118058,
+      "handovers": 25123,
       "edge_upfs": 52
     },
     {
@@ -468,7 +1106,7 @@
       "file_bytes": {
         "meta": 525,
         "gnbs": 814763,
-        "trajectories": 6051309
+        "trajectories": 6052636
       },
       "scale_factor": 100000,
       "dt": 2.0,
@@ -486,9 +1124,9 @@
       "speed_kmh": 120.0,
       "operator": "movistar",
       "psas": 5,
-      "total_bytes": 6866597,
+      "total_bytes": 6867924,
       "operator_label": "Movistar",
-      "handovers": 11116,
+      "handovers": 10865,
       "edge_upfs": 52
     },
     {
@@ -497,7 +1135,7 @@
       "file_bytes": {
         "meta": 523,
         "gnbs": 814763,
-        "trajectories": 12089320
+        "trajectories": 12092447
       },
       "scale_factor": 50000,
       "dt": 2.0,
@@ -515,9 +1153,9 @@
       "speed_kmh": 120.0,
       "operator": "movistar",
       "psas": 5,
-      "total_bytes": 12904606,
+      "total_bytes": 12907733,
       "operator_label": "Movistar",
-      "handovers": 21375,
+      "handovers": 21542,
       "edge_upfs": 52
     },
     {
@@ -526,7 +1164,7 @@
       "file_bytes": {
         "meta": 524,
         "gnbs": 814763,
-        "trajectories": 24207027
+        "trajectories": 24208673
       },
       "scale_factor": 25000,
       "dt": 2.0,
@@ -544,38 +1182,473 @@
       "speed_kmh": 120.0,
       "operator": "movistar",
       "psas": 5,
-      "total_bytes": 25022314,
+      "total_bytes": 25023960,
       "operator_label": "Movistar",
-      "handovers": 43528,
+      "handovers": 44465,
+      "edge_upfs": 52
+    },
+    {
+      "mobility_id": "pedestrian_5",
+      "country_label": "Spain",
+      "file_bytes": {
+        "meta": 522,
+        "gnbs": 555206,
+        "trajectories": 5797198
+      },
+      "scale_factor": 100000,
+      "dt": 2.0,
+      "mobility_label": "Pedestrian 5 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 406,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-spain-orange-pedestrian_5-s100000.json",
+        "gnbs": "data/gnbs-spain-orange.json",
+        "trajectories": "data/trajectories-spain-orange-pedestrian_5-s100000.json"
+      },
+      "id": "spain-orange-pedestrian_5-s100000",
+      "country": "spain",
+      "speed_kmh": 5.0,
+      "operator": "orange",
+      "psas": 5,
+      "total_bytes": 6352926,
+      "operator_label": "Orange",
+      "handovers": 673,
+      "edge_upfs": 52
+    },
+    {
+      "mobility_id": "pedestrian_5",
+      "country_label": "Spain",
+      "file_bytes": {
+        "meta": 521,
+        "gnbs": 555206,
+        "trajectories": 11570835
+      },
+      "scale_factor": 50000,
+      "dt": 2.0,
+      "mobility_label": "Pedestrian 5 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 811,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-spain-orange-pedestrian_5-s50000.json",
+        "gnbs": "data/gnbs-spain-orange.json",
+        "trajectories": "data/trajectories-spain-orange-pedestrian_5-s50000.json"
+      },
+      "id": "spain-orange-pedestrian_5-s50000",
+      "country": "spain",
+      "speed_kmh": 5.0,
+      "operator": "orange",
+      "psas": 5,
+      "total_bytes": 12126562,
+      "operator_label": "Orange",
+      "handovers": 1177,
+      "edge_upfs": 52
+    },
+    {
+      "mobility_id": "pedestrian_5",
+      "country_label": "Spain",
+      "file_bytes": {
+        "meta": 522,
+        "gnbs": 555206,
+        "trajectories": 23143689
+      },
+      "scale_factor": 25000,
+      "dt": 2.0,
+      "mobility_label": "Pedestrian 5 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 1622,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-spain-orange-pedestrian_5-s25000.json",
+        "gnbs": "data/gnbs-spain-orange.json",
+        "trajectories": "data/trajectories-spain-orange-pedestrian_5-s25000.json"
+      },
+      "id": "spain-orange-pedestrian_5-s25000",
+      "country": "spain",
+      "speed_kmh": 5.0,
+      "operator": "orange",
+      "psas": 5,
+      "total_bytes": 23699417,
+      "operator_label": "Orange",
+      "handovers": 2339,
+      "edge_upfs": 52
+    },
+    {
+      "mobility_id": "urban_50",
+      "country_label": "Spain",
+      "file_bytes": {
+        "meta": 512,
+        "gnbs": 555206,
+        "trajectories": 5895847
+      },
+      "scale_factor": 100000,
+      "dt": 2.0,
+      "mobility_label": "Urban 50 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 406,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-spain-orange-urban_50-s100000.json",
+        "gnbs": "data/gnbs-spain-orange.json",
+        "trajectories": "data/trajectories-spain-orange-urban_50-s100000.json"
+      },
+      "id": "spain-orange-urban_50-s100000",
+      "country": "spain",
+      "speed_kmh": 50.0,
+      "operator": "orange",
+      "psas": 5,
+      "total_bytes": 6451565,
+      "operator_label": "Orange",
+      "handovers": 4320,
+      "edge_upfs": 52
+    },
+    {
+      "mobility_id": "urban_50",
+      "country_label": "Spain",
+      "file_bytes": {
+        "meta": 510,
+        "gnbs": 555206,
+        "trajectories": 11767056
+      },
+      "scale_factor": 50000,
+      "dt": 2.0,
+      "mobility_label": "Urban 50 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 811,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-spain-orange-urban_50-s50000.json",
+        "gnbs": "data/gnbs-spain-orange.json",
+        "trajectories": "data/trajectories-spain-orange-urban_50-s50000.json"
+      },
+      "id": "spain-orange-urban_50-s50000",
+      "country": "spain",
+      "speed_kmh": 50.0,
+      "operator": "orange",
+      "psas": 5,
+      "total_bytes": 12322772,
+      "operator_label": "Orange",
+      "handovers": 8680,
+      "edge_upfs": 52
+    },
+    {
+      "mobility_id": "urban_50",
+      "country_label": "Spain",
+      "file_bytes": {
+        "meta": 512,
+        "gnbs": 555206,
+        "trajectories": 23538561
+      },
+      "scale_factor": 25000,
+      "dt": 2.0,
+      "mobility_label": "Urban 50 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 1622,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-spain-orange-urban_50-s25000.json",
+        "gnbs": "data/gnbs-spain-orange.json",
+        "trajectories": "data/trajectories-spain-orange-urban_50-s25000.json"
+      },
+      "id": "spain-orange-urban_50-s25000",
+      "country": "spain",
+      "speed_kmh": 50.0,
+      "operator": "orange",
+      "psas": 5,
+      "total_bytes": 24094279,
+      "operator_label": "Orange",
+      "handovers": 17548,
       "edge_upfs": 52
     },
     {
       "mobility_id": "highway_120",
       "country_label": "Spain",
       "file_bytes": {
-        "meta": 525,
-        "gnbs": 814763,
-        "trajectories": 60503561
+        "meta": 516,
+        "gnbs": 555206,
+        "trajectories": 5980781
       },
-      "scale_factor": 10000,
+      "scale_factor": 100000,
       "dt": 2.0,
       "mobility_label": "Highway 120 km/h (Gauss-Markov)",
       "mobility_model": "gauss_markov",
-      "agents": 4055,
+      "agents": 406,
       "duration": 1200,
       "files": {
-        "meta": "data/meta-spain-movistar-highway_120-s10000.json",
-        "gnbs": "data/gnbs-spain-movistar.json",
-        "trajectories": "data/trajectories-spain-movistar-highway_120-s10000.json"
+        "meta": "data/meta-spain-orange-highway_120-s100000.json",
+        "gnbs": "data/gnbs-spain-orange.json",
+        "trajectories": "data/trajectories-spain-orange-highway_120-s100000.json"
       },
-      "id": "spain-movistar-highway_120-s10000",
+      "id": "spain-orange-highway_120-s100000",
       "country": "spain",
       "speed_kmh": 120.0,
-      "operator": "movistar",
+      "operator": "orange",
       "psas": 5,
-      "total_bytes": 61318849,
-      "operator_label": "Movistar",
-      "handovers": 108688,
+      "total_bytes": 6536503,
+      "operator_label": "Orange",
+      "handovers": 8037,
+      "edge_upfs": 52
+    },
+    {
+      "mobility_id": "highway_120",
+      "country_label": "Spain",
+      "file_bytes": {
+        "meta": 515,
+        "gnbs": 555206,
+        "trajectories": 11956114
+      },
+      "scale_factor": 50000,
+      "dt": 2.0,
+      "mobility_label": "Highway 120 km/h (Gauss-Markov)",
+      "mobility_model": "gauss_markov",
+      "agents": 811,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-spain-orange-highway_120-s50000.json",
+        "gnbs": "data/gnbs-spain-orange.json",
+        "trajectories": "data/trajectories-spain-orange-highway_120-s50000.json"
+      },
+      "id": "spain-orange-highway_120-s50000",
+      "country": "spain",
+      "speed_kmh": 120.0,
+      "operator": "orange",
+      "psas": 5,
+      "total_bytes": 12511835,
+      "operator_label": "Orange",
+      "handovers": 15844,
+      "edge_upfs": 52
+    },
+    {
+      "mobility_id": "highway_120",
+      "country_label": "Spain",
+      "file_bytes": {
+        "meta": 516,
+        "gnbs": 555206,
+        "trajectories": 23907162
+      },
+      "scale_factor": 25000,
+      "dt": 2.0,
+      "mobility_label": "Highway 120 km/h (Gauss-Markov)",
+      "mobility_model": "gauss_markov",
+      "agents": 1622,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-spain-orange-highway_120-s25000.json",
+        "gnbs": "data/gnbs-spain-orange.json",
+        "trajectories": "data/trajectories-spain-orange-highway_120-s25000.json"
+      },
+      "id": "spain-orange-highway_120-s25000",
+      "country": "spain",
+      "speed_kmh": 120.0,
+      "operator": "orange",
+      "psas": 5,
+      "total_bytes": 24462884,
+      "operator_label": "Orange",
+      "handovers": 31938,
+      "edge_upfs": 52
+    },
+    {
+      "mobility_id": "pedestrian_5",
+      "country_label": "Spain",
+      "file_bytes": {
+        "meta": 530,
+        "gnbs": 348659,
+        "trajectories": 5796973
+      },
+      "scale_factor": 100000,
+      "dt": 2.0,
+      "mobility_label": "Pedestrian 5 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 406,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-spain-vodafone-pedestrian_5-s100000.json",
+        "gnbs": "data/gnbs-spain-vodafone.json",
+        "trajectories": "data/trajectories-spain-vodafone-pedestrian_5-s100000.json"
+      },
+      "id": "spain-vodafone-pedestrian_5-s100000",
+      "country": "spain",
+      "speed_kmh": 5.0,
+      "operator": "vodafone",
+      "psas": 5,
+      "total_bytes": 6146162,
+      "operator_label": "Vodafone",
+      "handovers": 435,
+      "edge_upfs": 52
+    },
+    {
+      "mobility_id": "pedestrian_5",
+      "country_label": "Spain",
+      "file_bytes": {
+        "meta": 528,
+        "gnbs": 348659,
+        "trajectories": 11574408
+      },
+      "scale_factor": 50000,
+      "dt": 2.0,
+      "mobility_label": "Pedestrian 5 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 811,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-spain-vodafone-pedestrian_5-s50000.json",
+        "gnbs": "data/gnbs-spain-vodafone.json",
+        "trajectories": "data/trajectories-spain-vodafone-pedestrian_5-s50000.json"
+      },
+      "id": "spain-vodafone-pedestrian_5-s50000",
+      "country": "spain",
+      "speed_kmh": 5.0,
+      "operator": "vodafone",
+      "psas": 5,
+      "total_bytes": 11923595,
+      "operator_label": "Vodafone",
+      "handovers": 848,
+      "edge_upfs": 52
+    },
+    {
+      "mobility_id": "pedestrian_5",
+      "country_label": "Spain",
+      "file_bytes": {
+        "meta": 530,
+        "gnbs": 348659,
+        "trajectories": 23143558
+      },
+      "scale_factor": 25000,
+      "dt": 2.0,
+      "mobility_label": "Pedestrian 5 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 1622,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-spain-vodafone-pedestrian_5-s25000.json",
+        "gnbs": "data/gnbs-spain-vodafone.json",
+        "trajectories": "data/trajectories-spain-vodafone-pedestrian_5-s25000.json"
+      },
+      "id": "spain-vodafone-pedestrian_5-s25000",
+      "country": "spain",
+      "speed_kmh": 5.0,
+      "operator": "vodafone",
+      "psas": 5,
+      "total_bytes": 23492747,
+      "operator_label": "Vodafone",
+      "handovers": 1821,
+      "edge_upfs": 52
+    },
+    {
+      "mobility_id": "urban_50",
+      "country_label": "Spain",
+      "file_bytes": {
+        "meta": 520,
+        "gnbs": 348659,
+        "trajectories": 5871898
+      },
+      "scale_factor": 100000,
+      "dt": 2.0,
+      "mobility_label": "Urban 50 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 406,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-spain-vodafone-urban_50-s100000.json",
+        "gnbs": "data/gnbs-spain-vodafone.json",
+        "trajectories": "data/trajectories-spain-vodafone-urban_50-s100000.json"
+      },
+      "id": "spain-vodafone-urban_50-s100000",
+      "country": "spain",
+      "speed_kmh": 50.0,
+      "operator": "vodafone",
+      "psas": 5,
+      "total_bytes": 6221077,
+      "operator_label": "Vodafone",
+      "handovers": 3243,
+      "edge_upfs": 52
+    },
+    {
+      "mobility_id": "urban_50",
+      "country_label": "Spain",
+      "file_bytes": {
+        "meta": 518,
+        "gnbs": 348659,
+        "trajectories": 11726673
+      },
+      "scale_factor": 50000,
+      "dt": 2.0,
+      "mobility_label": "Urban 50 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 811,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-spain-vodafone-urban_50-s50000.json",
+        "gnbs": "data/gnbs-spain-vodafone.json",
+        "trajectories": "data/trajectories-spain-vodafone-urban_50-s50000.json"
+      },
+      "id": "spain-vodafone-urban_50-s50000",
+      "country": "spain",
+      "speed_kmh": 50.0,
+      "operator": "vodafone",
+      "psas": 5,
+      "total_bytes": 12075850,
+      "operator_label": "Vodafone",
+      "handovers": 6987,
+      "edge_upfs": 52
+    },
+    {
+      "mobility_id": "urban_50",
+      "country_label": "Spain",
+      "file_bytes": {
+        "meta": 520,
+        "gnbs": 348659,
+        "trajectories": 23458333
+      },
+      "scale_factor": 25000,
+      "dt": 2.0,
+      "mobility_label": "Urban 50 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 1622,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-spain-vodafone-urban_50-s25000.json",
+        "gnbs": "data/gnbs-spain-vodafone.json",
+        "trajectories": "data/trajectories-spain-vodafone-urban_50-s25000.json"
+      },
+      "id": "spain-vodafone-urban_50-s25000",
+      "country": "spain",
+      "speed_kmh": 50.0,
+      "operator": "vodafone",
+      "psas": 5,
+      "total_bytes": 23807512,
+      "operator_label": "Vodafone",
+      "handovers": 14536,
+      "edge_upfs": 52
+    },
+    {
+      "mobility_id": "highway_120",
+      "country_label": "Spain",
+      "file_bytes": {
+        "meta": 524,
+        "gnbs": 348659,
+        "trajectories": 5954239
+      },
+      "scale_factor": 100000,
+      "dt": 2.0,
+      "mobility_label": "Highway 120 km/h (Gauss-Markov)",
+      "mobility_model": "gauss_markov",
+      "agents": 406,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-spain-vodafone-highway_120-s100000.json",
+        "gnbs": "data/gnbs-spain-vodafone.json",
+        "trajectories": "data/trajectories-spain-vodafone-highway_120-s100000.json"
+      },
+      "id": "spain-vodafone-highway_120-s100000",
+      "country": "spain",
+      "speed_kmh": 120.0,
+      "operator": "vodafone",
+      "psas": 5,
+      "total_bytes": 6303422,
+      "operator_label": "Vodafone",
+      "handovers": 6896,
       "edge_upfs": 52
     },
     {
@@ -583,29 +1656,580 @@
       "country_label": "Spain",
       "file_bytes": {
         "meta": 523,
-        "gnbs": 814763,
-        "trajectories": 121003645
+        "gnbs": 348659,
+        "trajectories": 11897635
       },
-      "scale_factor": 5000,
+      "scale_factor": 50000,
       "dt": 2.0,
       "mobility_label": "Highway 120 km/h (Gauss-Markov)",
       "mobility_model": "gauss_markov",
-      "agents": 8109,
+      "agents": 811,
       "duration": 1200,
       "files": {
-        "meta": "data/meta-spain-movistar-highway_120-s5000.json",
-        "gnbs": "data/gnbs-spain-movistar.json",
-        "trajectories": "data/trajectories-spain-movistar-highway_120-s5000.json"
+        "meta": "data/meta-spain-vodafone-highway_120-s50000.json",
+        "gnbs": "data/gnbs-spain-vodafone.json",
+        "trajectories": "data/trajectories-spain-vodafone-highway_120-s50000.json"
       },
-      "id": "spain-movistar-highway_120-s5000",
+      "id": "spain-vodafone-highway_120-s50000",
       "country": "spain",
       "speed_kmh": 120.0,
-      "operator": "movistar",
+      "operator": "vodafone",
       "psas": 5,
-      "total_bytes": 121818931,
-      "operator_label": "Movistar",
-      "handovers": 218082,
+      "total_bytes": 12246817,
+      "operator_label": "Vodafone",
+      "handovers": 14002,
       "edge_upfs": 52
+    },
+    {
+      "mobility_id": "highway_120",
+      "country_label": "Spain",
+      "file_bytes": {
+        "meta": 524,
+        "gnbs": 348659,
+        "trajectories": 23821034
+      },
+      "scale_factor": 25000,
+      "dt": 2.0,
+      "mobility_label": "Highway 120 km/h (Gauss-Markov)",
+      "mobility_model": "gauss_markov",
+      "agents": 1622,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-spain-vodafone-highway_120-s25000.json",
+        "gnbs": "data/gnbs-spain-vodafone.json",
+        "trajectories": "data/trajectories-spain-vodafone-highway_120-s25000.json"
+      },
+      "id": "spain-vodafone-highway_120-s25000",
+      "country": "spain",
+      "speed_kmh": 120.0,
+      "operator": "vodafone",
+      "psas": 5,
+      "total_bytes": 24170217,
+      "operator_label": "Vodafone",
+      "handovers": 28540,
+      "edge_upfs": 52
+    },
+    {
+      "mobility_id": "pedestrian_5",
+      "country_label": "USA",
+      "file_bytes": {
+        "meta": 506,
+        "gnbs": 2648157,
+        "trajectories": 41566729
+      },
+      "scale_factor": 100000,
+      "dt": 2.0,
+      "mobility_label": "Pedestrian 5 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 2747,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-usa-att-pedestrian_5-s100000.json",
+        "gnbs": "data/gnbs-usa-att.json",
+        "trajectories": "data/trajectories-usa-att-pedestrian_5-s100000.json"
+      },
+      "id": "usa-att-pedestrian_5-s100000",
+      "country": "usa",
+      "speed_kmh": 5.0,
+      "operator": "att",
+      "psas": 5,
+      "total_bytes": 44215392,
+      "operator_label": "AT&T",
+      "handovers": 1902,
+      "edge_upfs": 817
+    },
+    {
+      "mobility_id": "pedestrian_5",
+      "country_label": "USA",
+      "file_bytes": {
+        "meta": 504,
+        "gnbs": 2648157,
+        "trajectories": 83084463
+      },
+      "scale_factor": 50000,
+      "dt": 2.0,
+      "mobility_label": "Pedestrian 5 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 5494,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-usa-att-pedestrian_5-s50000.json",
+        "gnbs": "data/gnbs-usa-att.json",
+        "trajectories": "data/trajectories-usa-att-pedestrian_5-s50000.json"
+      },
+      "id": "usa-att-pedestrian_5-s50000",
+      "country": "usa",
+      "speed_kmh": 5.0,
+      "operator": "att",
+      "psas": 5,
+      "total_bytes": 85733124,
+      "operator_label": "AT&T",
+      "handovers": 3716,
+      "edge_upfs": 817
+    },
+    {
+      "mobility_id": "pedestrian_5",
+      "country_label": "USA",
+      "file_bytes": {
+        "meta": 505,
+        "gnbs": 2648157,
+        "trajectories": 166226470
+      },
+      "scale_factor": 25000,
+      "dt": 2.0,
+      "mobility_label": "Pedestrian 5 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 10988,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-usa-att-pedestrian_5-s25000.json",
+        "gnbs": "data/gnbs-usa-att.json",
+        "trajectories": "data/trajectories-usa-att-pedestrian_5-s25000.json"
+      },
+      "id": "usa-att-pedestrian_5-s25000",
+      "country": "usa",
+      "speed_kmh": 5.0,
+      "operator": "att",
+      "psas": 5,
+      "total_bytes": 168875132,
+      "operator_label": "AT&T",
+      "handovers": 7741,
+      "edge_upfs": 817
+    },
+    {
+      "mobility_id": "urban_50",
+      "country_label": "USA",
+      "file_bytes": {
+        "meta": 496,
+        "gnbs": 2648157,
+        "trajectories": 41972407
+      },
+      "scale_factor": 100000,
+      "dt": 2.0,
+      "mobility_label": "Urban 50 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 2747,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-usa-att-urban_50-s100000.json",
+        "gnbs": "data/gnbs-usa-att.json",
+        "trajectories": "data/trajectories-usa-att-urban_50-s100000.json"
+      },
+      "id": "usa-att-urban_50-s100000",
+      "country": "usa",
+      "speed_kmh": 50.0,
+      "operator": "att",
+      "psas": 5,
+      "total_bytes": 44621060,
+      "operator_label": "AT&T",
+      "handovers": 17760,
+      "edge_upfs": 817
+    },
+    {
+      "mobility_id": "urban_50",
+      "country_label": "USA",
+      "file_bytes": {
+        "meta": 494,
+        "gnbs": 2648157,
+        "trajectories": 83946136
+      },
+      "scale_factor": 50000,
+      "dt": 2.0,
+      "mobility_label": "Urban 50 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 5494,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-usa-att-urban_50-s50000.json",
+        "gnbs": "data/gnbs-usa-att.json",
+        "trajectories": "data/trajectories-usa-att-urban_50-s50000.json"
+      },
+      "id": "usa-att-urban_50-s50000",
+      "country": "usa",
+      "speed_kmh": 50.0,
+      "operator": "att",
+      "psas": 5,
+      "total_bytes": 86594787,
+      "operator_label": "AT&T",
+      "handovers": 35466,
+      "edge_upfs": 817
+    },
+    {
+      "mobility_id": "urban_50",
+      "country_label": "USA",
+      "file_bytes": {
+        "meta": 495,
+        "gnbs": 2648157,
+        "trajectories": 167862388
+      },
+      "scale_factor": 25000,
+      "dt": 2.0,
+      "mobility_label": "Urban 50 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 10988,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-usa-att-urban_50-s25000.json",
+        "gnbs": "data/gnbs-usa-att.json",
+        "trajectories": "data/trajectories-usa-att-urban_50-s25000.json"
+      },
+      "id": "usa-att-urban_50-s25000",
+      "country": "usa",
+      "speed_kmh": 50.0,
+      "operator": "att",
+      "psas": 5,
+      "total_bytes": 170511040,
+      "operator_label": "AT&T",
+      "handovers": 70028,
+      "edge_upfs": 817
+    },
+    {
+      "mobility_id": "highway_120",
+      "country_label": "USA",
+      "file_bytes": {
+        "meta": 500,
+        "gnbs": 2648157,
+        "trajectories": 42530547
+      },
+      "scale_factor": 100000,
+      "dt": 2.0,
+      "mobility_label": "Highway 120 km/h (Gauss-Markov)",
+      "mobility_model": "gauss_markov",
+      "agents": 2747,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-usa-att-highway_120-s100000.json",
+        "gnbs": "data/gnbs-usa-att.json",
+        "trajectories": "data/trajectories-usa-att-highway_120-s100000.json"
+      },
+      "id": "usa-att-highway_120-s100000",
+      "country": "usa",
+      "speed_kmh": 120.0,
+      "operator": "att",
+      "psas": 5,
+      "total_bytes": 45179204,
+      "operator_label": "AT&T",
+      "handovers": 38171,
+      "edge_upfs": 817
+    },
+    {
+      "mobility_id": "highway_120",
+      "country_label": "USA",
+      "file_bytes": {
+        "meta": 498,
+        "gnbs": 2648157,
+        "trajectories": 85094242
+      },
+      "scale_factor": 50000,
+      "dt": 2.0,
+      "mobility_label": "Highway 120 km/h (Gauss-Markov)",
+      "mobility_model": "gauss_markov",
+      "agents": 5494,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-usa-att-highway_120-s50000.json",
+        "gnbs": "data/gnbs-usa-att.json",
+        "trajectories": "data/trajectories-usa-att-highway_120-s50000.json"
+      },
+      "id": "usa-att-highway_120-s50000",
+      "country": "usa",
+      "speed_kmh": 120.0,
+      "operator": "att",
+      "psas": 5,
+      "total_bytes": 87742897,
+      "operator_label": "AT&T",
+      "handovers": 77848,
+      "edge_upfs": 817
+    },
+    {
+      "mobility_id": "highway_120",
+      "country_label": "USA",
+      "file_bytes": {
+        "meta": 500,
+        "gnbs": 2648157,
+        "trajectories": 170245908
+      },
+      "scale_factor": 25000,
+      "dt": 2.0,
+      "mobility_label": "Highway 120 km/h (Gauss-Markov)",
+      "mobility_model": "gauss_markov",
+      "agents": 10988,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-usa-att-highway_120-s25000.json",
+        "gnbs": "data/gnbs-usa-att.json",
+        "trajectories": "data/trajectories-usa-att-highway_120-s25000.json"
+      },
+      "id": "usa-att-highway_120-s25000",
+      "country": "usa",
+      "speed_kmh": 120.0,
+      "operator": "att",
+      "psas": 5,
+      "total_bytes": 172894565,
+      "operator_label": "AT&T",
+      "handovers": 155326,
+      "edge_upfs": 817
+    },
+    {
+      "mobility_id": "pedestrian_5",
+      "country_label": "USA",
+      "file_bytes": {
+        "meta": 522,
+        "gnbs": 5275220,
+        "trajectories": 41576694
+      },
+      "scale_factor": 100000,
+      "dt": 2.0,
+      "mobility_label": "Pedestrian 5 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 2747,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-usa-tmobile-pedestrian_5-s100000.json",
+        "gnbs": "data/gnbs-usa-tmobile.json",
+        "trajectories": "data/trajectories-usa-tmobile-pedestrian_5-s100000.json"
+      },
+      "id": "usa-tmobile-pedestrian_5-s100000",
+      "country": "usa",
+      "speed_kmh": 5.0,
+      "operator": "tmobile",
+      "psas": 5,
+      "total_bytes": 46852436,
+      "operator_label": "T-Mobile",
+      "handovers": 3133,
+      "edge_upfs": 817
+    },
+    {
+      "mobility_id": "pedestrian_5",
+      "country_label": "USA",
+      "file_bytes": {
+        "meta": 520,
+        "gnbs": 5275220,
+        "trajectories": 83142609
+      },
+      "scale_factor": 50000,
+      "dt": 2.0,
+      "mobility_label": "Pedestrian 5 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 5494,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-usa-tmobile-pedestrian_5-s50000.json",
+        "gnbs": "data/gnbs-usa-tmobile.json",
+        "trajectories": "data/trajectories-usa-tmobile-pedestrian_5-s50000.json"
+      },
+      "id": "usa-tmobile-pedestrian_5-s50000",
+      "country": "usa",
+      "speed_kmh": 5.0,
+      "operator": "tmobile",
+      "psas": 5,
+      "total_bytes": 88418349,
+      "operator_label": "T-Mobile",
+      "handovers": 5653,
+      "edge_upfs": 817
+    },
+    {
+      "mobility_id": "pedestrian_5",
+      "country_label": "USA",
+      "file_bytes": {
+        "meta": 522,
+        "gnbs": 5275220,
+        "trajectories": 166338336
+      },
+      "scale_factor": 25000,
+      "dt": 2.0,
+      "mobility_label": "Pedestrian 5 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 10988,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-usa-tmobile-pedestrian_5-s25000.json",
+        "gnbs": "data/gnbs-usa-tmobile.json",
+        "trajectories": "data/trajectories-usa-tmobile-pedestrian_5-s25000.json"
+      },
+      "id": "usa-tmobile-pedestrian_5-s25000",
+      "country": "usa",
+      "speed_kmh": 5.0,
+      "operator": "tmobile",
+      "psas": 5,
+      "total_bytes": 171614078,
+      "operator_label": "T-Mobile",
+      "handovers": 11552,
+      "edge_upfs": 817
+    },
+    {
+      "mobility_id": "urban_50",
+      "country_label": "USA",
+      "file_bytes": {
+        "meta": 512,
+        "gnbs": 5275220,
+        "trajectories": 42205594
+      },
+      "scale_factor": 100000,
+      "dt": 2.0,
+      "mobility_label": "Urban 50 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 2747,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-usa-tmobile-urban_50-s100000.json",
+        "gnbs": "data/gnbs-usa-tmobile.json",
+        "trajectories": "data/trajectories-usa-tmobile-urban_50-s100000.json"
+      },
+      "id": "usa-tmobile-urban_50-s100000",
+      "country": "usa",
+      "speed_kmh": 50.0,
+      "operator": "tmobile",
+      "psas": 5,
+      "total_bytes": 47481326,
+      "operator_label": "T-Mobile",
+      "handovers": 26458,
+      "edge_upfs": 817
+    },
+    {
+      "mobility_id": "urban_50",
+      "country_label": "USA",
+      "file_bytes": {
+        "meta": 510,
+        "gnbs": 5275220,
+        "trajectories": 84477195
+      },
+      "scale_factor": 50000,
+      "dt": 2.0,
+      "mobility_label": "Urban 50 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 5494,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-usa-tmobile-urban_50-s50000.json",
+        "gnbs": "data/gnbs-usa-tmobile.json",
+        "trajectories": "data/trajectories-usa-tmobile-urban_50-s50000.json"
+      },
+      "id": "usa-tmobile-urban_50-s50000",
+      "country": "usa",
+      "speed_kmh": 50.0,
+      "operator": "tmobile",
+      "psas": 5,
+      "total_bytes": 89752925,
+      "operator_label": "T-Mobile",
+      "handovers": 53141,
+      "edge_upfs": 817
+    },
+    {
+      "mobility_id": "urban_50",
+      "country_label": "USA",
+      "file_bytes": {
+        "meta": 512,
+        "gnbs": 5275220,
+        "trajectories": 168950148
+      },
+      "scale_factor": 25000,
+      "dt": 2.0,
+      "mobility_label": "Urban 50 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 10988,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-usa-tmobile-urban_50-s25000.json",
+        "gnbs": "data/gnbs-usa-tmobile.json",
+        "trajectories": "data/trajectories-usa-tmobile-urban_50-s25000.json"
+      },
+      "id": "usa-tmobile-urban_50-s25000",
+      "country": "usa",
+      "speed_kmh": 50.0,
+      "operator": "tmobile",
+      "psas": 5,
+      "total_bytes": 174225880,
+      "operator_label": "T-Mobile",
+      "handovers": 109101,
+      "edge_upfs": 817
+    },
+    {
+      "mobility_id": "highway_120",
+      "country_label": "USA",
+      "file_bytes": {
+        "meta": 516,
+        "gnbs": 5275220,
+        "trajectories": 43139475
+      },
+      "scale_factor": 100000,
+      "dt": 2.0,
+      "mobility_label": "Highway 120 km/h (Gauss-Markov)",
+      "mobility_model": "gauss_markov",
+      "agents": 2747,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-usa-tmobile-highway_120-s100000.json",
+        "gnbs": "data/gnbs-usa-tmobile.json",
+        "trajectories": "data/trajectories-usa-tmobile-highway_120-s100000.json"
+      },
+      "id": "usa-tmobile-highway_120-s100000",
+      "country": "usa",
+      "speed_kmh": 120.0,
+      "operator": "tmobile",
+      "psas": 5,
+      "total_bytes": 48415211,
+      "operator_label": "T-Mobile",
+      "handovers": 60959,
+      "edge_upfs": 817
+    },
+    {
+      "mobility_id": "highway_120",
+      "country_label": "USA",
+      "file_bytes": {
+        "meta": 515,
+        "gnbs": 5275220,
+        "trajectories": 86080539
+      },
+      "scale_factor": 50000,
+      "dt": 2.0,
+      "mobility_label": "Highway 120 km/h (Gauss-Markov)",
+      "mobility_model": "gauss_markov",
+      "agents": 5494,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-usa-tmobile-highway_120-s50000.json",
+        "gnbs": "data/gnbs-usa-tmobile.json",
+        "trajectories": "data/trajectories-usa-tmobile-highway_120-s50000.json"
+      },
+      "id": "usa-tmobile-highway_120-s50000",
+      "country": "usa",
+      "speed_kmh": 120.0,
+      "operator": "tmobile",
+      "psas": 5,
+      "total_bytes": 91356274,
+      "operator_label": "T-Mobile",
+      "handovers": 113893,
+      "edge_upfs": 817
+    },
+    {
+      "mobility_id": "highway_120",
+      "country_label": "USA",
+      "file_bytes": {
+        "meta": 516,
+        "gnbs": 5275220,
+        "trajectories": 172085281
+      },
+      "scale_factor": 25000,
+      "dt": 2.0,
+      "mobility_label": "Highway 120 km/h (Gauss-Markov)",
+      "mobility_model": "gauss_markov",
+      "agents": 10988,
+      "duration": 1200,
+      "files": {
+        "meta": "data/meta-usa-tmobile-highway_120-s25000.json",
+        "gnbs": "data/gnbs-usa-tmobile.json",
+        "trajectories": "data/trajectories-usa-tmobile-highway_120-s25000.json"
+      },
+      "id": "usa-tmobile-highway_120-s25000",
+      "country": "usa",
+      "speed_kmh": 120.0,
+      "operator": "tmobile",
+      "psas": 5,
+      "total_bytes": 177361017,
+      "operator_label": "T-Mobile",
+      "handovers": 224935,
+      "edge_upfs": 817
     },
     {
       "mobility_id": "pedestrian_5",
@@ -613,7 +2237,7 @@
       "file_bytes": {
         "meta": 521,
         "gnbs": 2160087,
-        "trajectories": 41558364
+        "trajectories": 41540672
       },
       "scale_factor": 100000,
       "dt": 2.0,
@@ -631,9 +2255,9 @@
       "speed_kmh": 5.0,
       "operator": "verizon",
       "psas": 5,
-      "total_bytes": 43718972,
+      "total_bytes": 43701280,
       "operator_label": "Verizon",
-      "handovers": 1546,
+      "handovers": 1695,
       "edge_upfs": 817
     },
     {
@@ -642,7 +2266,7 @@
       "file_bytes": {
         "meta": 519,
         "gnbs": 2160087,
-        "trajectories": 83081830
+        "trajectories": 83108652
       },
       "scale_factor": 50000,
       "dt": 2.0,
@@ -660,9 +2284,9 @@
       "speed_kmh": 5.0,
       "operator": "verizon",
       "psas": 5,
-      "total_bytes": 85242436,
+      "total_bytes": 85269258,
       "operator_label": "Verizon",
-      "handovers": 3407,
+      "handovers": 3299,
       "edge_upfs": 817
     },
     {
@@ -671,7 +2295,7 @@
       "file_bytes": {
         "meta": 520,
         "gnbs": 2160087,
-        "trajectories": 166170759
+        "trajectories": 166189483
       },
       "scale_factor": 25000,
       "dt": 2.0,
@@ -689,38 +2313,9 @@
       "speed_kmh": 5.0,
       "operator": "verizon",
       "psas": 5,
-      "total_bytes": 168331366,
+      "total_bytes": 168350090,
       "operator_label": "Verizon",
-      "handovers": 6591,
-      "edge_upfs": 817
-    },
-    {
-      "mobility_id": "pedestrian_5",
-      "country_label": "USA",
-      "file_bytes": {
-        "meta": 521,
-        "gnbs": 2160087,
-        "trajectories": 415443431
-      },
-      "scale_factor": 10000,
-      "dt": 2.0,
-      "mobility_label": "Pedestrian 5 km/h (Random Waypoint)",
-      "mobility_model": "random_waypoint",
-      "agents": 27470,
-      "duration": 1200,
-      "files": {
-        "meta": "data/meta-usa-verizon-pedestrian_5-s10000.json",
-        "gnbs": "data/gnbs-usa-verizon.json",
-        "trajectories": "data/trajectories-usa-verizon-pedestrian_5-s10000.json"
-      },
-      "id": "usa-verizon-pedestrian_5-s10000",
-      "country": "usa",
-      "speed_kmh": 5.0,
-      "operator": "verizon",
-      "psas": 5,
-      "total_bytes": 417604039,
-      "operator_label": "Verizon",
-      "handovers": 16326,
+      "handovers": 6548,
       "edge_upfs": 817
     },
     {
@@ -729,7 +2324,7 @@
       "file_bytes": {
         "meta": 511,
         "gnbs": 2160087,
-        "trajectories": 41940797
+        "trajectories": 41927047
       },
       "scale_factor": 100000,
       "dt": 2.0,
@@ -747,9 +2342,9 @@
       "speed_kmh": 50.0,
       "operator": "verizon",
       "psas": 5,
-      "total_bytes": 44101395,
+      "total_bytes": 44087645,
       "operator_label": "Verizon",
-      "handovers": 15728,
+      "handovers": 15128,
       "edge_upfs": 817
     },
     {
@@ -758,7 +2353,7 @@
       "file_bytes": {
         "meta": 509,
         "gnbs": 2160087,
-        "trajectories": 83840993
+        "trajectories": 83845472
       },
       "scale_factor": 50000,
       "dt": 2.0,
@@ -776,9 +2371,9 @@
       "speed_kmh": 50.0,
       "operator": "verizon",
       "psas": 5,
-      "total_bytes": 86001589,
+      "total_bytes": 86006068,
       "operator_label": "Verizon",
-      "handovers": 31815,
+      "handovers": 30447,
       "edge_upfs": 817
     },
     {
@@ -787,7 +2382,7 @@
       "file_bytes": {
         "meta": 510,
         "gnbs": 2160087,
-        "trajectories": 167655234
+        "trajectories": 167674966
       },
       "scale_factor": 25000,
       "dt": 2.0,
@@ -805,38 +2400,9 @@
       "speed_kmh": 50.0,
       "operator": "verizon",
       "psas": 5,
-      "total_bytes": 169815831,
+      "total_bytes": 169835563,
       "operator_label": "Verizon",
-      "handovers": 62798,
-      "edge_upfs": 817
-    },
-    {
-      "mobility_id": "urban_50",
-      "country_label": "USA",
-      "file_bytes": {
-        "meta": 511,
-        "gnbs": 2160087,
-        "trajectories": 419172710
-      },
-      "scale_factor": 10000,
-      "dt": 2.0,
-      "mobility_label": "Urban 50 km/h (Random Waypoint)",
-      "mobility_model": "random_waypoint",
-      "agents": 27470,
-      "duration": 1200,
-      "files": {
-        "meta": "data/meta-usa-verizon-urban_50-s10000.json",
-        "gnbs": "data/gnbs-usa-verizon.json",
-        "trajectories": "data/trajectories-usa-verizon-urban_50-s10000.json"
-      },
-      "id": "usa-verizon-urban_50-s10000",
-      "country": "usa",
-      "speed_kmh": 50.0,
-      "operator": "verizon",
-      "psas": 5,
-      "total_bytes": 421333308,
-      "operator_label": "Verizon",
-      "handovers": 155406,
+      "handovers": 62460,
       "edge_upfs": 817
     },
     {
@@ -845,7 +2411,7 @@
       "file_bytes": {
         "meta": 515,
         "gnbs": 2160087,
-        "trajectories": 42430416
+        "trajectories": 42463730
       },
       "scale_factor": 100000,
       "dt": 2.0,
@@ -863,9 +2429,9 @@
       "speed_kmh": 120.0,
       "operator": "verizon",
       "psas": 5,
-      "total_bytes": 44591018,
+      "total_bytes": 44624332,
       "operator_label": "Verizon",
-      "handovers": 34023,
+      "handovers": 35136,
       "edge_upfs": 817
     },
     {
@@ -874,7 +2440,7 @@
       "file_bytes": {
         "meta": 513,
         "gnbs": 2160087,
-        "trajectories": 84870579
+        "trajectories": 84840320
       },
       "scale_factor": 50000,
       "dt": 2.0,
@@ -892,9 +2458,9 @@
       "speed_kmh": 120.0,
       "operator": "verizon",
       "psas": 5,
-      "total_bytes": 87031179,
+      "total_bytes": 87000920,
       "operator_label": "Verizon",
-      "handovers": 68533,
+      "handovers": 66848,
       "edge_upfs": 817
     },
     {
@@ -903,7 +2469,7 @@
       "file_bytes": {
         "meta": 515,
         "gnbs": 2160087,
-        "trajectories": 169675017
+        "trajectories": 169814212
       },
       "scale_factor": 25000,
       "dt": 2.0,
@@ -921,38 +2487,9 @@
       "speed_kmh": 120.0,
       "operator": "verizon",
       "psas": 5,
-      "total_bytes": 171835619,
+      "total_bytes": 171974814,
       "operator_label": "Verizon",
-      "handovers": 137163,
-      "edge_upfs": 817
-    },
-    {
-      "mobility_id": "highway_120",
-      "country_label": "USA",
-      "file_bytes": {
-        "meta": 515,
-        "gnbs": 2160087,
-        "trajectories": 424358008
-      },
-      "scale_factor": 10000,
-      "dt": 2.0,
-      "mobility_label": "Highway 120 km/h (Gauss-Markov)",
-      "mobility_model": "gauss_markov",
-      "agents": 27470,
-      "duration": 1200,
-      "files": {
-        "meta": "data/meta-usa-verizon-highway_120-s10000.json",
-        "gnbs": "data/gnbs-usa-verizon.json",
-        "trajectories": "data/trajectories-usa-verizon-highway_120-s10000.json"
-      },
-      "id": "usa-verizon-highway_120-s10000",
-      "country": "usa",
-      "speed_kmh": 120.0,
-      "operator": "verizon",
-      "psas": 5,
-      "total_bytes": 426518610,
-      "operator_label": "Verizon",
-      "handovers": 343818,
+      "handovers": 139151,
       "edge_upfs": 817
     },
     {
@@ -961,7 +2498,7 @@
       "file_bytes": {
         "meta": 527,
         "gnbs": 3663501,
-        "trajectories": 41533542
+        "trajectories": 41523157
       },
       "scale_factor": 100000,
       "dt": 2.0,
@@ -979,9 +2516,9 @@
       "speed_kmh": 5.0,
       "operator": "asr",
       "psas": 5,
-      "total_bytes": 45197570,
+      "total_bytes": 45187185,
       "operator_label": "ASR macro",
-      "handovers": 1571,
+      "handovers": 1696,
       "edge_upfs": 817
     },
     {
@@ -990,7 +2527,7 @@
       "file_bytes": {
         "meta": 525,
         "gnbs": 3663501,
-        "trajectories": 83100237
+        "trajectories": 83112318
       },
       "scale_factor": 50000,
       "dt": 2.0,
@@ -1008,9 +2545,9 @@
       "speed_kmh": 5.0,
       "operator": "asr",
       "psas": 5,
-      "total_bytes": 86764263,
+      "total_bytes": 86776344,
       "operator_label": "ASR macro",
-      "handovers": 3246,
+      "handovers": 3235,
       "edge_upfs": 817
     },
     {
@@ -1019,7 +2556,7 @@
       "file_bytes": {
         "meta": 526,
         "gnbs": 3663501,
-        "trajectories": 166218281
+        "trajectories": 166207486
       },
       "scale_factor": 25000,
       "dt": 2.0,
@@ -1037,38 +2574,9 @@
       "speed_kmh": 5.0,
       "operator": "asr",
       "psas": 5,
-      "total_bytes": 169882308,
+      "total_bytes": 169871513,
       "operator_label": "ASR macro",
-      "handovers": 6545,
-      "edge_upfs": 817
-    },
-    {
-      "mobility_id": "pedestrian_5",
-      "country_label": "USA ASR",
-      "file_bytes": {
-        "meta": 527,
-        "gnbs": 3663501,
-        "trajectories": 415471937
-      },
-      "scale_factor": 10000,
-      "dt": 2.0,
-      "mobility_label": "Pedestrian 5 km/h (Random Waypoint)",
-      "mobility_model": "random_waypoint",
-      "agents": 27470,
-      "duration": 1200,
-      "files": {
-        "meta": "data/meta-usa_asr-asr-pedestrian_5-s10000.json",
-        "gnbs": "data/gnbs-usa_asr-asr.json",
-        "trajectories": "data/trajectories-usa_asr-asr-pedestrian_5-s10000.json"
-      },
-      "id": "usa_asr-asr-pedestrian_5-s10000",
-      "country": "usa_asr",
-      "speed_kmh": 5.0,
-      "operator": "asr",
-      "psas": 5,
-      "total_bytes": 419135965,
-      "operator_label": "ASR macro",
-      "handovers": 16469,
+      "handovers": 6655,
       "edge_upfs": 817
     },
     {
@@ -1077,7 +2585,7 @@
       "file_bytes": {
         "meta": 517,
         "gnbs": 3663501,
-        "trajectories": 41909259
+        "trajectories": 41915411
       },
       "scale_factor": 100000,
       "dt": 2.0,
@@ -1095,9 +2603,9 @@
       "speed_kmh": 50.0,
       "operator": "asr",
       "psas": 5,
-      "total_bytes": 45573277,
+      "total_bytes": 45579429,
       "operator_label": "ASR macro",
-      "handovers": 16048,
+      "handovers": 15918,
       "edge_upfs": 817
     },
     {
@@ -1106,7 +2614,7 @@
       "file_bytes": {
         "meta": 515,
         "gnbs": 3663501,
-        "trajectories": 83842536
+        "trajectories": 83839139
       },
       "scale_factor": 50000,
       "dt": 2.0,
@@ -1124,9 +2632,9 @@
       "speed_kmh": 50.0,
       "operator": "asr",
       "psas": 5,
-      "total_bytes": 87506552,
+      "total_bytes": 87503155,
       "operator_label": "ASR macro",
-      "handovers": 31590,
+      "handovers": 31256,
       "edge_upfs": 817
     },
     {
@@ -1135,7 +2643,7 @@
       "file_bytes": {
         "meta": 516,
         "gnbs": 3663501,
-        "trajectories": 167729340
+        "trajectories": 167775434
       },
       "scale_factor": 25000,
       "dt": 2.0,
@@ -1153,38 +2661,9 @@
       "speed_kmh": 50.0,
       "operator": "asr",
       "psas": 5,
-      "total_bytes": 171393357,
+      "total_bytes": 171439451,
       "operator_label": "ASR macro",
-      "handovers": 63241,
-      "edge_upfs": 817
-    },
-    {
-      "mobility_id": "urban_50",
-      "country_label": "USA ASR",
-      "file_bytes": {
-        "meta": 517,
-        "gnbs": 3663501,
-        "trajectories": 419241205
-      },
-      "scale_factor": 10000,
-      "dt": 2.0,
-      "mobility_label": "Urban 50 km/h (Random Waypoint)",
-      "mobility_model": "random_waypoint",
-      "agents": 27470,
-      "duration": 1200,
-      "files": {
-        "meta": "data/meta-usa_asr-asr-urban_50-s10000.json",
-        "gnbs": "data/gnbs-usa_asr-asr.json",
-        "trajectories": "data/trajectories-usa_asr-asr-urban_50-s10000.json"
-      },
-      "id": "usa_asr-asr-urban_50-s10000",
-      "country": "usa_asr",
-      "speed_kmh": 50.0,
-      "operator": "asr",
-      "psas": 5,
-      "total_bytes": 422905223,
-      "operator_label": "ASR macro",
-      "handovers": 158311,
+      "handovers": 63371,
       "edge_upfs": 817
     },
     {
@@ -1193,7 +2672,7 @@
       "file_bytes": {
         "meta": 521,
         "gnbs": 3663501,
-        "trajectories": 42488229
+        "trajectories": 42465482
       },
       "scale_factor": 100000,
       "dt": 2.0,
@@ -1211,9 +2690,9 @@
       "speed_kmh": 120.0,
       "operator": "asr",
       "psas": 5,
-      "total_bytes": 46152251,
+      "total_bytes": 46129504,
       "operator_label": "ASR macro",
-      "handovers": 35819,
+      "handovers": 36017,
       "edge_upfs": 817
     },
     {
@@ -1222,7 +2701,7 @@
       "file_bytes": {
         "meta": 519,
         "gnbs": 3663501,
-        "trajectories": 84893310
+        "trajectories": 84910671
       },
       "scale_factor": 50000,
       "dt": 2.0,
@@ -1240,9 +2719,9 @@
       "speed_kmh": 120.0,
       "operator": "asr",
       "psas": 5,
-      "total_bytes": 88557330,
+      "total_bytes": 88574691,
       "operator_label": "ASR macro",
-      "handovers": 71342,
+      "handovers": 70728,
       "edge_upfs": 817
     },
     {
@@ -1251,7 +2730,7 @@
       "file_bytes": {
         "meta": 521,
         "gnbs": 3663501,
-        "trajectories": 169884798
+        "trajectories": 169880973
       },
       "scale_factor": 25000,
       "dt": 2.0,
@@ -1269,41 +2748,12 @@
       "speed_kmh": 120.0,
       "operator": "asr",
       "psas": 5,
-      "total_bytes": 173548820,
+      "total_bytes": 173544995,
       "operator_label": "ASR macro",
-      "handovers": 143050,
-      "edge_upfs": 817
-    },
-    {
-      "mobility_id": "highway_120",
-      "country_label": "USA ASR",
-      "file_bytes": {
-        "meta": 521,
-        "gnbs": 3663501,
-        "trajectories": 424686175
-      },
-      "scale_factor": 10000,
-      "dt": 2.0,
-      "mobility_label": "Highway 120 km/h (Gauss-Markov)",
-      "mobility_model": "gauss_markov",
-      "agents": 27470,
-      "duration": 1200,
-      "files": {
-        "meta": "data/meta-usa_asr-asr-highway_120-s10000.json",
-        "gnbs": "data/gnbs-usa_asr-asr.json",
-        "trajectories": "data/trajectories-usa_asr-asr-highway_120-s10000.json"
-      },
-      "id": "usa_asr-asr-highway_120-s10000",
-      "country": "usa_asr",
-      "speed_kmh": 120.0,
-      "operator": "asr",
-      "psas": 5,
-      "total_bytes": 428350197,
-      "operator_label": "ASR macro",
-      "handovers": 358572,
+      "handovers": 144673,
       "edge_upfs": 817
     }
   ],
   "version": 1,
-  "generated_at": "2026-07-06T10:23:23.176"
+  "generated_at": "2026-07-06T10:58:29.420"
 }
