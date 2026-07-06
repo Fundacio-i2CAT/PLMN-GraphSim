@@ -1,7 +1,7 @@
 #!/usr/bin/env julia
 # National-grade mobility evaluation, parametric by country.
-#   julia --project run_national.jl spain
-#   julia --project run_national.jl usa
+#   julia --project main.jl national spain
+#   julia --project main.jl national usa
 #
 # Full OpenCellID topology (no subsampling), principled two-tier deployment matching
 # the IEEE Access paper: edge UPFs by population geography (Spain 52 provinces /
@@ -16,7 +16,7 @@ using DesJulia6gRupa.Types
 using ConcurrentSim
 import DesJulia6gRupa.Simulation as DSim
 
-#   julia --project run_national.jl spain 0.05   # 5% inbound roamers (§7.4 phase-1)
+#   julia --project main.jl national spain 0.05   # 5% inbound roamers (§7.4 phase-1)
 const COUNTRY = lowercase(get(ARGS, 1, "spain"))
 const ROAM = parse(Float64, get(ARGS, 2, "0.0"))  # roamer fraction (0 = legacy intra-PLMN run)
 const SCALE = 1000
@@ -44,12 +44,12 @@ const NUM_PSA = PROFILES[COUNTRY][5]
 function build_topology()
     haskey(PROFILES, COUNTRY) || error("unknown country $COUNTRY")
     sub, files, opid, nedge, _npsa, _pop = PROFILES[COUNTRY]
-    base = joinpath(@__DIR__, "data", sub)
+    base = joinpath(pkgdir(DesJulia6gRupa), "data", sub)
     paths = filter(isfile, [joinpath(base, f) for f in files])
     isempty(paths) && error("no gNB data under $base for $files")
     # two_tier: nedge edge UPFs (UL-CL) clustered under NUM_PSA centralized PSAs
     cfg = SimConfig(1, 2, SCALE, 1, 1, 1, :two_tier, NUM_PSA, 1)
-    topo = DSim.load_and_deploy_network(paths, opid, nedge, joinpath(@__DIR__, "data", sub), cfg)
+    topo = DSim.load_and_deploy_network(paths, opid, nedge, joinpath(pkgdir(DesJulia6gRupa), "data", sub), cfg)
     return topo, nedge
 end
 

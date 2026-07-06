@@ -4,8 +4,8 @@
 # the 6G-RUPA advantage is robust to deployment density, and how the Xn/N2 mix
 # shifts as anchor regions shrink. Multiple seeds for confidence.
 #
-#   julia --project run_deployment_sweep.jl spain
-#   julia --project run_deployment_sweep.jl usa
+#   julia --project main.jl deployment_sweep spain
+#   julia --project main.jl deployment_sweep usa
 
 using DesJulia6gRupa
 using DesJulia6gRupa.Types
@@ -26,7 +26,7 @@ const DT = 2
 const SPEED = 50.0
 
 sub, files, opid = PROFILES[COUNTRY]
-base = joinpath(@__DIR__, "data", sub)
+base = joinpath(pkgdir(DesJulia6gRupa), "data", sub)
 paths = filter(isfile, [joinpath(base, "opencellid", f) for f in files])
 
 println("Deployment-pattern sweep [$(uppercase(COUNTRY))]  GM $(SPEED)km/h, $NAG agents, $(DUR)s, seeds=$(length(SEEDS))")
@@ -72,7 +72,7 @@ for nupf in UPF_COUNTS
 end
 
 # persist
-open(joinpath(@__DIR__, "results", "deployment_sweep_$(COUNTRY).csv"), "w") do io
+open(joinpath(pkgdir(DesJulia6gRupa), "results", "deployment_sweep_$(COUNTRY).csv"), "w") do io
     println(io, "upfs,ho_mean,n2_pct,mb5_per_hr,mb6_per_hr,adv_mean,adv_sd")
     for r in results
         println(io, "$(r.nupf),$(round(r.ho,digits=1)),$(round(r.n2,digits=3)),",

@@ -1,8 +1,8 @@
 #!/usr/bin/env julia
 # Iberia two-country roaming evaluation (§7.4 phase 2).
-#   julia --project run_iberia.jl                # deployed default (:reestablish)
-#   julia --project run_iberia.jl ideal_ho       # 5G best-case sensitivity
-#   julia --project run_iberia.jl reestablish 500 300   # smoke: 500 agents, 300 s
+#   julia --project main.jl iberia                # deployed default (:reestablish)
+#   julia --project main.jl iberia ideal_ho       # 5G best-case sensitivity
+#   julia --project main.jl iberia reestablish 500 300   # smoke: 500 agents, 300 s
 #
 # Composes the Spain (Movistar, 52 edge / 5 PSA) and Portugal (MEO, 18 edge / 2 PSA)
 # national topologies into one multi-operator field. Agents are placed by the merged
@@ -30,7 +30,7 @@ const HOME    = ("spain",    ["opencellid/214.csv"], 7, 52, 5, 49_442_844)
 const VISITED = ("portugal", ["opencellid/268.csv"], 6, 18, 2, 9_855_909)
 
 function build_country(sub, files, opid, nedge, npsa)
-    base = joinpath(@__DIR__, "data", sub)
+    base = joinpath(pkgdir(DesJulia6gRupa), "data", sub)
     paths = filter(isfile, [joinpath(base, f) for f in files])
     isempty(paths) && error("no gNB data under $base for $files")
     cfg = SimConfig(1, 2, SCALE, 1, 1, 1, :two_tier, npsa, 1)

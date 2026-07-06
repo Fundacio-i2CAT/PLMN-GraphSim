@@ -22,8 +22,8 @@ using DesJulia6gRupa, DesJulia6gRupa.Types
 import DesJulia6gRupa.Simulation as DSim
 import DesJulia6gRupa: select_agent_location
 
-const CONFIG_PATH = joinpath(@__DIR__, "config.toml")
-const OUTDIR = get(ENV, "FRONTEND_DATA_DIR", joinpath(@__DIR__, "frontend", "data"))
+const CONFIG_PATH = joinpath(pkgdir(DesJulia6gRupa), "config.toml")
+const OUTDIR = get(ENV, "FRONTEND_DATA_DIR", joinpath(pkgdir(DesJulia6gRupa), "frontend", "data"))
 const DEFAULT_COUNTRY = "spain"
 const DEFAULT_OPERATOR = "movistar"
 const SCALE_PRESETS = [100_000, 50_000, 25_000, 10_000, 5_000, 1_000]
@@ -237,7 +237,7 @@ function gnb_paths(data_dir::String, country_config)
 end
 
 function build_topology(country::String, operator::String, country_config, scale_factor::Int)
-    data_dir = joinpath(@__DIR__, String(country_config["data_dir"]))
+    data_dir = joinpath(pkgdir(DesJulia6gRupa), String(country_config["data_dir"]))
     paths = gnb_paths(data_dir, country_config)
     isempty(paths) && error("no OpenCellID data files found under $data_dir/opencellid")
 

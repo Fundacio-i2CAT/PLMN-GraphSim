@@ -1,9 +1,9 @@
 #!/usr/bin/env julia
 # Multi-operator federation evaluation (§7.5.1): pan-Iberian "network of networks".
-#   julia --project run_federation.jl                       # deployed default (:reestablish)
-#   julia --project run_federation.jl ideal_ho              # 5G best-case sensitivity
-#   julia --project run_federation.jl reestablish 2000 600  # smoke: 2000 agents, 600 s
-#   julia --project run_federation.jl reestablish 0 1200 all  # full demand, all mobility
+#   julia --project main.jl federation                       # deployed default (:reestablish)
+#   julia --project main.jl federation ideal_ho              # 5G best-case sensitivity
+#   julia --project main.jl federation reestablish 2000 600  # smoke: 2000 agents, 600 s
+#   julia --project main.jl federation reestablish 0 1200 all  # full demand, all mobility
 #
 # K real operator fields (existing OpenCellID data, no new downloads) composed into
 # one shared topology, K swept 2..5. Member order keeps K=2 == the Iberia §7.4
@@ -55,7 +55,7 @@ const RUN_MODELS = MOBILITY == "all" ? MODELS :
 isempty(RUN_MODELS) && error("unknown mobility '$MOBILITY' (pedestrian|urban|highway|all)")
 
 function build_member(sub, files, opid, nedge, npsa)
-    base = joinpath(@__DIR__, "data", sub)
+    base = joinpath(pkgdir(DesJulia6gRupa), "data", sub)
     paths = filter(isfile, [joinpath(base, f) for f in files])
     isempty(paths) && error("no gNB data under $base for $files")
     cfg = SimConfig(1, 2, SCALE, 1, 1, 1, :two_tier, npsa, 1)
