@@ -96,6 +96,7 @@
     <div class="it"><span class="dot" style="background:#ff9f43"></span> L2 N2 - 5G 1150 B / RUPA 200</div>
     <div class="it"><span class="dot" style="background:#ff5b5b"></span> L3 PSA - 5G 1500 B / RUPA 200</div>
     <div class="it"><span class="dot" style="background:#4ea3ff"></span> moving agents - faint = gNB sites</div>
+    <div class="it" id="ntnLegend" style="display:none"><span class="dot" style="background:#8fd6ff"></span> <span id="ntnLegendText">LEO satellites + coverage cones</span></div>
   </div>
 
   <div id="ctrl">
@@ -104,6 +105,8 @@
     <input id="time" type="range" min="0" max="600" value="0" step="1">
     <div class="grp">speed x<input id="rate" type="range" min="1" max="60" value="20"></div>
     <div class="grp">trail<input id="trail" type="range" min="5" max="120" value="40"></div>
+    <div class="grp" id="ntnGrp" style="display:none">satellites
+      <input id="ntn" type="checkbox" checked></div>
   </div>
 
   <div id="heavyModal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="heavyTitle">
@@ -150,6 +153,8 @@
   let meta = null;
   let gnbs = [];
   let trips = [];
+  let ntn = null;          // ntn-<constellation>-<country>.json or null
+  let ntnOn = true;
   let hos = [];
   let tArr = [];
   let pre5 = new Float64Array(1);
@@ -381,6 +386,48 @@
       currentTime,
       fadeTrail: true
     });
+    const out = [baseLayer(), gnb, tl];
+
+    // §7.5.2 NTN: LEO ground tracks + interpolated satellite positions + the
+    // min-elevation coverage cone each satellite sweeps over the country.
+    if (ntn && ntnOn) {
+      const pos = ntnPositions(currentTime);
+      out.push(new ScatterplotLayer({
+        id: 'ntn-footprint',
+        data: pos,
+        getPosition: d => d,
+        getRadius: ntn.footprint_km * 1000,
+        radiusUnits: 'meters',
+        getFillColor: [120, 200, 255, 14],
+        stroked: true,
+        getLineColor: [140, 210, 255, 70],
+        lineWidthMinPixels: 1,
+        updateTriggers: {getPosition: currentTime}
+      }));
+      out.push(new TripsLayer({
+        id: 'ntn-trips',
+        data: ntn.sats,
+        getPath: d => d.path,
+        getTimestamps: d => d.ts,
+        getColor: [143, 214, 255],
+        opacity: 0.55,
+        widthMinPixels: 1,
+        trailLength: 150,
+        currentTime,
+        fadeTrail: true
+      }));
+      out.push(new ScatterplotLayer({
+        id: 'ntn-sats',
+        data: pos,
+        getPosition: d => d,
+        getRadius: 4000,
+        radiusMinPixels: 2.5,
+        radiusMaxPixels: 6,
+        getFillColor: [225, 245, 255, 240],
+        updateTriggers: {getPosition: currentTime}
+      }));
+    }
+
     const from = lowerBound(tArr, currentTime - FLASH);
     const to = upperBound(tArr, currentTime);
     const lit = hos.slice(from, to);
@@ -398,7 +445,41 @@
       stroked: false,
       updateTriggers: {getRadius: currentTime}
     });
-    return [baseLayer(), gnb, tl, fl];
+    out.push(fl);
+    return out;
+  }
+
+  // Interpolated sub-satellite points at t (uniform dt sampling → direct index).
+  // Only satellites currently INSIDE the exported bbox (country ± footprint
+  // margin) get a dot + coverage cone — tracks pass through, cones are local.
+  function ntnPositions(t) {
+    const dt = ntn.dt, last = ntn.sats[0]?.ts.length - 1;
+    if (last === undefined || last < 1) return [];
+    const k = Math.min(Math.max(t / dt, 0), last - 1e-9);
+    const i = Math.floor(k), f = k - i;
+    const b = ntn.bbox;
+    const out = [];
+    for (const s of ntn.sats) {
+      const lon = s.path[i][0] + (s.path[i + 1][0] - s.path[i][0]) * f;
+      const lat = s.path[i][1] + (s.path[i + 1][1] - s.path[i][1]) * f;
+      if (!b || (lat >= b.lat_min && lat <= b.lat_max && lon >= b.lon_min && lon <= b.lon_max)) {
+        out.push([lon, lat]);
+      }
+    }
+    return out;
+  }
+
+  async function loadNtn(country) {
+    ntn = null;
+    try {
+      const data = await fetchJson(`data/ntn-starlink-${country}.json`);
+      if (data && data.sats && data.sats.length) ntn = data;
+    } catch (_) { /* no satellite bundle for this country */ }
+    el('ntnGrp').style.display = ntn ? '' : 'none';
+    el('ntnLegend').style.display = ntn ? '' : 'none';
+    if (ntn) el('ntnLegendText').textContent =
+      `${ntn.constellation} LEO (${ntn.sats.length}/${ntn.total_sats} sats over view, ` +
+      `${Math.round(ntn.footprint_km)} km cones @ ${ntn.min_elevation_deg}° min-elev)`;
   }
 
   function ensureDeck() {
@@ -488,6 +569,7 @@
       meta = m;
       gnbs = g;
       trips = t;
+      await loadNtn(meta.country);
       duration = meta.duration;
       currentTime = 0;
       el('time').max = duration;
@@ -544,6 +626,7 @@
   el('time').oninput = e => { currentTime = +e.target.value; render(); };
   el('rate').oninput = e => { rate = +e.target.value; };
   el('trail').oninput = e => { trail = +e.target.value; render(); };
+  el('ntn').onchange = e => { ntnOn = e.target.checked; render(); };
   el('heavyCancel').onclick = () => closeHeavyModal(false);
   el('heavyContinue').onclick = () => closeHeavyModal(true);
 
