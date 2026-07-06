@@ -122,10 +122,20 @@ reproduce bit-for-bit when `mobility.enabled = false`.
         agent_sessions[i] = ctx
     end
 
+    # Roaming (phase-1 injection, §7.4 / roaming-plan 6b): a fraction of agents are
+    # inbound roamers whose HOME operator differs from the simulated field
+    # (operator 1 = the visited network). Their attach IS the border-entry event:
+    # registration + HR PDU-session establishment (5G) / enrollment + renumber
+    # (6G-RUPA). Their mid-run moves stay inside the visited operator, so no further
+    # operator-change events fire in phase 1 (geometric border crossings arrive with
+    # the two-country phase-2 topology).
+    is_roamer = rand() < sim_state.config.roaming.roamer_fraction
+    is_roamer && charge_roaming_entry!(sim_state, num_sessions)
+
     current_gnb = gnb_index
     current_upf = assigned_upf_index
     current_domain = assigned_upf_index  # Simple: domain ID = UPF index
-    current_operator = 1                 # Single operator for now
+    current_operator = 1                 # Serving operator = the simulated field
     current_loc = agent_location
     update_dt = sim_state.config.mobility.update_interval
     model = sim_state.config.mobility.model
