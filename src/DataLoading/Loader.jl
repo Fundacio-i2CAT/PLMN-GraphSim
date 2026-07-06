@@ -117,34 +117,53 @@ function perform_hierarchical_clustering(edge_upf_locs::Vector{GeoPoint}, num_ce
 end
 
 """
+    compose_topologies(members::Vector{NetworkTopology}; operators=1:K) -> NetworkTopology
     compose_topologies(home, visited; home_operator=1, visited_operator=2) -> NetworkTopology
 
-Compose two single-operator national topologies into ONE multi-operator topology
-(Iberia roaming scenario, §7.4 phase 2): home first, visited concatenated with all
-indices offset, gNBs/PSAs tagged by operator. Municipalities merge and placement
-probabilities are recomputed over the combined population, so agents distribute
-across both countries by real population weight. An agent whose nearest gNB flips
-operator has geometrically crossed the border — the roaming trigger.
+Compose K single-operator fields into ONE multi-operator topology. Members are
+concatenated in order with all indices offset, gNBs/PSAs tagged by operator id.
+Municipalities merge and placement probabilities are recomputed over the combined
+population, so agents distribute across the whole federation by real population
+weight. An agent whose nearest gNB flips operator has crossed a member boundary —
+the roaming trigger (Iberia §7.4 K=2; federation §7.5.1 K≥3, where overlapping
+member fields make the crossing a routine attach-to-best-coverage event).
 """
-function compose_topologies(home::NetworkTopology, visited::NetworkTopology;
-                            home_operator::Int = 1, visited_operator::Int = 2)
-    edge_off = length(home.upf_locations)
-    psa_off = length(home.centralized_upf_locations)
+function compose_topologies(members::Vector{NetworkTopology};
+                            operators::AbstractVector{Int} = collect(1:length(members)))
+    length(members) == length(operators) ||
+        error("need one operator id per member ($(length(members)) vs $(length(operators)))")
+    isempty(members) && error("cannot compose zero topologies")
 
-    gnb_locations = vcat(home.gnb_locations, visited.gnb_locations)
-    upf_locations = vcat(home.upf_locations, visited.upf_locations)
-    gnb_to_upf = vcat(home.gnb_to_upf_map, visited.gnb_to_upf_map .+ edge_off)
-    centralized = vcat(home.centralized_upf_locations, visited.centralized_upf_locations)
-    parent_map = vcat(home.edge_upf_parent_map, visited.edge_upf_parent_map .+ psa_off)
+    gnb_locations = reduce(vcat, (m.gnb_locations for m in members))
+    upf_locations = reduce(vcat, (m.upf_locations for m in members))
+    centralized = reduce(vcat, (m.centralized_upf_locations for m in members))
 
-    gnb_operator = vcat(fill(home_operator, length(home.gnb_locations)),
-                        fill(visited_operator, length(visited.gnb_locations)))
-    psa_operator = vcat(fill(home_operator, length(home.centralized_upf_locations)),
-                        fill(visited_operator, length(visited.centralized_upf_locations)))
+    # Overlapping members (two operators covering the same country) share
+    # municipalities: dedupe by code so population weight counts each place once,
+    # while every member's infrastructure stays in.
+    municipalities = Municipality[]
+    seen = Set{String}()
+    for m in members, muni in m.municipalities
+        muni.code in seen && continue
+        push!(seen, muni.code)
+        push!(municipalities, muni)
+    end
 
-    municipalities = vcat(home.municipalities, visited.municipalities)
+    gnb_to_upf = Int[]
+    parent_map = Int[]
+    gnb_operator = Int[]
+    psa_operator = Int[]
+    edge_off, psa_off = 0, 0
+    for (m, op) in zip(members, operators)
+        append!(gnb_to_upf, m.gnb_to_upf_map .+ edge_off)
+        append!(parent_map, m.edge_upf_parent_map .+ psa_off)
+        append!(gnb_operator, fill(op, length(m.gnb_locations)))
+        append!(psa_operator, fill(op, length(m.centralized_upf_locations)))
+        edge_off += length(m.upf_locations)
+        psa_off += length(m.centralized_upf_locations)
+    end
+
     muni_probs = calculate_municipality_probs(municipalities)
-
     mg = build_graph(upf_locations, gnb_locations, gnb_to_upf, centralized, parent_map)
 
     return NetworkTopology(
@@ -155,6 +174,10 @@ function compose_topologies(home::NetworkTopology, visited::NetworkTopology;
         gnb_operator, psa_operator,
     )
 end
+
+compose_topologies(home::NetworkTopology, visited::NetworkTopology;
+                   home_operator::Int = 1, visited_operator::Int = 2) =
+    compose_topologies([home, visited]; operators = [home_operator, visited_operator])
 
 # Main Functions
 function load_and_deploy_network(csv_paths::Vector{String}, operator_net_id::Int, num_upfs::Int, data_dir::String, config::SimConfig)
