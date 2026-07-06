@@ -20,23 +20,30 @@ import DesJulia6gRupa.Simulation as DSim
 const COUNTRY = lowercase(get(ARGS, 1, "spain"))
 const ROAM = parse(Float64, get(ARGS, 2, "0.0"))  # roamer fraction (0 = legacy intra-PLMN run)
 const SCALE = 1000
-const NUM_PSA = 5                 # centralized PSAs (config.toml num_centralized_upfs)
 const ADOPTION = 0.82             # mobile_adoption_rate (config.toml)
 
-# (data subdir, gNB csv files relative to data/<sub>, operator net id, #edge UPFs, population)
+# (data subdir, gNB csv files relative to data/<sub>, operator net id, #edge UPFs,
+#  #centralized PSAs, population)
 #   usa     = OpenCellID Verizon (operator-tagged, sparse — lower density bound)
 #   usa_asr = FCC ASR all macro structures (operator-agnostic, complete — upper bound;
 #             net=999 synthetic tag so no operator filter applies). Density-invariance
 #             cross-check: same σ advantage on both real datasets.
+# Edge UPFs = second-level admin units (Spain provinces / PT distritos / USA counties
+# >50k); PSAs scale ~1 per 10M population (Spain/USA 5; Portugal 2 ≈ the real
+# MEO/Altice dual-core geography, Lisboa + Porto).
 const PROFILES = Dict(
-    "spain"   => ("spain", ["opencellid/214.csv"],                  7,   52,  49_442_844),
-    "usa"     => ("usa",   ["opencellid/310.csv","opencellid/311.csv"], 480, 817, 335_000_000),
-    "usa_asr" => ("usa",   ["asr/310.csv"],                        999, 817, 335_000_000),
+    "spain"    => ("spain", ["opencellid/214.csv"],                  7,   52, 5, 49_442_844),
+    "usa"      => ("usa",   ["opencellid/310.csv","opencellid/311.csv"], 480, 817, 5, 335_000_000),
+    "usa_asr"  => ("usa",   ["asr/310.csv"],                        999, 817, 5, 335_000_000),
+    # Iberia roaming phase 2: MEO (268-06, 6,791 cells; Vodafone PT 268-01 has 7,695),
+    # 18 mainland distritos, INE Censos 2021 mainland population (CAOP Continente cut).
+    "portugal" => ("portugal", ["opencellid/268.csv"],              6,   18, 2, 9_855_909),
 )
+const NUM_PSA = PROFILES[COUNTRY][5]
 
 function build_topology()
     haskey(PROFILES, COUNTRY) || error("unknown country $COUNTRY")
-    sub, files, opid, nedge, _pop = PROFILES[COUNTRY]
+    sub, files, opid, nedge, _npsa, _pop = PROFILES[COUNTRY]
     base = joinpath(@__DIR__, "data", sub)
     paths = filter(isfile, [joinpath(base, f) for f in files])
     isempty(paths) && error("no gNB data under $base for $files")
@@ -47,7 +54,7 @@ function build_topology()
 end
 
 # Principled agent count: effective mobile users represented at this scale_factor.
-national_agents() = ceil(Int, PROFILES[COUNTRY][5] * ADOPTION / SCALE)
+national_agents() = ceil(Int, PROFILES[COUNTRY][6] * ADOPTION / SCALE)
 
 function run_scenario(topology, nupf, name, model; n_agents, duration, dt)
     config = SimConfig(1, 2, SCALE, Float64(duration), Float64(duration)-5, 5.0,
@@ -103,7 +110,7 @@ println("Building $(uppercase(COUNTRY)) topology...")
 topology, nupf = build_topology()
 NAG = national_agents()
 println("Topology: $(length(topology.gnb_locations)) gNBs, $(length(topology.upf_locations)) edge UPFs, $NUM_PSA PSAs")
-println("Agents: $NAG  (= $(PROFILES[COUNTRY][5]) pop x $ADOPTION adoption / $SCALE scale)")
+println("Agents: $NAG  (= $(PROFILES[COUNTRY][6]) pop x $ADOPTION adoption / $SCALE scale)")
 
 res = Any[]
 push!(res, run_scenario(topology, nupf, "Pedestrian 5km/h (RWP)",

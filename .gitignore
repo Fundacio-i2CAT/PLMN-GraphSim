@@ -13,6 +13,7 @@ public
 # Large data
 data/spain/
 data/usa/
+data/portugal/
 data.zip
 
 # Static frontend generated bundles
