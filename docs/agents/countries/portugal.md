@@ -63,11 +63,14 @@ python3 data/processing_scripts/standardize_portugal.py
 edge-UPF count (the Spain-provinces analogue): 6,506 mainland gNBs → 18 edge UPFs → 2
 PSAs, all 278 municipalities polygon-matched.
 
-## Iberia scenario sketch (phase 2)
+## Iberia scenario (phase 2 — IMPLEMENTED, `run_iberia.jl`)
 
-Two operator fields loaded together — Movistar (MCC 214, net 7) + MEO (MCC 268, net 6) —
-each with its own edge/PSA hierarchy; an agent whose nearest gNB flips country has
-geometrically crossed the border, which **is** the roaming trigger (no coverage-overlap
-machinery needed). 5G charges the border per `RoamingConfig.border_semantics`; 6G-RUPA
+Two operator fields composed into one topology via `DataLoading.compose_topologies`
+(Movistar 52 edge/5 PSA + MEO 18 edge/2 PSA → 52,902 gNBs, 70 edge UPFs, 7 PSAs,
+8,322 municipalities; operator tags on gNBs and PSAs). Agents place across both
+countries by merged Censos/INE population weights. An agent whose nearest gNB flips
+operator has geometrically crossed the border, which **is** the roaming trigger (no
+coverage-overlap machinery needed). 5G charges the border per
+`RoamingConfig.border_semantics`; 6G-RUPA
 renumbers into the visited DIF. Home-Routed path-stretch becomes measurable: serving
 PT edge UPF → pinned Spanish PSA.

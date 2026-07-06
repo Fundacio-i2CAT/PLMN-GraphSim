@@ -114,10 +114,12 @@ reproduce bit-for-bit when `mobility.enabled = false`.
     assigned_upf_index = connect_agent_to_gnb_and_upf(env, topology, user_id, agent_location, gnb_index)
 
     # Track this agent's session contexts so we can migrate them on handover.
+    attach_operator = serving_operator(topology, gnb_index)
     num_sessions = rand(sim_state.config.min_sessions:sim_state.config.max_sessions)
     agent_sessions = Vector{SessionContext5G}(undef, num_sessions)
     for i in 1:num_sessions
-        ctx = create_session_context(assigned_upf_index, topology)
+        ctx = create_session_context(assigned_upf_index, topology,
+                                     assigned_upf_index, attach_operator)
         push!(sim_state.upf_sessions_5g[assigned_upf_index], ctx)
         agent_sessions[i] = ctx
     end
@@ -135,7 +137,9 @@ reproduce bit-for-bit when `mobility.enabled = false`.
     current_gnb = gnb_index
     current_upf = assigned_upf_index
     current_domain = assigned_upf_index  # Simple: domain ID = UPF index
-    current_operator = 1                 # Serving operator = the simulated field
+    # Serving operator = tag of the nearest gNB (1 in single-operator topologies; in a
+    # composed Iberia topology a nearest-gNB flip across operators is a border crossing).
+    current_operator = attach_operator
     current_loc = agent_location
     update_dt = sim_state.config.mobility.update_interval
     model = sim_state.config.mobility.model
@@ -154,7 +158,7 @@ reproduce bit-for-bit when `mobility.enabled = false`.
         # Cell change detected -> handover.
         new_upf = topology.gnb_to_upf_map[new_gnb]
         new_domain = new_upf  # Domain = UPF index
-        new_operator = 1      # Single operator
+        new_operator = serving_operator(topology, new_gnb)
 
         # Update graph edges to reflect new attachment.
         if haskey(topology.graph, (:Agent, user_id), (:gNB, current_gnb))

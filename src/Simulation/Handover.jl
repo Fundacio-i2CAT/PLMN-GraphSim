@@ -247,6 +247,19 @@ function handle_handover_6grupa!(sim_state::SimGlobalState,
 end
 
 """
+    serving_operator(topology, gnb_index) -> Int
+
+Operator tag of a gNB (1 = home / single-operator legacy; 2+ = visited operators in a
+composed Iberia-style topology). The serving operator of an agent is the tag of its
+nearest gNB, so a nearest-gNB flip across operators IS the geometric border crossing.
+"""
+function serving_operator(topology::NetworkTopology, gnb_index::Int)
+    ops = topology.gnb_operator
+    (gnb_index >= 1 && gnb_index <= length(ops)) || return 1
+    return ops[gnb_index]
+end
+
+"""
     charge_roaming_entry!(sim_state, num_sessions)
 
 Phase-1 roamer ENTRY: an inbound roamer arrives in the visited network
@@ -319,13 +332,24 @@ function dispatch_handover!(sim_state::SimGlobalState,
     # Anchor path-stretch sample: with the anchor pinned (5G SSC-1) traffic hairpins
     # from the new serving edge UPF to the original PSA; RUPA egresses at the nearest
     # PSA. Use the (preserved) anchor from the agent's session metadata as the pin.
+    # Samples split into two buckets: DOMESTIC (intra-PLMN, §6 — excess ~0) vs
+    # ROAMING (serving-gNB operator ≠ anchor-PSA operator, §7.4 — the HR hairpin to
+    # the home country, the stretch that motivates the whole roaming comparison).
     if !isempty(agent_sessions)
-        pinned_psa = agent_sessions[1].metadata.anchor_upf_index
+        pinned_psa = new_sessions[1].metadata.anchor_upf_index
         d5, dopt = anchor_path_stretch(topology, new_upf, pinned_psa)
         if d5 > 0.0 || dopt > 0.0
-            sim_state.anchor_dist_5g_sum  += d5
-            sim_state.anchor_dist_opt_sum += dopt
-            sim_state.anchor_stretch_samples += 1
+            pops = topology.psa_operator
+            anchor_op = (pinned_psa >= 1 && pinned_psa <= length(pops)) ? pops[pinned_psa] : 1
+            if anchor_op != serving_operator(topology, new_gnb)
+                sim_state.roam_dist_5g_sum  += d5
+                sim_state.roam_dist_opt_sum += dopt
+                sim_state.roam_stretch_samples += 1
+            else
+                sim_state.anchor_dist_5g_sum  += d5
+                sim_state.anchor_dist_opt_sum += dopt
+                sim_state.anchor_stretch_samples += 1
+            end
         end
     end
 

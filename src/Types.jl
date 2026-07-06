@@ -263,6 +263,16 @@ mutable struct SimGlobalState
     history_roam_entries::Vector{Int64}
     history_session_breaks_5g::Vector{Int64}
     history_roam_sessions_5g::Vector{Int64}
+
+    # --- Roaming path-stretch (Iberia phase 2; the §7.4 hairpin, measured) ---
+    # Sampled per handover while the agent is in a ROAMING state (serving-gNB operator
+    # ≠ anchor-PSA operator): 5G HR hairpins to the pinned HOME-country PSA, RUPA
+    # egresses at the nearest aggregate. Kept separate from the domestic
+    # anchor_dist_* accumulators so the intra-PLMN (~0 excess) and roaming
+    # (country-scale) results stay distinct.
+    roam_dist_5g_sum::Float64
+    roam_dist_opt_sum::Float64
+    roam_stretch_samples::Int64
 end
 
 # Backward-compatible constructor: all σ counters and histories initialized to 0/empty.
@@ -285,7 +295,8 @@ SimGlobalState(config, upf_sessions_5g, forwarding_tables_6grupa,
                    Int64(0), Int64(0),
                    0.0, 0.0, Int64(0),
                    Int64(0), Int64(0), Int64(0),
-                   Int64[], Int64[], Int64[])
+                   Int64[], Int64[], Int64[],
+                   0.0, 0.0, Int64(0))
 
 struct GUPFState6GRUPA
     forwarding_table::Vector{ForwardingEntry6GRUPA}
@@ -309,6 +320,24 @@ struct NetworkTopology
 
     # Graph Representation
     graph::AbstractGraph
+
+    # --- Multi-operator composition (Iberia roaming, §7.4 phase 2) ---
+    # Operator tag per gNB / per PSA (1 = home, 2+ = visited operators). A composed
+    # topology concatenates two operator fields; the serving operator of an agent is
+    # the tag of its nearest gNB, so a nearest-gNB flip across operators IS the
+    # geometric border crossing that triggers the roaming branch.
+    gnb_operator::Vector{Int}
+    psa_operator::Vector{Int}
 end
+
+# Backward-compatible constructor: single-operator topology, everything tagged 1.
+NetworkTopology(gnb_locations, upf_locations, gnb_to_upf_map,
+                centralized_upf_locations, edge_upf_parent_map,
+                municipalities, municipality_bins, municipality_probs, graph) =
+    NetworkTopology(gnb_locations, upf_locations, gnb_to_upf_map,
+                    centralized_upf_locations, edge_upf_parent_map,
+                    municipalities, municipality_bins, municipality_probs, graph,
+                    fill(1, length(gnb_locations)),
+                    fill(1, length(centralized_upf_locations)))
 
 end

@@ -116,6 +116,46 @@ function perform_hierarchical_clustering(edge_upf_locs::Vector{GeoPoint}, num_ce
     return centralized_locs, edge_to_centralized
 end
 
+"""
+    compose_topologies(home, visited; home_operator=1, visited_operator=2) -> NetworkTopology
+
+Compose two single-operator national topologies into ONE multi-operator topology
+(Iberia roaming scenario, §7.4 phase 2): home first, visited concatenated with all
+indices offset, gNBs/PSAs tagged by operator. Municipalities merge and placement
+probabilities are recomputed over the combined population, so agents distribute
+across both countries by real population weight. An agent whose nearest gNB flips
+operator has geometrically crossed the border — the roaming trigger.
+"""
+function compose_topologies(home::NetworkTopology, visited::NetworkTopology;
+                            home_operator::Int = 1, visited_operator::Int = 2)
+    edge_off = length(home.upf_locations)
+    psa_off = length(home.centralized_upf_locations)
+
+    gnb_locations = vcat(home.gnb_locations, visited.gnb_locations)
+    upf_locations = vcat(home.upf_locations, visited.upf_locations)
+    gnb_to_upf = vcat(home.gnb_to_upf_map, visited.gnb_to_upf_map .+ edge_off)
+    centralized = vcat(home.centralized_upf_locations, visited.centralized_upf_locations)
+    parent_map = vcat(home.edge_upf_parent_map, visited.edge_upf_parent_map .+ psa_off)
+
+    gnb_operator = vcat(fill(home_operator, length(home.gnb_locations)),
+                        fill(visited_operator, length(visited.gnb_locations)))
+    psa_operator = vcat(fill(home_operator, length(home.centralized_upf_locations)),
+                        fill(visited_operator, length(visited.centralized_upf_locations)))
+
+    municipalities = vcat(home.municipalities, visited.municipalities)
+    muni_probs = calculate_municipality_probs(municipalities)
+
+    mg = build_graph(upf_locations, gnb_locations, gnb_to_upf, centralized, parent_map)
+
+    return NetworkTopology(
+        gnb_locations, upf_locations, gnb_to_upf,
+        centralized, parent_map,
+        municipalities, Dict{String,Vector{Int}}(), muni_probs,
+        mg,
+        gnb_operator, psa_operator,
+    )
+end
+
 # Main Functions
 function load_and_deploy_network(csv_paths::Vector{String}, operator_net_id::Int, num_upfs::Int, data_dir::String, config::SimConfig)
     df = load_raw_gnb_data(csv_paths)
