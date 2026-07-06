@@ -1,6 +1,31 @@
 {
   "countries": [
     {
+      "label": "Portugal",
+      "operators": [
+        {
+          "label": "Meo",
+          "id": "meo"
+        },
+        {
+          "label": "Nos",
+          "id": "nos"
+        },
+        {
+          "label": "Vodafone Pt",
+          "id": "vodafone_pt"
+        }
+      ],
+      "viewState": {
+        "latitude": 20.0,
+        "pitch": 0,
+        "bearing": 0,
+        "longitude": 0.0,
+        "zoom": 2.0
+      },
+      "id": "portugal"
+    },
+    {
       "label": "Spain",
       "operators": [
         {
@@ -118,6 +143,35 @@
     }
   ],
   "datasets": [
+    {
+      "mobility_id": "pedestrian_5",
+      "country_label": "Portugal",
+      "file_bytes": {
+        "meta": 516,
+        "gnbs": 115656,
+        "trajectories": 58955
+      },
+      "scale_factor": 100000,
+      "dt": 2.0,
+      "mobility_label": "Pedestrian 5 km/h (Random Waypoint)",
+      "mobility_model": "random_waypoint",
+      "agents": 81,
+      "duration": 60,
+      "files": {
+        "meta": "data/meta-portugal-meo-pedestrian_5-s100000.json",
+        "gnbs": "data/gnbs-portugal-meo.json",
+        "trajectories": "data/trajectories-portugal-meo-pedestrian_5-s100000.json"
+      },
+      "id": "portugal-meo-pedestrian_5-s100000",
+      "country": "portugal",
+      "speed_kmh": 5.0,
+      "operator": "meo",
+      "psas": 2,
+      "total_bytes": 175127,
+      "operator_label": "Meo",
+      "handovers": 2,
+      "edge_upfs": 18
+    },
     {
       "mobility_id": "pedestrian_5",
       "country_label": "Spain",
@@ -1251,5 +1305,5 @@
     }
   ],
   "version": 1,
-  "generated_at": "2026-06-29T09:24:44.888"
+  "generated_at": "2026-07-06T10:23:23.176"
 }
