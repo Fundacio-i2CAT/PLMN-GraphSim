@@ -413,39 +413,41 @@
       currentTime,
       fadeTrail: true
     });
-    const out = globeMode ? [...globeBaseLayers(), gnb, tl] : [baseLayer(), gnb, tl];
+    const out = globeMode ? [...globeBaseLayers()] : [baseLayer()];
 
-    // §7.5.2 NTN: LEO ground tracks + interpolated satellite positions + the
-    // min-elevation coverage cone each satellite sweeps over the country.
+    // §7.5.2 NTN: coverage cones + orbit trails go UNDER the terrestrial layers
+    // so agents and handover flashes stay readable; only the satellite dots ride
+    // on top (at shell altitude in globe mode).
+    let satDots = null;
     if (ntn) {
       const pos = ntnPositions(currentTime);
+      const shellM = globeMode ? ntn.shell_alt_km * 1000 : 0;
       out.push(new ScatterplotLayer({
         id: 'ntn-footprint',
         data: pos,
         getPosition: d => d.p,
         getRadius: ntn.footprint_km * 1000,
         radiusUnits: 'meters',
-        getFillColor: [120, 200, 255, 14],
+        getFillColor: [120, 200, 255, 10],
         stroked: true,
-        getLineColor: [140, 210, 255, 70],
+        getLineColor: [140, 210, 255, 60],
         lineWidthMinPixels: 1,
         updateTriggers: {getPosition: currentTime}
       }));
-      const shellM = globeMode ? ntn.shell_alt_km * 1000 : 0;
       out.push(new TripsLayer({
         id: 'ntn-trips',
         data: ntn.sats,
         getPath: d => globeMode ? d.path.map(q => [q[0], q[1], shellM]) : d.path,
         getTimestamps: d => d.ts,
         getColor: [143, 214, 255],
-        opacity: 0.55,
+        opacity: 0.4,
         widthMinPixels: 1,
         trailLength: 150,
         currentTime,
         fadeTrail: true,
         updateTriggers: {getPath: globeMode}
       }));
-      out.push(new ScatterplotLayer({
+      satDots = new ScatterplotLayer({
         id: 'ntn-sats',
         data: pos,
         getPosition: d => globeMode ? [d.p[0], d.p[1], shellM] : d.p,
@@ -455,8 +457,10 @@
         getFillColor: [225, 245, 255, 240],
         pickable: true,
         updateTriggers: {getPosition: [currentTime, globeMode]}
-      }));
+      });
     }
+    out.push(gnb, tl);
+    if (satDots) out.push(satDots);
 
     const from = lowerBound(tArr, currentTime - FLASH);
     const to = upperBound(tArr, currentTime);
