@@ -106,7 +106,8 @@
     <div class="grp">speed x<input id="rate" type="range" min="1" max="60" value="20"></div>
     <div class="grp">trail<input id="trail" type="range" min="5" max="120" value="40"></div>
     <div class="grp" id="ntnGrp" style="display:none">satellites
-      <input id="ntn" type="checkbox" checked></div>
+      <select id="ntnSel" style="width:auto"></select></div>
+    <button id="globeBtn" title="toggle globe / flat map">globe</button>
   </div>
 
   <div id="heavyModal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="heavyTitle">
@@ -122,7 +123,9 @@
   </div>
 
   <script>
-  const {DeckGL, TileLayer, BitmapLayer, ScatterplotLayer, TripsLayer} = deck;
+  const {DeckGL, TileLayer, BitmapLayer, ScatterplotLayer, TripsLayer,
+         GeoJsonLayer, SolidPolygonLayer} = deck;
+  const GlobeViewCls = deck.GlobeView || deck._GlobeView || null;
   const COST5G = {1: 600, 2: 1150, 3: 1500};
   const COSTRUPA = 200;
   const LVLCOL = {1: [55,214,122], 2: [255,159,67], 3: [255,91,91]};
@@ -153,8 +156,11 @@
   let meta = null;
   let gnbs = [];
   let trips = [];
-  let ntn = null;          // ntn-<constellation>-<country>.json or null
-  let ntnOn = true;
+  let globeMode = new URLSearchParams(location.search).get('globe') === '1' && !!GlobeViewCls;
+  let ntn = null;              // active ntn-<constellation>-<country>.json or null
+  let ntnAvail = [];           // constellations with a bundle for this country
+  let ntnChoice = 'starlink';  // sticky user choice ('' = off)
+  const NTN_CONSTELLATIONS = ['starlink', 'oneweb', 'kuiper', 'telesat'];
   let hos = [];
   let tArr = [];
   let pre5 = new Float64Array(1);
@@ -349,6 +355,27 @@
     return datasetsFor(country, operator, mobility).find(d => d.scale_factor === scale);
   }
 
+  function globeBaseLayers() {
+    return [
+      new SolidPolygonLayer({
+        id: 'globe-ocean',
+        data: [[[-180, -90], [180, -90], [180, 90], [-180, 90]]],
+        getPolygon: d => d,
+        filled: true,
+        getFillColor: [8, 14, 22]
+      }),
+      new GeoJsonLayer({
+        id: 'globe-land',
+        data: 'data/land-110m.geojson',
+        stroked: true,
+        filled: true,
+        getFillColor: [30, 38, 48],
+        getLineColor: [70, 85, 100],
+        lineWidthMinPixels: 0.5
+      })
+    ];
+  }
+
   function baseLayer() {
     return new TileLayer({
       id: 'base',
@@ -386,16 +413,16 @@
       currentTime,
       fadeTrail: true
     });
-    const out = [baseLayer(), gnb, tl];
+    const out = globeMode ? [...globeBaseLayers(), gnb, tl] : [baseLayer(), gnb, tl];
 
     // §7.5.2 NTN: LEO ground tracks + interpolated satellite positions + the
     // min-elevation coverage cone each satellite sweeps over the country.
-    if (ntn && ntnOn) {
+    if (ntn) {
       const pos = ntnPositions(currentTime);
       out.push(new ScatterplotLayer({
         id: 'ntn-footprint',
         data: pos,
-        getPosition: d => d,
+        getPosition: d => d.p,
         getRadius: ntn.footprint_km * 1000,
         radiusUnits: 'meters',
         getFillColor: [120, 200, 255, 14],
@@ -404,27 +431,30 @@
         lineWidthMinPixels: 1,
         updateTriggers: {getPosition: currentTime}
       }));
+      const shellM = globeMode ? ntn.shell_alt_km * 1000 : 0;
       out.push(new TripsLayer({
         id: 'ntn-trips',
         data: ntn.sats,
-        getPath: d => d.path,
+        getPath: d => globeMode ? d.path.map(q => [q[0], q[1], shellM]) : d.path,
         getTimestamps: d => d.ts,
         getColor: [143, 214, 255],
         opacity: 0.55,
         widthMinPixels: 1,
         trailLength: 150,
         currentTime,
-        fadeTrail: true
+        fadeTrail: true,
+        updateTriggers: {getPath: globeMode}
       }));
       out.push(new ScatterplotLayer({
         id: 'ntn-sats',
         data: pos,
-        getPosition: d => d,
+        getPosition: d => globeMode ? [d.p[0], d.p[1], shellM] : d.p,
         getRadius: 4000,
         radiusMinPixels: 2.5,
         radiusMaxPixels: 6,
         getFillColor: [225, 245, 255, 240],
-        updateTriggers: {getPosition: currentTime}
+        pickable: true,
+        updateTriggers: {getPosition: [currentTime, globeMode]}
       }));
     }
 
@@ -463,23 +493,39 @@
       const lon = s.path[i][0] + (s.path[i + 1][0] - s.path[i][0]) * f;
       const lat = s.path[i][1] + (s.path[i + 1][1] - s.path[i][1]) * f;
       if (!b || (lat >= b.lat_min && lat <= b.lat_max && lon >= b.lon_min && lon <= b.lon_max)) {
-        out.push([lon, lat]);
+        out.push({p: [lon, lat], id: s.id});
       }
     }
+    ntnLive = out.length;
     return out;
   }
+  let ntnLive = 0;
 
   async function loadNtn(country) {
     ntn = null;
-    try {
-      const data = await fetchJson(`data/ntn-starlink-${country}.json`);
-      if (data && data.sats && data.sats.length) ntn = data;
-    } catch (_) { /* no satellite bundle for this country */ }
-    el('ntnGrp').style.display = ntn ? '' : 'none';
+    ntnAvail = (await Promise.all(NTN_CONSTELLATIONS.map(async c => {
+      try {
+        const head = await fetch(`data/ntn-${c}-${country}.json`, {method: 'HEAD'});
+        return head.ok ? c : null;
+      } catch (_) { return null; }
+    }))).filter(Boolean);
+    const sel = el('ntnSel');
+    sel.innerHTML = '';
+    for (const row of [{v: '', t: 'off'}, ...ntnAvail.map(c => ({v: c, t: c}))]) {
+      const opt = document.createElement('option');
+      opt.value = row.v; opt.textContent = row.t;
+      sel.appendChild(opt);
+    }
+    const want = ntnAvail.includes(ntnChoice) ? ntnChoice : (ntnChoice === '' ? '' : ntnAvail[0] || '');
+    sel.value = want;
+    el('ntnGrp').style.display = ntnAvail.length ? '' : 'none';
+    if (want) {
+      try {
+        const data = await fetchJson(`data/ntn-${want}-${country}.json`);
+        if (data && data.sats && data.sats.length) ntn = data;
+      } catch (_) { /* keep null */ }
+    }
     el('ntnLegend').style.display = ntn ? '' : 'none';
-    if (ntn) el('ntnLegendText').textContent =
-      `${ntn.constellation} LEO (${ntn.sats.length}/${ntn.total_sats} sats over view, ` +
-      `${Math.round(ntn.footprint_km)} km cones @ ${ntn.min_elevation_deg}° min-elev)`;
   }
 
   function ensureDeck() {
@@ -488,6 +534,10 @@
       container: 'map',
       viewState,
       controller: true,
+      getTooltip: ({layer, object}) =>
+        layer && layer.id === 'ntn-sats' && object
+          ? `${ntn.constellation} sat #${object.id}\nshell ${Math.round(ntn.shell_alt_km)} km, cone ${Math.round(ntn.footprint_km)} km`
+          : null,
       onViewStateChange: ({viewState: vs}) => {
         viewState = vs;
         deckgl.setProps({viewState});
@@ -513,7 +563,11 @@
 
   function render() {
     ensureDeck();
-    deckgl.setProps({viewState, layers: layers()});
+    deckgl.setProps({
+      viewState,
+      views: globeMode ? new GlobeViewCls() : new deck.MapView(),
+      layers: layers()
+    });
     const i = upperBound(tArr, currentTime);
     const b5 = pre5[i] || 0;
     const br = preR[i] || 0;
@@ -521,6 +575,9 @@
     el('brupa').textContent = fmtB(br);
     el('s5g').textContent = fmtInt(i) + ' handovers';
     el('advv').textContent = b5 > 0 ? (100 * (1 - br / b5)).toFixed(1) + '%' : '0%';
+    if (ntn) el('ntnLegendText').textContent =
+      `${ntn.constellation} LEO: ${ntnLive}/${ntn.sats.length} sats over view now ` +
+      `(${Math.round(ntn.footprint_km)} km cones @ ${ntn.min_elevation_deg}° min-elev)`;
     el('clock').textContent = Math.round(currentTime) + ' s';
     el('time').value = Math.round(currentTime);
   }
@@ -626,7 +683,18 @@
   el('time').oninput = e => { currentTime = +e.target.value; render(); };
   el('rate').oninput = e => { rate = +e.target.value; };
   el('trail').oninput = e => { trail = +e.target.value; render(); };
-  el('ntn').onchange = e => { ntnOn = e.target.checked; render(); };
+  el('ntnSel').onchange = async e => {
+    ntnChoice = e.target.value;
+    await loadNtn(meta ? meta.country : el('country').value);
+    render();
+  };
+  el('globeBtn').onclick = e => {
+    if (!GlobeViewCls) { el('status').textContent = 'GlobeView not available in this deck.gl build'; return; }
+    globeMode = !globeMode;
+    e.target.textContent = globeMode ? 'flat map' : 'globe';
+    render();
+  };
+  if (globeMode) el('globeBtn').textContent = 'flat map';
   el('heavyCancel').onclick = () => closeHeavyModal(false);
   el('heavyContinue').onclick = () => closeHeavyModal(true);
 
