@@ -12,6 +12,7 @@ using DesJulia6gRupa
     include("IberiaTests.jl")
     include("FederationTests.jl")
     include("NTNTests.jl")
+    include("LayerTests.jl")
 
     if Base.find_package("Aqua") !== nothing && Base.find_package("JET") !== nothing
         include("qa.jl")

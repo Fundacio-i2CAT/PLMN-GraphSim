@@ -10,6 +10,7 @@ using CSV
 using Dates
 using Graphs
 using MetaGraphsNext
+using JSON
 using ..Types
 using ..DataLoading
 using ..AgentGeneration
@@ -20,6 +21,7 @@ include("Simulation/State.jl")
 include("Simulation/SpatialIndex.jl")
 include("Simulation/Mobility.jl")
 include("Simulation/Handover.jl")
+include("Simulation/Layers.jl")
 include("Simulation/NTN.jl")
 include("Simulation/Core.jl")
 include("Simulation/Metrics/Metrics.jl")
