@@ -30,6 +30,7 @@ struct GUPF
     node_id::Int
     address::UInt32
     forwarding_table::Vector{ForwardingEntry6GRUPA}
+    kind::Symbol   # :edge | :psa | :border | :member (generic base-layer node)
 end
 
 """
@@ -81,8 +82,8 @@ _address(layer_id::Int, node_id::Int) =
     UInt32((UInt32(layer_id) << 20) | (UInt32(node_id) & 0x000FFFFF))
 
 function _push_gupf!(layer::Layer, node_id::Int,
-                     table::Vector{ForwardingEntry6GRUPA})
-    push!(layer.gupfs, GUPF(layer.id, node_id, _address(layer.id, node_id), table))
+                     table::Vector{ForwardingEntry6GRUPA}, kind::Symbol)
+    push!(layer.gupfs, GUPF(layer.id, node_id, _address(layer.id, node_id), table, kind))
     layer.node_to_gupf[node_id] = length(layer.gupfs)
     return layer.gupfs[end]
 end
@@ -154,7 +155,7 @@ function build_layer_stack(t::NetworkTopology; internetwork::Bool = true,
             table = [ForwardingEntry6GRUPA(UInt32(g), 0xFFFFFF00, Int32(1))
                      for g in gnbs_of_edge[i]]
             push!(table, ForwardingEntry6GRUPA(UInt32(0), 0x00000000, Int32(2)))
-            _push_gupf!(layer, i, table)
+            _push_gupf!(layer, i, table, :edge)
         end
         # PSA GUPFs: one entry per child edge domain + a default border uplink.
         for j in member_psas
@@ -164,7 +165,7 @@ function build_layer_stack(t::NetworkTopology; internetwork::Bool = true,
                      for i in children]
             push!(table, ForwardingEntry6GRUPA(UInt32(0), 0x00000000, Int32(2)))
             node = E + j
-            _push_gupf!(layer, node, table)
+            _push_gupf!(layer, node, table, :psa)
             layer.border_node == 0 && (layer.border_node = node)
             for i in children
                 push!(layer.edges, (layer.node_to_gupf[i], layer.node_to_gupf[node]))
@@ -191,7 +192,7 @@ function build_layer_stack(t::NetworkTopology; internetwork::Bool = true,
                 table = [ForwardingEntry6GRUPA(UInt32(o) << 24, 0xFF000000,
                                                Int32(k))
                          for (k, o) in enumerate(ops)]
-                _push_gupf!(inet, E + j, table)
+                _push_gupf!(inet, E + j, table, :border)
             end
         end
         inet.border_node = isempty(inet.gupfs) ? 0 : inet.gupfs[1].node_id
@@ -222,7 +223,7 @@ function add_member_layer!(stack::LayerStack, node_ids::Vector{Int};
     layer = _new_layer!(stack, name, 0)
     for (k, node) in enumerate(node_ids)
         table = [ForwardingEntry6GRUPA(_address(layer.id, node), 0xFFFFFF00, Int32(1))]
-        _push_gupf!(layer, node, table)
+        _push_gupf!(layer, node, table, :member)
         locations !== nothing && (stack.node_locations[node] = locations[k])
     end
     for k in 2:length(node_ids)
@@ -247,7 +248,7 @@ function add_federation_layer!(stack::LayerStack, lower_ids::Vector{Int};
         lower = stack.layers[lid]
         table = [ForwardingEntry6GRUPA(UInt32(o) << 24, 0xFF000000, Int32(k2))
                  for (k2, o) in enumerate(lower_ids)]
-        _push_gupf!(layer, lower.border_node, table)
+        _push_gupf!(layer, lower.border_node, table, :border)
     end
     for k in 2:length(layer.gupfs)
         push!(layer.edges, (k - 1, k))
@@ -283,7 +284,7 @@ function enroll!(stack::LayerStack, upper_id::Int, lower_id::Int)
     # One border GUPF for the newcomer, reaching every member aggregate.
     table = [ForwardingEntry6GRUPA(UInt32(k) << 24, 0xFF000000, Int32(k))
              for k in 1:length(stack.floats_over[upper_id])]
-    _push_gupf!(upper, lower.border_node, table)
+    _push_gupf!(upper, lower.border_node, table, :border)
     isempty(upper.gupfs) || length(upper.gupfs) < 2 ||
         push!(upper.edges, (length(upper.gupfs) - 1, length(upper.gupfs)))
     return stack
@@ -400,6 +401,7 @@ function export_layer_stack_json(stack::LayerStack, path::String)
                 "layer_id" => g.layer_id,
                 "address" => g.address,
                 "table_size" => length(g.forwarding_table),
+                "kind" => string(g.kind),
                 "lat" => haskey(stack.node_locations, g.node_id) ?
                          stack.node_locations[g.node_id].lat : 0.0,
                 "lon" => haskey(stack.node_locations, g.node_id) ?
