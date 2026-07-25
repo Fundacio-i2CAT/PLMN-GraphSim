@@ -6,6 +6,11 @@ using DesJulia6gRupa.Types
 using Graphs
 using MetaGraphsNext
 
+if !isdefined(Main, :TestFixtures)
+    include("TestFixtures.jl")
+end
+using .TestFixtures
+
 # Multi-operator federation (§7.5.1): K operator fields composed into ONE shared
 # topology — the "network of networks" scenario. In the federation vision an agent
 # attaches to whichever member's coverage is best, so inter-operator crossings become
@@ -16,21 +21,9 @@ using MetaGraphsNext
 
 @testset "Federation composition (§7.5.1)" begin
 
-    _graph() = MetaGraph(Graph(), label_type = Tuple{Symbol, Int},
-                         vertex_data_type = GeoPoint, edge_data_type = Float64)
-
-    # Minimal operator field: n gNBs (1:1 with edge UPFs) → 1 PSA, one municipality.
-    function _field(n::Int, lon0::Float64, pop::Int, code::String)
-        NetworkTopology(
-            [GeoPoint(40.0, lon0 - (i - 1)) for i in 1:n],
-            [GeoPoint(40.0, lon0 - (i - 1)) for i in 1:n],
-            collect(1:n),
-            [GeoPoint(40.0, lon0)], fill(1, n),
-            [Municipality(code, code, pop, GeoPoint(40.0, lon0), 0.0, nothing)],
-            Dict{String,Vector{Int}}(), [1.0],
-            _graph(),
-        )
-    end
+    # Shared builders (test/TestFixtures.jl): mock_graph, op_field(n, lon0, pop, code).
+    _graph = mock_graph
+    _field = op_field
 
     @testset "K-ary compose: offsets, tags, merged population" begin
         a, b, c = _field(2, -4.0, 3000, "a"), _field(1, -7.0, 1000, "b"), _field(3, -1.0, 4000, "c")
@@ -122,11 +115,11 @@ using MetaGraphsNext
         # op1 → op2 crossing.
         s = Simulation.dispatch_handover!(state, t, [ctx], 1, 3, 1, 3, 1, 3, 1, 2)
         @test state.roam_entries == 1
-        @test state.sigma_roam_5g == 3250
+        @test state.sigma_roam_5g == SIGMA_ROAM_5G_REEST
         # op2 → op3 crossing: second federation-member change, charged again.
         s = Simulation.dispatch_handover!(state, t, s, 3, 4, 3, 4, 3, 4, 2, 3)
         @test state.roam_entries == 2
-        @test state.sigma_roam_5g == 2 * 3250
+        @test state.sigma_roam_5g == 2 * SIGMA_ROAM_5G_REEST
         @test state.session_breaks_5g == 2 * scale
         # op3 internal move: gNB 4 → 5, same operator — NO roam charge.
         s = Simulation.dispatch_handover!(state, t, s, 4, 5, 4, 5, 4, 5, 3, 3)

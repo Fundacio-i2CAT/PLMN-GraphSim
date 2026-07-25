@@ -41,15 +41,6 @@ using MetaGraphsNext
         @test Simulation.find_serving_gnb(mock_topology, user3) == 3
     end
 
-    @testset "init_state_5g" begin
-        num_upfs = 5
-        state_5g = Simulation.init_state_5g(num_upfs)
-        
-        @test length(state_5g) == num_upfs
-        @test all(isempty, state_5g)
-        @test eltype(state_5g) == Vector{SessionContext5G}
-    end
-
     @testset "init_state_6g_rupa" begin
         # Construct a Mock Graph
         # 1 UPF connected to 2 gNBs

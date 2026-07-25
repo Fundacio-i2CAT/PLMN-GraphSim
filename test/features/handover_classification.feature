@@ -1,107 +1,144 @@
-Feature: 5G/6G-RUPA Handover Classification and Signaling Cost Tracking
+Feature: Handover & crossing signaling cost — 5G vs 6G-RUPA
+  # LIVING SPEC. This file is the agreed, current statement of the σ model and the
+  # graph-of-graphs claims. It supersedes the earlier draft, which had stale
+  # constants (roam 1180, inter 400) and the WRONG core-prefix model (install/
+  # withdraw a core route per move). Both are corrected below.
+  #
+  # σ constants (single source; keep in sync with test/TestFixtures.jl and
+  # src/Simulation/{Handover,Layers,NTN}.jl):
+  #   Xn (intra-domain, same anchor) ............ 600 B
+  #   N2 (inter-domain, anchor preserved) ....... 1150 B
+  #   6G-RUPA renumber (intra == inter, FLAT) ... 200 B
+  #   crossing 5G, :reestablish (deployed) ...... 3250 B  + session break + acct reloc
+  #   crossing 5G, :ideal_ho (sensitivity) ...... 1300 B  no break
+  #   6G-RUPA crossing entry .................... 450 B   0 breaks (then 200 B/move)
+  #   NTN sat->sat switch: 5G 1150 / RUPA 200
+  # Core forwarding-state writes per handover: 5G = sessions x scale_factor; RUPA = 0.
 
-  Background: Single MNO with two UPFs serving multiple gNBs
-    Given a simulation with two UPFs (anchor points)
-    And gNB 1 and gNB 2 served by UPF 1
-    And gNB 3 served by UPF 2
+  Background:
+    Given a two-tier single operator: gNB 1,2 on edge UPF 1, gNB 3 on edge UPF 2
+    And both edge UPFs anchored at PSA 1 (SSC mode 1, anchor pinned)
     And an agent with active PDU sessions
 
-  # ============ 5G Xn Handover (same anchor UPF) ============
-  Scenario: Xn handover - UE moves between gNBs sharing same anchor UPF
-    When UE hands over from gNB 1 to gNB 2 (both with anchor UPF 1)
-    Then handover is classified as Xn (same anchor)
-    And sigma_5g_xn counter increments by 600 bytes
-    And sigma_5g_n2 counter does not change
-    And session anchor_upf_index remains UPF 1
-    And handover_count increments to 1
+  # ---- Per-event σ (the core table) ----
+  @wired
+  Scenario: Xn handover — same edge UPF
+    When the UE moves from gNB 1 to gNB 2 (same edge UPF 1)
+    Then it is classified intra-domain, climb 0
+    And sigma_5g_xn increments by 600 and sigma_5g_n2 is unchanged
+    And sigma_rupa_intra increments by 200
+    And handover_count increments by 1
 
-  # ============ 5G N2 Handover (anchor UPF changes) ============
-  Scenario: N2 handover - UE moves to gNB served by different anchor UPF
-    When UE hands over from gNB 1 (anchor UPF 1) to gNB 3 (anchor UPF 2)
-    Then handover is classified as N2 (anchor change)
-    And sigma_5g_n2 counter increments by 1150 bytes
-    And sigma_5g_xn counter does not change
-    And session anchor_upf_index changes from UPF 1 to UPF 2
-    And handover_count increments to 1
+  @wired
+  Scenario: N2 handover — different edge UPF, anchor preserved
+    When the UE moves from gNB 2 (edge UPF 1) to gNB 3 (edge UPF 2)
+    Then it is classified inter-domain, climb 0
+    And sigma_5g_n2 increments by 1150 and sigma_5g_xn is unchanged
+    And sigma_rupa_inter increments by 200
+    And the session anchor_upf_index remains PSA 1
 
-  # ============ 5G Home-Routed Roaming (inter-PLMN, HR) ============
-  Scenario: Home-Routed roaming - UE roams to visited PLMN with HR model
-    When UE hands over from home PLMN gNB to visited PLMN gNB
-    And roaming mode is Home-Routed (traffic through H-SMF anchor)
-    Then handover is classified as HR roaming
-    And sigma_roam_5g increments by 1180 bytes
-    And V-SMF in visited PLMN routes data via N9 to H-UPF anchor
-    And H-SMF in home PLMN maintains session anchor
-    And handover_count increments to 1
+  @wired
+  Scenario: 6G-RUPA renumber is FLAT — inter costs the same as intra
+    When the UE renumbers within a domain, then across a domain boundary
+    Then both charge 200 B (the destination aggregate prefix already exists)
+    And no core forwarding entry is installed or withdrawn (delta S_core = 0)
 
-  # ============ 5G Local Breakout Roaming (inter-PLMN, LBO) ============
-  # OUT OF SCOPE (not implemented). The model deliberately simulates Home-Routed
-  # only: operators default to HR for billing/CDR tracking (see plan §6b and
-  # mobility-formal-model.md §3.5). LBO is discussed in the paper background as
-  # the contrast operators avoid, not simulated. No sigma_roam_5g_lbo counter
-  # exists. Kept here as a documented future-work scenario, not an active spec.
+  # ---- The O(n) vs O(1) headline ----
+  @wired
+  Scenario: 5G rewrites per-session core state; 6G-RUPA writes none
+    Given an agent with 2 sessions and scale_factor 1000
+    When an N2 handover occurs
+    Then core_writes_5g increments by 2 * 1000
+    And core_writes_rupa stays 0 at every level
+
+  # ---- SSC mode 1: anchor pinning + path stretch ----
+  @wired
+  Scenario: PSA-region crossing stays N2, anchor pinned, stretch accumulates
+    Given edge UPF 3 anchored at a second PSA 2
+    When the UE moves edge UPF 2 -> edge UPF 3 (crossing PSA region)
+    Then it is still N2 1150 (not a PSA relocation): sigma_5g_psa stays 0
+    And ho_l3 increments as a geometric marker only
+    And the anchor stays PSA 1 and anchor_dist_5g_sum > anchor_dist_opt_sum
+    And acct_reloc_5g and acct_reloc_rupa stay 0 (SSC-1 intra-PLMN)
+
+  # ---- Roaming / member crossing (operator change) ----
+  @wired
+  Scenario: Border crossing, deployed reality (:reestablish)
+    When the UE crosses from operator 1 to operator 2
+    Then sigma_roam_5g increments by 3250 and the session breaks (scaled)
+    And acct_reloc_5g increments (charging context rebuilt)
+    And sigma_roam_rupa increments by 450 with 0 breaks (flow survives)
+
+  @wired
+  Scenario: Border crossing, idealized inter-PLMN HO (:ideal_ho sensitivity)
+    When the UE crosses operators under :ideal_ho semantics
+    Then sigma_roam_5g increments by 1300 and no session breaks
+    And sigma_rupa is unchanged relative to :reestablish (architecture-invariant)
+
+  @wired
+  Scenario: Roaming path-stretch is the country-scale hairpin
+    When a roamer hands over while abroad (serving operator != anchor operator)
+    Then the sample lands in the roam bucket, not the domestic bucket
+    And roam_dist_5g_sum is the visited-edge -> pinned-home-PSA distance (100s of km)
+    And roam_dist_opt_sum uses the nearest aggregate (near 0)
+
+  # ---- Federation (K operators) ----
+  @wired
+  Scenario: K-ary composition offsets, tags, and O(K) membership
+    Given K operator fields composed into one topology
+    Then edge/PSA indices are offset per preceding member and tagged by operator
+    And municipalities dedupe by (code, name) so population weight counts once
+    And membership is K enrollments vs 5G's K*(K-1)/2 bilateral agreements
+
+  # ---- Graph-of-graphs (recursive internetworking) ----
+  @wired
+  Scenario: Climb depth classifies the move (one rule, all cases)
+    Given member layers under exchange layers under a root
+    When the UE moves within a member / to a sibling member / across exchanges
+    Then classify_move returns climb 0 / climb 1 / climb 2 respectively
+    And sigma_rupa is FLAT in climb depth (450 entry regardless of depth)
+
+  @wired
+  Scenario: Topological address makes climb a prefix comparison
+    Given hierarchical addresses root.exchange.member.psa.edge
+    Then two nodes share a prefix exactly up to their first common layer
+    And climb == member-path-length - shared-prefix-length
+    And edges under one PSA share the aggregate prefix, differ only in the suffix
+
+  @wired
+  Scenario: charge_move! reproduces legacy dispatch_handover! exactly
+    When the same move set is driven through both paths on twin states
+    Then every sigma / event / break counter matches
+    # This equivalence is the linchpin: it lets sigma be asserted once centrally.
+
+  # ---- NTN member (§7.5.2) ----
+  @wired
+  Scenario: Terrestrial <-> satellite crossing uses its own buckets
+    When the UE crosses terrestrial <-> NTN
+    Then sigma_ntn_cross_* is charged (3250/1300 vs 450) not the §7.4 roam counters
+    And a satellite->satellite switch is N2-class 1150 (5G) vs 200 (RUPA)
+
+  @wired
+  Scenario: SGP4 propagation is validated against LEOPath
+    Given the same TLE set LEOPath uses
+    Then sub-satellite points agree to <0.2° lat, <0.06° lon across fixtures
+
+  # ---- Billing orthogonality (§7.3) ----
+  @wired
+  Scenario: Same granularity, different key — RUPA key invariant under renumber
+    When every user does a PSA-relocating move
+    Then the 5G accounting key (user, PSA) relocates; the RUPA key (AP-name) does not
+    And per-user billing totals are identical in both
+
+  # ---- Out of scope, documented ----
   @future @not-implemented
-  Scenario: Local Breakout roaming - UE roams with data breaking out locally
-    When UE hands over from home PLMN gNB to visited PLMN gNB
-    And roaming mode is Local Breakout (data exits at V-UPF)
-    Then handover is classified as LBO roaming
-    And V-SMF in visited PLMN establishes V-UPF anchor for data plane
-    And H-SMF in home PLMN maintains only control plane context
-    And traffic does not backhaul through home network
+  Scenario: Local Breakout roaming
+    # HR only is modelled (operators default to HR for CDR tracking). LBO is the
+    # contrast operators avoid; no sigma_roam_5g_lbo counter exists.
 
-  # ============ 6G-RUPA Intra-domain Handover ============
-  Scenario: 6G-RUPA intra-domain handover - UE renumbered within same GUPF
-    When using 6G-RUPA architecture
-    And UE hands over from gNB 1 to gNB 2 (both attach to same GUPF)
-    Then handover is classified as intra-domain renumbering
-    And sigma_rupa_intra increments by 200 bytes
-    And sigma_rupa_inter counter does not change
-    And core forwarding table (aggregate prefix) size unchanged
-    And UE acquires new topological address within same domain prefix
-    And handover_count increments to 1
-
-  # ============ 6G-RUPA Inter-domain Handover ============
-  Scenario: 6G-RUPA inter-domain handover - UE renumbered to different GUPF domain
-    When using 6G-RUPA architecture
-    And UE hands over from gNB 1 (GUPF 1) to gNB 3 (GUPF 2)
-    Then handover is classified as inter-domain renumbering
-    And sigma_rupa_inter increments by 400 bytes
-    And sigma_rupa_intra counter does not change
-    And core routing table installs new aggregate prefix entry
-    And UE acquires new topological address in destination domain
-    And old domain prefix withdrawn if no UEs remain
-    And handover_count increments to 1
-
-  # ============ 6G-RUPA Inter-layer Roaming (N+1 recursion) ============
-  Scenario: 6G-RUPA inter-layer roaming - UE moves between MNO layers
-    When using 6G-RUPA architecture
-    And UE hands over from home layer (operator 1) to visited layer (operator 2)
-    Then handover is classified as inter-layer roaming
-    And sigma_roam_rupa increments by 300 bytes
-    And home layer maintains billing context (S_ctx URR equivalent)
-    And visited layer maintains forwarding state (S_fwd topological prefix)
-    And no per-session forwarding anchor exists
-    And N+1 internetwork layer routes traffic topologically
-    And handover_count increments to 1
-
-  # ============ Signaling Cost History and Metrics Export ============
-  Scenario: Multiple handovers accumulate correct sigma costs
-    When sequence of handovers occurs:
-      | type | count | cost_per | total |
-      | Xn   | 5     | 600      | 3000  |
-      | N2   | 3     | 1150     | 3450  |
-      | HR   | 1     | 1180     | 1180  |
-    Then history_sigma_5g_xn tracks cumulative bytes (3000)
-    And history_sigma_5g_n2 tracks cumulative bytes (3450)
-    And history_sigma_roam_5g tracks cumulative bytes (1180)
-    And mobility_evolution_*.csv includes all sigma columns
-    And CSV rows match timestamped history snapshots
-
-  # ============ Billing Context Independence (S_ctx orthogonal to S_fwd) ============
-  Scenario: Billing state tracked independently from forwarding state
-    When roaming occurs (5G HR or 6G-RUPA roaming)
-    Then home network maintains billing/accounting context (S_ctx)
-    And visited network maintains forwarding/routing state (S_fwd)
-    And S_ctx size is independent of where S_fwd resides
-    And both HR and LBO can track per-UE CDRs
-    And billing granularity is preserved across handovers
+  @future @not-modelled
+  Scenario: Single-radio interruption gap
+    # RINA multihoming/0-loss assumes >=2 radios. A single-radio UE has a radio
+    # association gap on every handover, orthogonal to the architecture (hits 5G
+    # and RUPA equally). Network-layer 0-loss (EFCP port-ids) still holds. Not
+    # charged in the sim; would apply symmetrically. See memory + roaming notes.

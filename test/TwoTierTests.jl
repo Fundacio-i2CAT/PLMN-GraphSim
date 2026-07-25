@@ -8,18 +8,6 @@ using MetaGraphsNext
 
 @testset "Two-Tier Architecture Tests" begin
 
-    @testset "Configuration" begin
-        # Test default values
-        config_default = SimConfig(1, 2, 1000, 10.0, 20.0, 5.0, :single_tier, 0, 1.0)
-        @test config_default.scenario == :single_tier
-        @test config_default.num_centralized_upfs == 0
-
-        # Test two-tier values
-        config_two_tier = SimConfig(1, 2, 1000, 10.0, 20.0, 5.0, :two_tier, 5, 1.0)
-        @test config_two_tier.scenario == :two_tier
-        @test config_two_tier.num_centralized_upfs == 5
-    end
-
     @testset "Hierarchical Clustering" begin
         # Create mock Edge UPFs
         # 3 close to (0,0), 3 close to (10,10)

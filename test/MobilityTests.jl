@@ -5,6 +5,11 @@ using DesJulia6gRupa.Types
 using Graphs
 using MetaGraphsNext
 
+if !isdefined(Main, :TestFixtures)
+    include("TestFixtures.jl")
+end
+using .TestFixtures
+
 @testset "Mobility (PoC)" begin
 
     @testset "MobilityConfig defaults preserve legacy behaviour" begin
@@ -134,11 +139,11 @@ using MetaGraphsNext
         @test length(state.upf_sessions_5g[1]) == 0
         @test length(state.upf_sessions_5g[2]) == 1
         @test length(new_sessions) == 1
-        @test state.sigma_5g_n2 == 1150
+        @test state.sigma_5g_n2 == SIGMA_N2
 
         # Same-UPF call is a no-op.
         Simulation.handle_handover_5g!(state, topology, new_sessions, 2, 2, 2, 2, 1, 1)
-        @test state.sigma_5g_n2 == 1150
+        @test state.sigma_5g_n2 == SIGMA_N2
     end
 
     @testset "handle_handover_6grupa! counts local renumbering events" begin
@@ -160,16 +165,16 @@ using MetaGraphsNext
         # wrong 400 B inter-domain model).
         @test state.sigma_rupa_intra == 0
         Simulation.handle_handover_6grupa!(state, topology, 1, 2, 1, 1, 1, 1)
-        @test state.sigma_rupa_intra == 200          # local renumber
+        @test state.sigma_rupa_intra == SIGMA_RUPA          # local renumber
         # Same gNB -> no-op.
         Simulation.handle_handover_6grupa!(state, topology, 2, 2, 1, 1, 1, 1)
-        @test state.sigma_rupa_intra == 200
+        @test state.sigma_rupa_intra == SIGMA_RUPA
 
         # Cross-domain renumber: classified as inter (event classifier) but charged
         # the SAME flat 200 B, not 400.
         Simulation.handle_handover_6grupa!(state, topology, 2, 3, 1, 2, 1, 1)
-        @test state.sigma_rupa_inter == 200          # flat renumber, not 400
-        @test state.sigma_rupa_intra == 200          # intra untouched
+        @test state.sigma_rupa_inter == SIGMA_RUPA          # flat renumber, not 400
+        @test state.sigma_rupa_intra == SIGMA_RUPA          # intra untouched
     end
 
     @testset "core forwarding-state churn: 5G O(n) per-session, RUPA 0" begin
@@ -235,8 +240,8 @@ using MetaGraphsNext
         # Intra-domain hop: gNB 1->2, same UPF/domain 1 => Xn + RUPA intra, one HO.
         sessions = Simulation.dispatch_handover!(state, topology, sessions,
                                                  1, 2, 1, 1, 1, 1, 1, 1)
-        @test state.sigma_5g_xn == 600
-        @test state.sigma_rupa_intra == 200
+        @test state.sigma_5g_xn == SIGMA_XN
+        @test state.sigma_rupa_intra == SIGMA_RUPA
         @test state.sigma_5g_n2 == 0
         @test state.sigma_rupa_inter == 0
         @test state.handover_count == 1               # counted once, not twice
@@ -245,8 +250,8 @@ using MetaGraphsNext
         # inter classified but charged flat renumber (200), one HO.
         sessions = Simulation.dispatch_handover!(state, topology, sessions,
                                                  2, 3, 1, 2, 1, 2, 1, 1)
-        @test state.sigma_5g_n2 == 1150
-        @test state.sigma_rupa_inter == 200           # flat renumber (was wrongly 400)
+        @test state.sigma_5g_n2 == SIGMA_N2
+        @test state.sigma_rupa_inter == SIGMA_RUPA           # flat renumber (was wrongly 400)
         @test state.handover_count == 2
     end
 
@@ -290,19 +295,19 @@ using MetaGraphsNext
 
         # L1: same edge UPF 1. Xn 600, RUPA flat 200.
         sessions = Simulation.dispatch_handover!(state, topology, sessions, 1,2, 1,1, 1,1, 1,1)
-        @test state.sigma_5g_xn == 600 && state.sigma_5g_n2 == 0 && state.sigma_5g_psa == 0
-        @test state.sigma_rupa_intra == 200
+        @test state.sigma_5g_xn == SIGMA_XN && state.sigma_5g_n2 == 0 && state.sigma_5g_psa == 0
+        @test state.sigma_rupa_intra == SIGMA_RUPA
         @test state.ho_l1 == 1 && state.ho_l2 == 0 && state.ho_l3 == 0
 
         # L2 same PSA: edge1 → edge2 (both PSA1). N2 1150, no PSA crossing.
         sessions = Simulation.dispatch_handover!(state, topology, sessions, 2,3, 1,2, 1,2, 1,1)
-        @test state.sigma_5g_n2 == 1150 && state.sigma_5g_psa == 0
+        @test state.sigma_5g_n2 == SIGMA_N2 && state.sigma_5g_psa == 0
         @test state.ho_l2 == 1 && state.ho_l3 == 0
 
         # L2 cross-PSA region: edge2 → edge3 (PSA1 → PSA2). STILL N2 1150 (anchor pinned),
         # NOT a PSA relocation: sigma_5g_psa stays 0, acct churn stays 0. ho_l3 marker++.
         sessions = Simulation.dispatch_handover!(state, topology, sessions, 3,4, 2,3, 2,3, 1,1)
-        @test state.sigma_5g_n2 == 2300 && state.sigma_5g_psa == 0
+        @test state.sigma_5g_n2 == 2 * SIGMA_N2 && state.sigma_5g_psa == 0
         @test state.ho_l2 == 2 && state.ho_l3 == 1
 
         # Anchor PINNED throughout (SSC-1): still PSA1 after roaming into PSA2's region.

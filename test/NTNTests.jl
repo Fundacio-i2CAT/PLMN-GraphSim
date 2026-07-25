@@ -3,6 +3,11 @@ using DesJulia6gRupa
 using DesJulia6gRupa.Simulation
 using DesJulia6gRupa.Types
 
+if !isdefined(Main, :TestFixtures)
+    include("TestFixtures.jl")
+end
+using .TestFixtures
+
 # NTN escalation (§7.5.2): a satellite constellation is one more federation member.
 # Orbital inputs are the SAME TLE files LEOPath uses (data/ntn/, from the published
 # NTN paper's simulator); propagation here is SGP4 via SatelliteToolboxSgp4.
@@ -97,8 +102,8 @@ const TLE_STARLINK = joinpath(pkgdir(DesJulia6gRupa), "data", "ntn",
                            Float64[], Vector{Float64}[], Vector{Int}[],
                            Vector{Float64}[], Vector{Int}[])
         Simulation.charge_ntn_crossing!(s, 2)
-        @test s.sigma_ntn_cross_5g == 3250
-        @test s.sigma_ntn_cross_rupa == 450
+        @test s.sigma_ntn_cross_5g == SIGMA_ROAM_5G_REEST
+        @test s.sigma_ntn_cross_rupa == SIGMA_ROAM_RUPA
         @test s.ntn_session_breaks_5g == 2 * scale
         @test s.sigma_roam_5g == 0                    # §7.4 counters untouched
         @test s.roam_entries == 0
@@ -108,7 +113,7 @@ const TLE_STARLINK = joinpath(pkgdir(DesJulia6gRupa), "data", "ntn",
                             Float64[], Vector{Float64}[], Vector{Int}[],
                             Vector{Float64}[], Vector{Int}[])
         Simulation.charge_ntn_crossing!(s2, 2)
-        @test s2.sigma_ntn_cross_5g == 1300           # idealized inter-op HO
+        @test s2.sigma_ntn_cross_5g == SIGMA_ROAM_5G_IDEAL           # idealized inter-op HO
         @test s2.ntn_session_breaks_5g == 0           # no break in ideal semantics
 
         # Satellite→satellite switch within the constellation: NG-RAN node change
@@ -116,7 +121,7 @@ const TLE_STARLINK = joinpath(pkgdir(DesJulia6gRupa), "data", "ntn",
         # RUPA: one renumber.
         Simulation.charge_ntn_sat_handover!(s)
         @test s.ntn_sat_handovers == 1
-        @test s.sigma_ntn_ho_5g == 1150
-        @test s.sigma_ntn_ho_rupa == 200
+        @test s.sigma_ntn_ho_5g == SIGMA_NTN_SATHO_5G
+        @test s.sigma_ntn_ho_rupa == SIGMA_NTN_SATHO_RUPA
     end
 end

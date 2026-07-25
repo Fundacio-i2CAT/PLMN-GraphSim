@@ -1,6 +1,8 @@
 using Test
 using DesJulia6gRupa
 
+include("TestFixtures.jl")
+
 @testset "DesJulia6gRupa.jl" begin
     include("AgentGenerationTests.jl")
     include("SimulationTests.jl")
