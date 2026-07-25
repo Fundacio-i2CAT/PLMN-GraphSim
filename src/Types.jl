@@ -292,6 +292,17 @@ mutable struct SimGlobalState
     ntn_session_breaks_5g::Int64         # breaks at crossings (:reestablish only)
     ntn_serving_ticks::Int64             # agent-ticks served by the satellite member
     ntn_total_ticks::Int64               # all mobile agent-ticks (serving fraction)
+
+    # --- Graph-of-graphs layer stack (recursive internetworking) ---
+    # layer_stack: Union{Nothing, Simulation.LayerStack} (Any to avoid module
+    # cycle); nothing = flat legacy model only. When present, every member
+    # crossing is ALSO classified through the layer DAG (Layers.jl
+    # classify_move) and its climb depth recorded here: ho_climb[k] = crossings
+    # whose first common federation layer sits k levels above the members.
+    # Observation only — σ charging stays with the legacy dispatch, whose
+    # equivalence with charge_move! is asserted in test/LayerTests.jl.
+    layer_stack::Any
+    ho_climb::Vector{Int64}
 end
 
 # Backward-compatible constructor: all σ counters and histories initialized to 0/empty.
@@ -317,7 +328,8 @@ SimGlobalState(config, upf_sessions_5g, forwarding_tables_6grupa,
                    Int64[], Int64[], Int64[],
                    0.0, 0.0, Int64(0),
                    nothing, Int64(0), Int64(0), Int64(0), Int64(0), Int64(0),
-                   Int64(0), Int64(0), Int64(0), Int64(0), Int64(0))
+                   Int64(0), Int64(0), Int64(0), Int64(0), Int64(0),
+                   nothing, Int64[])
 
 struct GUPFState6GRUPA
     forwarding_table::Vector{ForwardingEntry6GRUPA}

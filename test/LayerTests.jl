@@ -6,6 +6,8 @@ using DesJulia6gRupa.Types
 using Graphs
 using MetaGraphsNext
 using JSON3
+using ConcurrentSim: ConcurrentSim, @process, Process
+using Random
 
 # Graph-of-graphs layer model (recursive internetworking).
 #
@@ -227,6 +229,74 @@ using JSON3
         end
         after = [copy(g.forwarding_table) for l in stack.layers for g in l.gupfs]
         @test snapshot == after
+    end
+
+    @testset "observe_move!: climb histogram in the live loop" begin
+        t = _composed()
+        config = SimConfig(1, 1, 1, 100.0, 10.0, 5.0, :two_tier, 3, 1.0)
+        state = Simulation.init_global_state_for_simulation(t, config)
+
+        # No stack installed → observation is a no-op.
+        @test Simulation.observe_move!(state, t, 1, 4) === nothing
+        @test isempty(state.ho_climb)
+
+        # Flat stack: every member crossing climbs 1 (via the internetwork).
+        state.layer_stack = Simulation.build_layer_stack(t)
+        r = Simulation.observe_move!(state, t, 1, 4)   # op 1 → op 3
+        @test r.class == :crossing && state.ho_climb == [1]
+        Simulation.observe_move!(state, t, 1, 2)       # inter, not a crossing
+        @test state.ho_climb == [1]
+
+        # Hierarchy: members 1,2 under X; member 3 under Y; X,Y under root.
+        h = Simulation.build_layer_stack(t; internetwork = false)
+        m = [Simulation.layer_by_name(h, "member-$i").id for i in 1:3]
+        x = Simulation.add_federation_layer!(h, [m[1], m[2]]; name = "x")
+        y = Simulation.add_federation_layer!(h, [m[3]]; name = "y")
+        Simulation.add_federation_layer!(h, [x, y]; name = "root")
+        state.layer_stack = h
+        Simulation.observe_move!(state, t, 1, 3)       # member 1 → 2: via X, climb 1
+        Simulation.observe_move!(state, t, 1, 4)       # member 1 → 3: via root, climb 2
+        @test state.ho_climb == [2, 1]
+    end
+
+    @testset "live-loop equivalence: tracked operator vs stateless DAG (regression)" begin
+        # Regression for the stale-operator bug: lifecycle_embb_mobile never
+        # updated current_operator after a crossing, so every later move inside
+        # the visited member was charged as a NEW border crossing and the
+        # crossing back home was missed. The layer observation recomputes both
+        # ends of every move from gNB tags, so after a real mobile run the two
+        # counts must agree exactly: Σ ho_climb == roam_entries.
+
+        # Two co-located members with interleaved gNB strips (~85 m spacing):
+        # nearest-gNB flips across operators are routine, in both directions.
+        function _strip(lon0, n, code)
+            NetworkTopology(
+                [GeoPoint(40.0, lon0 - 0.002 * (i - 1)) for i in 1:n],
+                [GeoPoint(40.0, lon0 - 0.002 * (i - 1)) for i in 1:n],
+                collect(1:n),
+                [GeoPoint(40.0, lon0)], fill(1, n),
+                [Municipality(code, code, 1000, GeoPoint(40.0, lon0), 0.0, nothing)],
+                Dict{String,Vector{Int}}(), [1.0], _graph())
+        end
+        t = DataLoading.compose_topologies([_strip(-4.0, 8, "a"),
+                                            _strip(-4.001, 8, "b")])
+        stack = Simulation.build_layer_stack(t)
+
+        config = SimConfig(1, 1, 1, 30.0, 40.0, 0.001, :two_tier, 2, 1.0,
+                           MobilityConfig(true, 0.5, RandomWaypoint(400.0, 0.0, 0.5)),
+                           RoamingConfig(:reestablish, 0.0))
+        state = Simulation.init_global_state_for_simulation(t, config)
+        state.layer_stack = stack
+        Random.seed!(42)
+        env = ConcurrentSim.Simulation()
+        for i in 1:12
+            @process Simulation.user_lifecycle(env, i, state, t, eMBB)
+        end
+        ConcurrentSim.run(env, config.duration)
+
+        @test state.handover_count > 0
+        @test sum(state.ho_climb; init = 0) > 0          # crossings did happen
+        @test sum(state.ho_climb; init = 0) == state.roam_entries
     end
 
     @testset "JSON export for the layer visualization" begin

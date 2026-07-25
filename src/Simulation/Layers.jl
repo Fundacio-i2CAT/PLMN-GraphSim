@@ -386,6 +386,35 @@ function charge_move!(sim_state::SimGlobalState, stack::LayerStack,
 end
 
 """
+    observe_move!(sim_state, topology, old_gnb, new_gnb) -> classification | nothing
+
+Layer-DAG observation hook for the live sim loop: when `sim_state.layer_stack`
+holds a `LayerStack`, classify the physical move through the DAG and record the
+crossing climb depth in `sim_state.ho_climb` (histogram: index k = crossings
+resolved k levels above the member layers). Returns the classification, or
+`nothing` when no stack is installed.
+
+Observation only: σ charging stays with the legacy `dispatch_handover!` — this
+adds the recursion-depth dimension the flat operator-tag model cannot express
+(climb 1 = crossing via a direct exchange layer, climb 2 = via the root, …).
+"""
+function observe_move!(sim_state::SimGlobalState, topology::NetworkTopology,
+                       old_gnb::Int, new_gnb::Int)
+    stack = sim_state.layer_stack
+    stack === nothing && return nothing
+    r = classify_move(stack::LayerStack,
+                      attachment_of(stack, topology, old_gnb),
+                      attachment_of(stack, topology, new_gnb))
+    if r.class == :crossing
+        while length(sim_state.ho_climb) < r.climb
+            push!(sim_state.ho_climb, Int64(0))
+        end
+        sim_state.ho_climb[r.climb] += 1
+    end
+    return r
+end
+
+"""
     export_layer_stack_json(stack, path)
 
 Snapshot the whole stack (layers, GUPFs with per-instance table sizes, edges,
