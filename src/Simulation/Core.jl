@@ -212,9 +212,17 @@ reproduce bit-for-bit when `mobility.enabled = false`.
                                             current_upf, new_upf,
                                             current_domain, new_domain,
                                             current_operator, new_operator)
+        # Layer-DAG observation (graph-of-graphs): record the crossing climb
+        # depth when a stack is installed. Must also run before current_* moves.
+        observe_move!(sim_state, topology, current_gnb, new_gnb)
         current_upf = new_upf
         current_domain = new_domain
         current_gnb = new_gnb
+        # Track the serving operator across the handover. Leaving it stale (the
+        # attach-time value) double-charged every post-crossing move as a new
+        # border crossing and missed the crossing back home — caught by the
+        # layer-DAG observation, which recomputes both ends per move.
+        current_operator = new_operator
         @debug "User $user_id handover: gNB $(current_gnb) -> $(new_gnb), UPF -> $(new_upf) at $(now(env))"
     end
 end
