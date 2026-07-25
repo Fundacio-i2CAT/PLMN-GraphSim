@@ -385,6 +385,106 @@ function charge_move!(sim_state::SimGlobalState, stack::LayerStack,
     return r
 end
 
+# --- Topological addresses (hierarchical, DAG-derived) -----------------------
+#
+# A node's address is the path down the layer DAG to it, so a *prefix* is an
+# *aggregate*. Two nodes' addresses share a prefix exactly up to their first
+# common layer — which makes climb depth a literal prefix comparison:
+#
+#   climb = (member layer-path length) - (shared prefix length of the two paths)
+#
+# and a renumber "adopts an address under the destination aggregate" concretely:
+# the destination's prefix already exists, the mover just gets a new suffix under
+# it. This is the illustration the ΔS_core = 0 claim wants. Addresses are
+# stack-scoped (a layer-scoped synonym); the flat and hierarchical stacks give a
+# node different addresses, as expected.
+
+"""
+    layer_path(stack, layer_id) -> Vector{Int}
+
+Topological path of a layer in the DAG: `[root_rank, …, rank_within_parent]`.
+Roots are ranked by id; a layer's own component is its rank among its primary
+parent's `floats_over`. DAG multi-parent: the lowest-id parent is primary.
+"""
+function layer_path(stack::LayerStack, layer_id::Int)
+    roots = sort([l.id for l in stack.layers if isempty(stack.parents[l.id])])
+    _layer_path(stack, layer_id, roots, Dict{Int,Vector{Int}}())
+end
+
+function _layer_path(stack::LayerStack, id::Int, roots::Vector{Int},
+                     memo::Dict{Int,Vector{Int}})
+    haskey(memo, id) && return memo[id]
+    parents = stack.parents[id]
+    memo[id] = if isempty(parents)
+        [findfirst(==(id), roots)]
+    else
+        p = minimum(parents)
+        vcat(_layer_path(stack, p, roots, memo),
+             findfirst(==(id), stack.floats_over[p]))
+    end
+    return memo[id]
+end
+
+# Within-member ranks: PSA rank among the member's PSAs, edge rank among the
+# edges under that PSA — the aggregation sub-structure below the member.
+function _member_ranks(layer::Layer)
+    ranks = Dict{Int,Tuple{Int,Int}}()
+    psa_nodes = [g.node_id for g in layer.gupfs if g.kind == :psa]
+    psa_rank = Dict(n => i for (i, n) in enumerate(psa_nodes))
+    for (n, r) in psa_rank
+        ranks[n] = (r, 0)
+    end
+    edges_under = Dict{Int,Vector{Int}}()   # psa gupf idx -> edge node ids
+    for (a, b) in layer.edges
+        ga, gb = layer.gupfs[a], layer.gupfs[b]
+        ga.kind == :edge && gb.kind == :psa && push!(get!(edges_under, b, Int[]), ga.node_id)
+    end
+    for (pidx, edgenodes) in edges_under
+        pr = psa_rank[layer.gupfs[pidx].node_id]
+        for (er, en) in enumerate(edgenodes)
+            ranks[en] = (pr, er)
+        end
+    end
+    # Edges with no PSA parent (single-tier member): rank by appearance order.
+    fallback = 0
+    for g in layer.gupfs
+        if g.kind == :edge && !haskey(ranks, g.node_id)
+            ranks[g.node_id] = (0, (fallback += 1))
+        end
+    end
+    return ranks
+end
+
+"""
+    topo_address(stack, layer_id, node_id) -> Vector{Int}
+
+Hierarchical topological address of a GUPF: its member/aggregation path from the
+root down. A `:border` GUPF's address is the aggregate of the lower layer it
+represents (it *is* that aggregate). Renders as a dotted string via
+`topo_address_str`.
+"""
+function topo_address(stack::LayerStack, layer_id::Int, node_id::Int)
+    layer = stack.layers[layer_id]
+    g = layer.gupfs[layer.node_to_gupf[node_id]]
+    if g.kind == :border
+        for lid in stack.floats_over[layer_id]
+            stack.layers[lid].border_node == node_id && return layer_path(stack, lid)
+        end
+        return vcat(layer_path(stack, layer_id), node_id)
+    end
+    lp = layer_path(stack, layer_id)
+    if g.kind == :psa || g.kind == :edge
+        pr, er = _member_ranks(layer)[node_id]
+        return g.kind == :psa ? vcat(lp, pr) : vcat(lp, pr, er)
+    end
+    # Generic base-layer node (e.g. a satellite): rank by appearance order.
+    rank = findfirst(x -> x.node_id == node_id, layer.gupfs)
+    return vcat(lp, rank)
+end
+
+topo_address_str(stack::LayerStack, layer_id::Int, node_id::Int) =
+    join(topo_address(stack, layer_id, node_id), ".")
+
 """
     observe_move!(sim_state, topology, old_gnb, new_gnb) -> classification | nothing
 
@@ -429,6 +529,8 @@ function export_layer_stack_json(stack::LayerStack, path::String)
                 "node_id" => g.node_id,
                 "layer_id" => g.layer_id,
                 "address" => g.address,
+                "topo" => topo_address(stack, l.id, g.node_id),
+                "topo_str" => topo_address_str(stack, l.id, g.node_id),
                 "table_size" => length(g.forwarding_table),
                 "kind" => string(g.kind),
                 "lat" => haskey(stack.node_locations, g.node_id) ?

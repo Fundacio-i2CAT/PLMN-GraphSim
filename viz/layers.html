@@ -1,179 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Graph-of-Graphs Layer Inspector</title>
 <style>
   :root {
     color-scheme: light;
-    --surface: #fcfcfb;
-    --surface-2: #f2f1ee;
-    --panel: #ffffff;
-    --ink: #0b0b0b;
-    --ink-2: #52514e;
-    --ink-3: #8a8983;
-    --line: #e3e2dd;
-    --grid: #edece8;
-    --m1: #2a78d6; --m2: #eb6834; --m3: #1baf7a;
-    --m4: #eda100; --m5: #e87ba4; --ntn: #4a3aa7;
-    --fed: #52514e;
-    --hl: #0b0b0b;
-    --ok: #008300;
-    --bad: #e34948;
+    --surface: #fcfcfb; --surface-2: #f2f1ee; --panel: #ffffff;
+    --ink: #0b0b0b; --ink-2: #52514e; --ink-3: #8a8983;
+    --line: #e3e2dd; --grid: #edece8;
+    --m1: #2a78d6; --m2: #eb6834; --m3: #1baf7a; --m4: #eda100; --m5: #e87ba4; --ntn: #4a3aa7;
+    --fed: #52514e; --hl: #0b0b0b; --ok: #008300; --bad: #e34948;
   }
   @media (prefers-color-scheme: dark) {
     :root:where(:not([data-theme="light"])) {
       color-scheme: dark;
-      --surface: #1a1a19;
-      --surface-2: #232322;
-      --panel: #202020;
-      --ink: #ffffff;
-      --ink-2: #c3c2b7;
-      --ink-3: #8a8983;
-      --line: #383835;
-      --grid: #2a2a28;
-      --m1: #3987e5; --m2: #d95926; --m3: #199e70;
-      --m4: #c98500; --m5: #d55181; --ntn: #9085e9;
-      --fed: #c3c2b7;
-      --hl: #ffffff;
-      --ok: #4caf50;
-      --bad: #e66767;
+      --surface: #1a1a19; --surface-2: #232322; --panel: #202020;
+      --ink: #ffffff; --ink-2: #c3c2b7; --ink-3: #8a8983;
+      --line: #383835; --grid: #2a2a28;
+      --m1: #3987e5; --m2: #d95926; --m3: #199e70; --m4: #c98500; --m5: #d55181; --ntn: #9085e9;
+      --fed: #c3c2b7; --hl: #ffffff; --ok: #4caf50; --bad: #e66767;
     }
   }
   :root[data-theme="dark"] {
     color-scheme: dark;
-    --surface: #1a1a19;
-    --surface-2: #232322;
-    --panel: #202020;
-    --ink: #ffffff;
-    --ink-2: #c3c2b7;
-    --ink-3: #8a8983;
-    --line: #383835;
-    --grid: #2a2a28;
-    --m1: #3987e5; --m2: #d95926; --m3: #199e70;
-    --m4: #c98500; --m5: #d55181; --ntn: #9085e9;
-    --fed: #c3c2b7;
-    --hl: #ffffff;
-    --ok: #4caf50;
-    --bad: #e66767;
+    --surface: #1a1a19; --surface-2: #232322; --panel: #202020;
+    --ink: #ffffff; --ink-2: #c3c2b7; --ink-3: #8a8983;
+    --line: #383835; --grid: #2a2a28;
+    --m1: #3987e5; --m2: #d95926; --m3: #199e70; --m4: #c98500; --m5: #d55181; --ntn: #9085e9;
+    --fed: #c3c2b7; --hl: #ffffff; --ok: #4caf50; --bad: #e66767;
   }
   :root[data-theme="light"] {
     color-scheme: light;
-    --surface: #fcfcfb;
-    --surface-2: #f2f1ee;
-    --panel: #ffffff;
-    --ink: #0b0b0b;
-    --ink-2: #52514e;
-    --ink-3: #8a8983;
-    --line: #e3e2dd;
-    --grid: #edece8;
-    --m1: #2a78d6; --m2: #eb6834; --m3: #1baf7a;
-    --m4: #eda100; --m5: #e87ba4; --ntn: #4a3aa7;
-    --fed: #52514e;
-    --hl: #0b0b0b;
-    --ok: #008300;
-    --bad: #e34948;
+    --surface: #fcfcfb; --surface-2: #f2f1ee; --panel: #ffffff;
+    --ink: #0b0b0b; --ink-2: #52514e; --ink-3: #8a8983;
+    --line: #e3e2dd; --grid: #edece8;
+    --m1: #2a78d6; --m2: #eb6834; --m3: #1baf7a; --m4: #eda100; --m5: #e87ba4; --ntn: #4a3aa7;
+    --fed: #52514e; --hl: #0b0b0b; --ok: #008300; --bad: #e34948;
   }
-
   * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    background: var(--surface);
-    color: var(--ink);
-    font: 14px/1.45 ui-sans-serif, system-ui, sans-serif;
-  }
+  body { margin: 0; background: var(--surface); color: var(--ink);
+    font: 14px/1.45 ui-sans-serif, system-ui, sans-serif; }
   code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-
-  header {
-    display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.4rem 1.2rem;
-    padding: 1rem 1.4rem 0.6rem;
-    border-bottom: 1px solid var(--line);
-  }
+  header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.4rem 1.2rem;
+    padding: 1rem 1.4rem 0.6rem; border-bottom: 1px solid var(--line); }
   header h1 { font-size: 1.05rem; margin: 0; letter-spacing: 0.01em; }
   header .sub { color: var(--ink-2); font-size: 0.82rem; }
-  .toggle { margin-left: auto; display: flex; gap: 0; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
-  .toggle button {
-    border: 0; background: var(--surface-2); color: var(--ink-2);
-    padding: 0.3rem 0.85rem; font: inherit; font-size: 0.82rem; cursor: pointer;
-  }
+  .toggle { margin-left: auto; display: flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+  .toggle button { border: 0; background: var(--surface-2); color: var(--ink-2);
+    padding: 0.3rem 0.85rem; font: inherit; font-size: 0.82rem; cursor: pointer; }
   .toggle button.on { background: var(--ink); color: var(--surface); }
   .toggle button:focus-visible { outline: 2px solid var(--m1); outline-offset: -2px; }
-
   .wrap { display: flex; gap: 1rem; padding: 1rem 1.4rem 2rem; align-items: flex-start; }
   #stack { flex: 1 1 auto; min-width: 0; position: relative; }
   .level-row { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-bottom: 1.1rem; }
-  .level-tag {
-    flex-basis: 100%;
-    font-size: 0.7rem; letter-spacing: 0.09em; text-transform: uppercase;
-    color: var(--ink-3); margin-bottom: -0.35rem;
-  }
-  .panel {
-    background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
-    padding: 0.45rem 0.55rem 0.3rem;
-  }
-  .panel.dim { opacity: 0.45; }
-  .panel h3 {
-    margin: 0 0 0.15rem; font-size: 0.8rem; font-weight: 600;
-    display: flex; align-items: center; gap: 0.4rem;
-  }
+  .level-tag { flex-basis: 100%; font-size: 0.7rem; letter-spacing: 0.09em;
+    text-transform: uppercase; color: var(--ink-3); margin-bottom: -0.35rem; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+    padding: 0.45rem 0.55rem 0.3rem; }
+  .panel h3 { margin: 0 0 0.15rem; font-size: 0.8rem; font-weight: 600;
+    display: flex; align-items: center; gap: 0.4rem; }
   .panel h3 .swatch { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
   .panel h3 .meta { color: var(--ink-3); font-weight: 400; font-size: 0.72rem; margin-left: auto; }
   .panel svg { display: block; }
   .panel.sel { border-color: var(--hl); }
-
-  #connector-overlay {
-    position: absolute; inset: 0; pointer-events: none; z-index: 5;
-  }
-
-  aside {
-    flex: 0 0 300px; display: flex; flex-direction: column; gap: 0.8rem;
-    position: sticky; top: 0.8rem;
-  }
-  .card {
-    background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
-    padding: 0.7rem 0.85rem;
-  }
-  .card h2 {
-    margin: 0 0 0.45rem; font-size: 0.7rem; letter-spacing: 0.09em;
-    text-transform: uppercase; color: var(--ink-3); font-weight: 600;
-  }
+  #connector-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
+  aside { flex: 0 0 300px; display: flex; flex-direction: column; gap: 0.8rem;
+    position: sticky; top: 0.8rem; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+    padding: 0.7rem 0.85rem; }
+  .card h2 { margin: 0 0 0.45rem; font-size: 0.7rem; letter-spacing: 0.09em;
+    text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
   .kv { display: grid; grid-template-columns: auto 1fr; gap: 0.1rem 0.8rem; font-size: 0.82rem; }
   .kv dt { color: var(--ink-2); }
-  .kv dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+  .kv dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
   .hint { color: var(--ink-3); font-size: 0.78rem; }
-
   table.sigma { border-collapse: collapse; width: 100%; font-size: 0.8rem; }
-  table.sigma th, table.sigma td {
-    text-align: right; padding: 0.18rem 0.3rem; border-bottom: 1px solid var(--grid);
-    font-variant-numeric: tabular-nums;
-  }
+  table.sigma th, table.sigma td { text-align: right; padding: 0.18rem 0.3rem;
+    border-bottom: 1px solid var(--grid); font-variant-numeric: tabular-nums; }
   table.sigma th { color: var(--ink-3); font-weight: 500; font-size: 0.72rem; }
   table.sigma td:first-child, table.sigma th:first-child { text-align: left; }
   .adv { color: var(--ok); font-weight: 600; }
-
+  .pfx { color: var(--ink-3); } .pfx b { color: var(--m1); font-weight: 700; }
   #dag svg { display: block; margin: 0 auto; }
-  .dag-pill { cursor: default; }
-
   details.tbl { font-size: 0.8rem; }
   details.tbl summary { cursor: pointer; color: var(--ink-2); }
   details.tbl table { border-collapse: collapse; width: 100%; margin-top: 0.4rem; }
-  details.tbl th, details.tbl td {
-    padding: 0.15rem 0.35rem; border-bottom: 1px solid var(--grid);
-    text-align: right; font-variant-numeric: tabular-nums;
-  }
+  details.tbl th, details.tbl td { padding: 0.15rem 0.35rem; border-bottom: 1px solid var(--grid);
+    text-align: right; font-variant-numeric: tabular-nums; }
   details.tbl th:first-child, details.tbl td:first-child { text-align: left; }
-
-  #tooltip {
-    position: fixed; z-index: 10; pointer-events: none; display: none;
-    background: var(--ink); color: var(--surface);
-    font-size: 0.75rem; line-height: 1.4;
-    padding: 0.35rem 0.55rem; border-radius: 6px; max-width: 240px;
-  }
+  #tooltip { position: fixed; z-index: 10; pointer-events: none; display: none;
+    background: var(--ink); color: var(--surface); font-size: 0.75rem; line-height: 1.4;
+    padding: 0.35rem 0.55rem; border-radius: 6px; max-width: 260px; }
+  #err { margin: 1rem 1.4rem; padding: 0.8rem 1rem; border: 1px solid var(--bad);
+    border-radius: 8px; color: var(--bad); font-size: 0.85rem; display: none; }
   @media (prefers-reduced-motion: no-preference) {
-    .panel { transition: opacity 120ms ease, border-color 120ms ease; }
+    .panel { transition: border-color 120ms ease; }
   }
   @media (max-width: 900px) {
     .wrap { flex-direction: column; }
     aside { position: static; flex-basis: auto; width: 100%; }
   }
 </style>
-
+</head>
+<body>
 <header>
   <h1>Graph-of-graphs layer inspector</h1>
   <span class="sub">pan-Iberian federation · real OpenCellID fields · snapshot from <code>runs/layers_viz.jl</code></span>
@@ -182,6 +113,8 @@
     <button id="btn-hier">exchange hierarchy + NTN</button>
   </div>
 </header>
+
+<div id="err"></div>
 
 <div class="wrap">
   <div id="stack"><svg id="connector-overlay"></svg></div>
@@ -194,7 +127,7 @@
     </div>
     <div class="card">
       <h2>GUPF inspector</h2>
-      <div class="hint" id="insp-hint">Hover any GUPF. Nodes hosting several GUPF instances (border nodes — the recursion points) get cross-layer connectors.</div>
+      <div class="hint" id="insp-hint">Hover any GUPF. Border nodes (recursion points) get cross-layer connectors; the topological address shows the aggregation prefix.</div>
       <dl class="kv" id="insp"></dl>
     </div>
     <div class="card">
@@ -208,12 +141,14 @@
 <div id="tooltip"></div>
 
 <script>
-const DATASETS = { flat: {"floats_over":{"6":[1,2,3,4,5]},"layers":[{"name":"member-1","id":1,"border_node":193,"gupfs":[{"lat":41.43041939226513,"kind":"edge","table_size":3621,"node_id":1,"layer_id":1,"lon":2.0891543646408803,"address":1048577},{"lat":43.05586512605041,"kind":"edge","table_size":239,"node_id":2,"layer_id":1,"lon":-5.001189495798322,"address":1048578},{"lat":36.93210995542347,"kind":"edge","table_size":674,"node_id":3,"layer_id":1,"lon":-2.6158109955423465,"address":1048579},{"lat":43.22245789473682,"kind":"edge","table_size":799,"node_id":4,"layer_id":1,"lon":-8.343276441102756,"address":1048580},{"lat":36.412612217194585,"kind":"edge","table_size":664,"node_id":5,"layer_id":1,"lon":-5.23342926093514,"address":1048581},{"lat":39.63890095693778,"kind":"edge","table_size":419,"node_id":6,"layer_id":1,"lon":3.258345933014353,"address":1048582},{"lat":40.41398104805873,"kind":"edge","table_size":7367,"node_id":7,"layer_id":1,"lon":-3.6555375916372643,"address":1048583},{"lat":40.6994764957265,"kind":"edge","table_size":469,"node_id":8,"layer_id":1,"lon":-5.925855555555559,"address":1048584},{"lat":39.45759733746131,"kind":"edge","table_size":1616,"node_id":9,"layer_id":1,"lon":-0.42620458204334416,"address":1048585},{"lat":42.20182524752475,"kind":"edge","table_size":607,"node_id":10,"layer_id":1,"lon":-1.708552145214521,"address":1048586},{"lat":38.88876684684684,"kind":"edge","table_size":556,"node_id":11,"layer_id":1,"lon":1.408751531531531,"address":1048587},{"lat":42.645652178649264,"kind":"edge","table_size":919,"node_id":12,"layer_id":1,"lon":-2.7171192810457505,"address":1048588},{"lat":40.81003220720723,"kind":"edge","table_size":445,"node_id":13,"layer_id":1,"lon":0.5595957207207203,"address":1048589},{"lat":41.7505952830189,"kind":"edge","table_size":637,"node_id":14,"layer_id":1,"lon":-4.65118364779875,"address":1048590},{"lat":40.826260414269264,"kind":"edge","table_size":870,"node_id":15,"layer_id":1,"lon":-4.11720425776755,"address":1048591},{"lat":38.48860395721928,"kind":"edge","table_size":936,"node_id":16,"layer_id":1,"lon":-0.49930534759358297,"address":1048592},{"lat":38.929720916030504,"kind":"edge","table_size":656,"node_id":17,"layer_id":1,"lon":-6.47311114503817,"address":1048593},{"lat":43.25748056680162,"kind":"edge","table_size":248,"node_id":18,"layer_id":1,"lon":-7.278480566801621,"address":1048594},{"lat":37.385961562500015,"kind":"edge","table_size":321,"node_id":19,"layer_id":1,"lon":-6.932057499999999,"address":1048595},{"lat":41.37323504273504,"kind":"edge","table_size":820,"node_id":20,"layer_id":1,"lon":-2.5172786324786305,"address":1048596},{"lat":41.63440822027127,"kind":"edge","table_size":1254,"node_id":21,"layer_id":1,"lon":-1.0185430167597767,"address":1048597},{"lat":42.05257611668185,"kind":"edge","table_size":1098,"node_id":22,"layer_id":1,"lon":2.9360442114858722,"address":1048598},{"lat":36.74865124045805,"kind":"edge","table_size":1049,"node_id":23,"layer_id":1,"lon":-4.510641698473275,"address":1048599},{"lat":43.03634943609026,"kind":"edge","table_size":1065,"node_id":24,"layer_id":1,"lon":-1.8544296992481222,"address":1048600},{"lat":42.38404216027872,"kind":"edge","table_size":862,"node_id":25,"layer_id":1,"lon":-5.614777235772355,"address":1048601},{"lat":41.962051367781186,"kind":"edge","table_size":330,"node_id":26,"layer_id":1,"lon":-6.301755015197572,"address":1048602},{"lat":43.39504060324829,"kind":"edge","table_size":2156,"node_id":27,"layer_id":1,"lon":-5.806168306264506,"address":1048603},{"lat":43.29335498392283,"kind":"edge","table_size":312,"node_id":28,"layer_id":1,"lon":-3.654044694533762,"address":1048604},{"lat":40.03277750611244,"kind":"edge","table_size":410,"node_id":29,"layer_id":1,"lon":-0.01236650366748167,"address":1048605},{"lat":43.22930058004642,"kind":"edge","table_size":863,"node_id":30,"layer_id":1,"lon":-2.8194524361948954,"address":1048606},{"lat":37.400193796159506,"kind":"edge","table_size":1355,"node_id":31,"layer_id":1,"lon":-5.926416617429834,"address":1048607},{"lat":43.09770686015832,"kind":"edge","table_size":380,"node_id":32,"layer_id":1,"lon":-4.135527440633246,"address":1048608},{"lat":42.19025468750001,"kind":"edge","table_size":641,"node_id":33,"layer_id":1,"lon":-3.7159728125,"address":1048609},{"lat":42.485566740088125,"kind":"edge","table_size":455,"node_id":34,"layer_id":1,"lon":-0.14767026431718075,"address":1048610},{"lat":38.201951070336406,"kind":"edge","table_size":655,"node_id":35,"layer_id":1,"lon":-3.6949444954128445,"address":1048611},{"lat":39.49794827586207,"kind":"edge","table_size":465,"node_id":36,"layer_id":1,"lon":-3.250078017241378,"address":1048612},{"lat":42.35469819121452,"kind":"edge","table_size":775,"node_id":37,"layer_id":1,"lon":-8.722734625322998,"address":1048613},{"lat":41.73889169675086,"kind":"edge","table_size":555,"node_id":38,"layer_id":1,"lon":0.5463711191335742,"address":1048614},{"lat":36.623193023255794,"kind":"edge","table_size":474,"node_id":39,"layer_id":1,"lon":-6.100893023255814,"address":1048615},{"lat":37.484924065420586,"kind":"edge","table_size":429,"node_id":40,"layer_id":1,"lon":-1.8337086448598123,"address":1048616},{"lat":40.46460283400807,"kind":"edge","table_size":248,"node_id":41,"layer_id":1,"lon":-1.1892417004048597,"address":1048617},{"lat":42.30303110047847,"kind":"edge","table_size":210,"node_id":42,"layer_id":1,"lon":-7.743406220095693,"address":1048618},{"lat":42.247223847695395,"kind":"edge","table_size":500,"node_id":43,"layer_id":1,"lon":1.5721991983967936,"address":1048619},{"lat":41.32501673003803,"kind":"edge","table_size":1053,"node_id":44,"layer_id":1,"lon":1.394067015209124,"address":1048620},{"lat":41.410037899543376,"kind":"edge","table_size":220,"node_id":45,"layer_id":1,"lon":-0.3208812785388128,"address":1048621},{"lat":37.8944111657303,"kind":"edge","table_size":1425,"node_id":46,"layer_id":1,"lon":-1.1139936095505603,"address":1048622},{"lat":37.768359324758805,"kind":"edge","table_size":623,"node_id":47,"layer_id":1,"lon":-4.7705757234726685,"address":1048623},{"lat":39.81601138790036,"kind":"edge","table_size":282,"node_id":48,"layer_id":1,"lon":-5.0336202846975056,"address":1048624},{"lat":37.157799020568085,"kind":"edge","table_size":1022,"node_id":49,"layer_id":1,"lon":-3.59968090107738,"address":1048625},{"lat":41.37030407079647,"kind":"edge","table_size":566,"node_id":50,"layer_id":1,"lon":-5.204770973451337,"address":1048626},{"lat":41.79446489533013,"kind":"edge","table_size":1243,"node_id":51,"layer_id":1,"lon":2.370531078904992,"address":1048627},{"lat":39.31119100169781,"kind":"edge","table_size":590,"node_id":52,"layer_id":1,"lon":-1.9950444821731745,"address":1048628},{"lat":37.73954264920397,"kind":"psa","table_size":13,"node_id":193,"layer_id":1,"lon":-4.845104971881363,"address":1048769},{"lat":39.00285933931208,"kind":"psa","table_size":9,"node_id":194,"layer_id":1,"lon":-0.7076391673451605,"address":1048770},{"lat":42.447284797533264,"kind":"psa","table_size":9,"node_id":195,"layer_id":1,"lon":-6.967056745764133,"address":1048771},{"lat":41.50613988207356,"kind":"psa","table_size":12,"node_id":196,"layer_id":1,"lon":1.2035649165355038,"address":1048772},{"lat":42.191129612216976,"kind":"psa","table_size":14,"node_id":197,"layer_id":1,"lon":-3.519404854484781,"address":1048773}],"edges":[[3,53],[5,53],[17,53],[19,53],[23,53],[31,53],[35,53],[36,53],[39,53],[47,53],[48,53],[49,53],[9,54],[11,54],[16,54],[29,54],[40,54],[41,54],[46,54],[52,54],[4,55],[8,55],[18,55],[25,55],[26,55],[27,55],[37,55],[42,55],[1,56],[6,56],[13,56],[21,56],[22,56],[34,56],[38,56],[43,56],[44,56],[45,56],[51,56],[2,57],[7,57],[10,57],[12,57],[14,57],[15,57],[20,57],[24,57],[28,57],[30,57],[32,57],[33,57],[50,57],[53,54],[54,55],[55,56],[56,57]],"level":0},{"name":"member-2","id":2,"border_node":198,"gupfs":[{"lat":38.77088341232223,"kind":"edge","table_size":1478,"node_id":53,"layer_id":2,"lon":-9.185684427894369,"address":2097205},{"lat":41.649871129707094,"kind":"edge","table_size":240,"node_id":54,"layer_id":2,"lon":-8.637829707112967,"address":2097206},{"lat":37.17775365079368,"kind":"edge","table_size":316,"node_id":55,"layer_id":2,"lon":-8.156390793650788,"address":2097207},{"lat":40.64560117647058,"kind":"edge","table_size":171,"node_id":56,"layer_id":2,"lon":-8.532264117647058,"address":2097208},{"lat":39.596274832214775,"kind":"edge","table_size":299,"node_id":57,"layer_id":2,"lon":-8.612804026845637,"address":2097209},{"lat":41.60533939393939,"kind":"edge","table_size":67,"node_id":58,"layer_id":2,"lon":-6.513654545454545,"address":2097210},{"lat":37.11622654545455,"kind":"edge","table_size":276,"node_id":59,"layer_id":2,"lon":-8.60938145454545,"address":2097211},{"lat":41.431663060686,"kind":"edge","table_size":380,"node_id":60,"layer_id":2,"lon":-8.1724580474934,"address":2097212},{"lat":38.552459310344844,"kind":"edge","table_size":581,"node_id":61,"layer_id":2,"lon":-8.98132775862069,"address":2097213},{"lat":41.21694223602482,"kind":"edge","table_size":162,"node_id":62,"layer_id":2,"lon":-7.671032298136642,"address":2097214},{"lat":38.3002673758865,"kind":"edge","table_size":142,"node_id":63,"layer_id":2,"lon":-7.661862411347517,"address":2097215},{"lat":41.164322992299226,"kind":"edge","table_size":910,"node_id":64,"layer_id":2,"lon":-8.598359625962601,"address":2097216},{"lat":40.60456204379562,"kind":"edge","table_size":138,"node_id":65,"layer_id":2,"lon":-8.01604671532847,"address":2097217},{"lat":39.240995200000015,"kind":"edge","table_size":126,"node_id":66,"layer_id":2,"lon":-7.440337599999999,"address":2097218},{"lat":40.105573415132916,"kind":"edge","table_size":490,"node_id":67,"layer_id":2,"lon":-8.429456237218817,"address":2097219},{"lat":40.53626323529413,"kind":"edge","table_size":69,"node_id":68,"layer_id":2,"lon":-7.236704411764704,"address":2097220},{"lat":39.15999561403504,"kind":"edge","table_size":343,"node_id":69,"layer_id":2,"lon":-8.965966666666674,"address":2097221},{"lat":38.027912835820864,"kind":"edge","table_size":336,"node_id":70,"layer_id":2,"lon":-8.550297014925375,"address":2097222},{"lat":40.99557096481664,"kind":"psa","table_size":10,"node_id":198,"layer_id":2,"lon":-7.97864507845769,"address":2097350},{"lat":38.438085419652495,"kind":"psa","table_size":10,"node_id":199,"layer_id":2,"lon":-8.46267246161072,"address":2097351}],"edges":[[2,19],[4,19],[6,19],[8,19],[10,19],[12,19],[13,19],[15,19],[16,19],[1,20],[3,20],[5,20],[7,20],[9,20],[11,20],[14,20],[17,20],[18,20],[19,20]],"level":0},{"name":"member-3","id":3,"border_node":200,"gupfs":[{"lat":37.21103421052632,"kind":"edge","table_size":457,"node_id":71,"layer_id":3,"lon":-3.635499999999998,"address":3145799},{"lat":41.34729705882351,"kind":"edge","table_size":817,"node_id":72,"layer_id":3,"lon":1.5012495098039216,"address":3145800},{"lat":42.49228949044587,"kind":"edge","table_size":315,"node_id":73,"layer_id":3,"lon":-8.032046178343952,"address":3145801},{"lat":43.292165557729966,"kind":"edge","table_size":512,"node_id":74,"layer_id":3,"lon":-3.908620743639924,"address":3145802},{"lat":39.087921491228066,"kind":"edge","table_size":229,"node_id":75,"layer_id":3,"lon":-0.7903109649122809,"address":3145803},{"lat":38.34047640449439,"kind":"edge","table_size":179,"node_id":76,"layer_id":3,"lon":-1.4689320224719107,"address":3145804},{"lat":42.75219543281985,"kind":"edge","table_size":1884,"node_id":77,"layer_id":3,"lon":-2.738312055231014,"address":3145805},{"lat":36.46126690647494,"kind":"edge","table_size":1113,"node_id":78,"layer_id":3,"lon":-4.948383183453235,"address":3145806},{"lat":39.95548157894737,"kind":"edge","table_size":305,"node_id":79,"layer_id":3,"lon":-4.002727960526316,"address":3145807},{"lat":41.685421803653036,"kind":"edge","table_size":877,"node_id":80,"layer_id":3,"lon":-0.9394092465753419,"address":3145808},{"lat":43.39045063897759,"kind":"edge","table_size":1879,"node_id":81,"layer_id":3,"lon":-5.839807294994676,"address":3145809},{"lat":38.279685795454554,"kind":"edge","table_size":353,"node_id":82,"layer_id":3,"lon":-0.7868923295454547,"address":3145810},{"lat":38.87344859154924,"kind":"edge","table_size":285,"node_id":83,"layer_id":3,"lon":1.4087827464788725,"address":3145811},{"lat":37.420882407407426,"kind":"edge","table_size":649,"node_id":84,"layer_id":3,"lon":-5.9429614197530825,"address":3145812},{"lat":42.22332095959596,"kind":"edge","table_size":397,"node_id":85,"layer_id":3,"lon":-1.849017171717171,"address":3145813},{"lat":37.48104794520546,"kind":"edge","table_size":74,"node_id":86,"layer_id":3,"lon":-6.868724657534248,"address":3145814},{"lat":41.50772713310581,"kind":"edge","table_size":587,"node_id":87,"layer_id":3,"lon":-4.9046300341296885,"address":3145815},{"lat":43.059133136094644,"kind":"edge","table_size":508,"node_id":88,"layer_id":3,"lon":-2.356997238658777,"address":3145816},{"lat":41.28989958217271,"kind":"edge","table_size":719,"node_id":89,"layer_id":3,"lon":0.6161330083565457,"address":3145817},{"lat":41.348664819944645,"kind":"edge","table_size":362,"node_id":90,"layer_id":3,"lon":-2.3266454293628795,"address":3145818},{"lat":42.07943727008708,"kind":"edge","table_size":1034,"node_id":91,"layer_id":3,"lon":2.876188383349463,"address":3145819},{"lat":39.58457171717174,"kind":"edge","table_size":199,"node_id":92,"layer_id":3,"lon":-2.503968181818181,"address":3145820},{"lat":41.54167308970105,"kind":"edge","table_size":302,"node_id":93,"layer_id":3,"lon":-3.6857810631229246,"address":3145821},{"lat":38.06494356955379,"kind":"edge","table_size":382,"node_id":94,"layer_id":3,"lon":-3.7407207349081366,"address":3145822},{"lat":38.788086127167624,"kind":"edge","table_size":347,"node_id":95,"layer_id":3,"lon":-6.699702601156071,"address":3145823},{"lat":39.91609494584839,"kind":"edge","table_size":278,"node_id":96,"layer_id":3,"lon":-3.4520978339350186,"address":3145824},{"lat":38.457859514169996,"kind":"edge","table_size":248,"node_id":97,"layer_id":3,"lon":-0.4089161943319835,"address":3145825},{"lat":37.80977648437496,"kind":"edge","table_size":1281,"node_id":98,"layer_id":3,"lon":-1.1140457812499986,"address":3145826},{"lat":40.02874375939852,"kind":"edge","table_size":666,"node_id":99,"layer_id":3,"lon":-0.006433082706766943,"address":3145827},{"lat":39.562155523255804,"kind":"edge","table_size":345,"node_id":100,"layer_id":3,"lon":2.694602906976745,"address":3145828},{"lat":42.39329128712873,"kind":"edge","table_size":506,"node_id":101,"layer_id":3,"lon":-3.6418170297029606,"address":3145829},{"lat":42.59222824207502,"kind":"edge","table_size":1042,"node_id":102,"layer_id":3,"lon":-5.601760230547555,"address":3145830},{"lat":36.9039422442244,"kind":"edge","table_size":607,"node_id":103,"layer_id":3,"lon":-2.4382957095709585,"address":3145831},{"lat":41.89302746781116,"kind":"edge","table_size":467,"node_id":104,"layer_id":3,"lon":-5.656903218884121,"address":3145832},{"lat":43.257410872235816,"kind":"edge","table_size":1629,"node_id":105,"layer_id":3,"lon":-2.977909705159692,"address":3145833},{"lat":40.454196237218795,"kind":"edge","table_size":2446,"node_id":106,"layer_id":3,"lon":-3.6380440899795587,"address":3145834},{"lat":39.53386342756187,"kind":"edge","table_size":567,"node_id":107,"layer_id":3,"lon":-0.4320955830388686,"address":3145835},{"lat":40.560442763157894,"kind":"edge","table_size":153,"node_id":108,"layer_id":3,"lon":-1.1325309210526322,"address":3145836},{"lat":38.96937762557078,"kind":"edge","table_size":220,"node_id":109,"layer_id":3,"lon":-3.36333607305936,"address":3145837},{"lat":37.463882035928144,"kind":"edge","table_size":168,"node_id":110,"layer_id":3,"lon":-5.013292814371255,"address":3145838},{"lat":39.457970854271366,"kind":"edge","table_size":200,"node_id":111,"layer_id":3,"lon":-6.149345728643218,"address":3145839},{"lat":42.94949568965518,"kind":"edge","table_size":233,"node_id":112,"layer_id":3,"lon":-4.45621594827586,"address":3145840},{"lat":41.520627320125186,"kind":"edge","table_size":2878,"node_id":113,"layer_id":3,"lon":2.169310184219676,"address":3145841},{"lat":39.194586904761906,"kind":"edge","table_size":169,"node_id":114,"layer_id":3,"lon":-1.8266922619047619,"address":3145842},{"lat":43.04689696969696,"kind":"edge","table_size":265,"node_id":115,"layer_id":3,"lon":-8.326803030303038,"address":3145843},{"lat":40.376199473684224,"kind":"edge","table_size":191,"node_id":116,"layer_id":3,"lon":-5.8115073684210525,"address":3145844},{"lat":37.30961407407409,"kind":"edge","table_size":271,"node_id":117,"layer_id":3,"lon":-3.010220370370369,"address":3145845},{"lat":43.21982607973416,"kind":"edge","table_size":603,"node_id":118,"layer_id":3,"lon":-1.905395847176082,"address":3145846},{"lat":37.894398467432914,"kind":"edge","table_size":262,"node_id":119,"layer_id":3,"lon":-4.616150574712641,"address":3145847},{"lat":36.64417366412212,"kind":"edge","table_size":263,"node_id":120,"layer_id":3,"lon":-6.06218816793893,"address":3145848},{"lat":43.36443272727273,"kind":"edge","table_size":276,"node_id":121,"layer_id":3,"lon":-5.101694909090912,"address":3145849},{"lat":43.23269811023619,"kind":"edge","table_size":636,"node_id":122,"layer_id":3,"lon":-2.7170984251968497,"address":3145850},{"lat":40.027702445727314,"kind":"psa","table_size":9,"node_id":200,"layer_id":3,"lon":-4.228207158814049,"address":3145928},{"lat":39.85322773089179,"kind":"psa","table_size":17,"node_id":201,"layer_id":3,"lon":0.14750052196220145,"address":3145929},{"lat":42.66089773044329,"kind":"psa","table_size":12,"node_id":202,"layer_id":3,"lon":-2.9603464233858303,"address":3145930},{"lat":37.422115604737925,"kind":"psa","table_size":12,"node_id":203,"layer_id":3,"lon":-4.8160127485244475,"address":3145931},{"lat":42.796554256046555,"kind":"psa","table_size":7,"node_id":204,"layer_id":3,"lon":-6.426502477027376,"address":3145932}],"edges":[[9,53],[17,53],[22,53],[26,53],[36,53],[39,53],[41,53],[46,53],[2,54],[5,54],[6,54],[10,54],[12,54],[13,54],[19,54],[21,54],[27,54],[28,54],[29,54],[30,54],[37,54],[38,54],[43,54],[44,54],[4,55],[7,55],[15,55],[18,55],[20,55],[23,55],[31,55],[35,55],[42,55],[48,55],[52,55],[1,56],[8,56],[14,56],[16,56],[24,56],[25,56],[33,56],[40,56],[47,56],[49,56],[50,56],[3,57],[11,57],[32,57],[34,57],[45,57],[51,57],[53,54],[54,55],[55,56],[56,57]],"level":0},{"name":"member-4","id":4,"border_node":205,"gupfs":[{"lat":36.779178205128204,"kind":"edge","table_size":625,"node_id":123,"layer_id":4,"lon":-4.3942229166666635,"address":4194427},{"lat":40.909826285714296,"kind":"edge","table_size":176,"node_id":124,"layer_id":4,"lon":-5.698602285714287,"address":4194428},{"lat":41.85280605590066,"kind":"edge","table_size":645,"node_id":125,"layer_id":4,"lon":2.662410869565218,"address":4194429},{"lat":37.292964912280695,"kind":"edge","table_size":229,"node_id":126,"layer_id":4,"lon":-2.007025438596491,"address":4194430},{"lat":42.51852267080745,"kind":"edge","table_size":323,"node_id":127,"layer_id":4,"lon":-5.6423518633540395,"address":4194431},{"lat":38.782268367346944,"kind":"edge","table_size":295,"node_id":128,"layer_id":4,"lon":-0.2479874149659864,"address":4194432},{"lat":38.892237873754155,"kind":"edge","table_size":302,"node_id":129,"layer_id":4,"lon":-3.3521960132890363,"address":4194433},{"lat":43.113629566854975,"kind":"edge","table_size":532,"node_id":130,"layer_id":4,"lon":-1.8947564971751436,"address":4194434},{"lat":42.24656255813954,"kind":"edge","table_size":431,"node_id":131,"layer_id":4,"lon":3.0449399999999995,"address":4194435},{"lat":42.43645564516128,"kind":"edge","table_size":125,"node_id":132,"layer_id":4,"lon":0.4893193548387096,"address":4194436},{"lat":40.53526166666672,"kind":"edge","table_size":901,"node_id":133,"layer_id":4,"lon":-3.4629900000000027,"address":4194437},{"lat":38.44490234741784,"kind":"edge","table_size":214,"node_id":134,"layer_id":4,"lon":-1.1043281690140845,"address":4194438},{"lat":42.71706221198162,"kind":"edge","table_size":218,"node_id":135,"layer_id":4,"lon":-7.5930723502304165,"address":4194439},{"lat":41.5470817555938,"kind":"edge","table_size":582,"node_id":136,"layer_id":4,"lon":1.4663848537005164,"address":4194440},{"lat":39.61314791208792,"kind":"edge","table_size":456,"node_id":137,"layer_id":4,"lon":-0.40130175824175823,"address":4194441},{"lat":40.44338301886791,"kind":"edge","table_size":160,"node_id":138,"layer_id":4,"lon":-1.142725786163522,"address":4194442},{"lat":40.28045896057345,"kind":"edge","table_size":1117,"node_id":139,"layer_id":4,"lon":-3.7570884408602154,"address":4194443},{"lat":41.61688738532112,"kind":"edge","table_size":873,"node_id":140,"layer_id":4,"lon":-0.9631188073394495,"address":4194444},{"lat":39.69295714285712,"kind":"edge","table_size":134,"node_id":141,"layer_id":4,"lon":3.716685714285715,"address":4194445},{"lat":38.79739537572254,"kind":"edge","table_size":174,"node_id":142,"layer_id":4,"lon":-6.5381410404624285,"address":4194446},{"lat":36.87374570135746,"kind":"edge","table_size":443,"node_id":143,"layer_id":4,"lon":-2.878007918552037,"address":4194447},{"lat":41.97748686327078,"kind":"edge","table_size":374,"node_id":144,"layer_id":4,"lon":-3.6288906166219825,"address":4194448},{"lat":43.366462142857124,"kind":"edge","table_size":141,"node_id":145,"layer_id":4,"lon":-4.8121800000000015,"address":4194449},{"lat":43.42787500000001,"kind":"edge","table_size":45,"node_id":146,"layer_id":4,"lon":-6.591545454545454,"address":4194450},{"lat":38.11227482014389,"kind":"edge","table_size":140,"node_id":147,"layer_id":4,"lon":-6.439528776978418,"address":4194451},{"lat":38.88249426751593,"kind":"edge","table_size":315,"node_id":148,"layer_id":4,"lon":1.4119585987261138,"address":4194452},{"lat":43.258043149466154,"kind":"edge","table_size":1125,"node_id":149,"layer_id":4,"lon":-2.9025987544483987,"address":4194453},{"lat":36.30668128078816,"kind":"edge","table_size":204,"node_id":150,"layer_id":4,"lon":-5.320305418719212,"address":4194454},{"lat":42.65861263537911,"kind":"edge","table_size":278,"node_id":151,"layer_id":4,"lon":-8.45765631768955,"address":4194455},{"lat":43.41841851453177,"kind":"edge","table_size":930,"node_id":152,"layer_id":4,"lon":-5.788504305705054,"address":4194456},{"lat":42.13940821917812,"kind":"edge","table_size":366,"node_id":153,"layer_id":4,"lon":-1.7399567123287671,"address":4194457},{"lat":37.80733401360545,"kind":"edge","table_size":295,"node_id":154,"layer_id":4,"lon":-4.682319727891158,"address":4194458},{"lat":42.68775205223884,"kind":"edge","table_size":537,"node_id":155,"layer_id":4,"lon":-2.777672201492538,"address":4194459},{"lat":39.48474626865673,"kind":"edge","table_size":135,"node_id":156,"layer_id":4,"lon":-6.082835820895525,"address":4194460},{"lat":39.17648614457832,"kind":"edge","table_size":167,"node_id":157,"layer_id":4,"lon":-1.8407506024096392,"address":4194461},{"lat":41.806177385159,"kind":"edge","table_size":284,"node_id":158,"layer_id":4,"lon":-5.817366077738518,"address":4194462},{"lat":41.47696428571425,"kind":"edge","table_size":309,"node_id":159,"layer_id":4,"lon":0.4278636363636365,"address":4194463},{"lat":37.07760649819504,"kind":"edge","table_size":555,"node_id":160,"layer_id":4,"lon":-6.027663537906137,"address":4194464},{"lat":39.97634497041421,"kind":"edge","table_size":170,"node_id":161,"layer_id":4,"lon":-4.766845562130176,"address":4194465},{"lat":35.29806363636364,"kind":"edge","table_size":12,"node_id":162,"layer_id":4,"lon":-2.939963636363636,"address":4194466},{"lat":37.63826403162052,"kind":"edge","table_size":507,"node_id":163,"layer_id":4,"lon":-3.715802766798414,"address":4194467},{"lat":41.994991752577306,"kind":"edge","table_size":195,"node_id":164,"layer_id":4,"lon":-4.3864500000000035,"address":4194468},{"lat":41.46662645228215,"kind":"edge","table_size":965,"node_id":165,"layer_id":4,"lon":2.145497614107887,"address":4194469},{"lat":43.22103599257889,"kind":"edge","table_size":540,"node_id":166,"layer_id":4,"lon":-3.7823250463821876,"address":4194470},{"lat":41.38267921348312,"kind":"edge","table_size":357,"node_id":167,"layer_id":4,"lon":-2.3593157303370766,"address":4194471},{"lat":42.621780833333354,"kind":"edge","table_size":121,"node_id":168,"layer_id":4,"lon":-0.47985916666666656,"address":4194472},{"lat":41.4608197368421,"kind":"edge","table_size":381,"node_id":169,"layer_id":4,"lon":-4.956018684210532,"address":4194473},{"lat":37.85927495291902,"kind":"edge","table_size":532,"node_id":170,"layer_id":4,"lon":-1.1044981167608294,"address":4194474},{"lat":39.50155146198831,"kind":"edge","table_size":172,"node_id":171,"layer_id":4,"lon":-2.5902771929824557,"address":4194475},{"lat":37.29496898395721,"kind":"edge","table_size":188,"node_id":172,"layer_id":4,"lon":-5.216912299465241,"address":4194476},{"lat":40.285239072847695,"kind":"edge","table_size":152,"node_id":173,"layer_id":4,"lon":-6.206927152317881,"address":4194477},{"lat":41.05084653243849,"kind":"edge","table_size":448,"node_id":174,"layer_id":4,"lon":1.029007382550336,"address":4194478},{"lat":42.23309158260886,"kind":"psa","table_size":12,"node_id":205,"layer_id":4,"lon":-5.995515862864158,"address":4194509},{"lat":38.124809758337705,"kind":"psa","table_size":12,"node_id":206,"layer_id":4,"lon":-2.016558093452215,"address":4194510},{"lat":37.9596144907346,"kind":"psa","table_size":10,"node_id":207,"layer_id":4,"lon":-5.49653056679055,"address":4194511},{"lat":41.183643855067025,"kind":"psa","table_size":10,"node_id":208,"layer_id":4,"lon":1.8215631137931259,"address":4194512},{"lat":41.93981724348612,"kind":"psa","table_size":13,"node_id":209,"layer_id":4,"lon":-2.4076081466513295,"address":4194513}],"edges":[[2,53],[5,53],[13,53],[23,53],[24,53],[29,53],[30,53],[36,53],[42,53],[47,53],[51,53],[4,54],[6,54],[7,54],[12,54],[15,54],[21,54],[35,54],[40,54],[41,54],[48,54],[49,54],[1,55],[20,55],[25,55],[28,55],[32,55],[34,55],[38,55],[39,55],[50,55],[3,56],[9,56],[10,56],[14,56],[19,56],[26,56],[37,56],[43,56],[52,56],[8,57],[11,57],[16,57],[17,57],[18,57],[22,57],[27,57],[31,57],[33,57],[44,57],[45,57],[46,57],[53,54],[54,55],[55,56],[56,57]],"level":0},{"name":"member-5","id":5,"border_node":210,"gupfs":[{"lat":38.74306594863296,"kind":"edge","table_size":2415,"node_id":175,"layer_id":5,"lon":-9.189479411764713,"address":5243055},{"lat":40.6760924050633,"kind":"edge","table_size":317,"node_id":176,"layer_id":5,"lon":-8.584135443037972,"address":5243056},{"lat":38.54356497175144,"kind":"edge","table_size":178,"node_id":177,"layer_id":5,"lon":-8.09041412429379,"address":5243057},{"lat":41.611416170212756,"kind":"edge","table_size":236,"node_id":178,"layer_id":5,"lon":-8.3256114893617,"address":5243058},{"lat":39.606673789173776,"kind":"edge","table_size":352,"node_id":179,"layer_id":5,"lon":-8.809188034188033,"address":5243059},{"lat":41.67713862928348,"kind":"edge","table_size":322,"node_id":180,"layer_id":5,"lon":-8.728642367601251,"address":5243060},{"lat":37.2227439163498,"kind":"edge","table_size":527,"node_id":181,"layer_id":5,"lon":-8.587080228136886,"address":5243061},{"lat":38.00490952380952,"kind":"edge","table_size":22,"node_id":182,"layer_id":5,"lon":-7.426261904761906,"address":5243062},{"lat":40.615588888888894,"kind":"edge","table_size":100,"node_id":183,"layer_id":5,"lon":-7.99271313131313,"address":5243063},{"lat":41.253920622568096,"kind":"edge","table_size":258,"node_id":184,"layer_id":5,"lon":-7.958401167315178,"address":5243064},{"lat":40.147447129909374,"kind":"edge","table_size":332,"node_id":185,"layer_id":5,"lon":-8.536668277945624,"address":5243065},{"lat":39.235082254196676,"kind":"edge","table_size":418,"node_id":186,"layer_id":5,"lon":-9.125716306954436,"address":5243066},{"lat":39.020103508771925,"kind":"edge","table_size":115,"node_id":187,"layer_id":5,"lon":-7.3019096491228055,"address":5243067},{"lat":38.386703058103976,"kind":"edge","table_size":328,"node_id":188,"layer_id":5,"lon":-8.792003669724767,"address":5243068},{"lat":41.167371285140646,"kind":"edge","table_size":997,"node_id":189,"layer_id":5,"lon":-8.611718172690766,"address":5243069},{"lat":37.23493656387665,"kind":"edge","table_size":228,"node_id":190,"layer_id":5,"lon":-7.902594713656389,"address":5243070},{"lat":40.95252987012986,"kind":"edge","table_size":78,"node_id":191,"layer_id":5,"lon":-7.352215584415584,"address":5243071},{"lat":39.68909027777777,"kind":"edge","table_size":145,"node_id":192,"layer_id":5,"lon":-7.775812500000001,"address":5243072},{"lat":38.56868738124445,"kind":"psa","table_size":11,"node_id":210,"layer_id":5,"lon":-8.300046054260372,"address":5243090},{"lat":41.01268812514955,"kind":"psa","table_size":9,"node_id":211,"layer_id":5,"lon":-8.26126320421015,"address":5243091}],"edges":[[1,19],[3,19],[5,19],[7,19],[8,19],[12,19],[13,19],[14,19],[16,19],[18,19],[2,20],[4,20],[6,20],[9,20],[10,20],[11,20],[15,20],[17,20],[19,20]],"level":0},{"name":"internetwork","id":6,"border_node":193,"gupfs":[{"lat":37.73954264920397,"kind":"border","table_size":5,"node_id":193,"layer_id":6,"lon":-4.845104971881363,"address":6291649},{"lat":39.00285933931208,"kind":"border","table_size":5,"node_id":194,"layer_id":6,"lon":-0.7076391673451605,"address":6291650},{"lat":42.447284797533264,"kind":"border","table_size":5,"node_id":195,"layer_id":6,"lon":-6.967056745764133,"address":6291651},{"lat":41.50613988207356,"kind":"border","table_size":5,"node_id":196,"layer_id":6,"lon":1.2035649165355038,"address":6291652},{"lat":42.191129612216976,"kind":"border","table_size":5,"node_id":197,"layer_id":6,"lon":-3.519404854484781,"address":6291653},{"lat":40.99557096481664,"kind":"border","table_size":5,"node_id":198,"layer_id":6,"lon":-7.97864507845769,"address":6291654},{"lat":38.438085419652495,"kind":"border","table_size":5,"node_id":199,"layer_id":6,"lon":-8.46267246161072,"address":6291655},{"lat":40.027702445727314,"kind":"border","table_size":5,"node_id":200,"layer_id":6,"lon":-4.228207158814049,"address":6291656},{"lat":39.85322773089179,"kind":"border","table_size":5,"node_id":201,"layer_id":6,"lon":0.14750052196220145,"address":6291657},{"lat":42.66089773044329,"kind":"border","table_size":5,"node_id":202,"layer_id":6,"lon":-2.9603464233858303,"address":6291658},{"lat":37.422115604737925,"kind":"border","table_size":5,"node_id":203,"layer_id":6,"lon":-4.8160127485244475,"address":6291659},{"lat":42.796554256046555,"kind":"border","table_size":5,"node_id":204,"layer_id":6,"lon":-6.426502477027376,"address":6291660},{"lat":42.23309158260886,"kind":"border","table_size":5,"node_id":205,"layer_id":6,"lon":-5.995515862864158,"address":6291661},{"lat":38.124809758337705,"kind":"border","table_size":5,"node_id":206,"layer_id":6,"lon":-2.016558093452215,"address":6291662},{"lat":37.9596144907346,"kind":"border","table_size":5,"node_id":207,"layer_id":6,"lon":-5.49653056679055,"address":6291663},{"lat":41.183643855067025,"kind":"border","table_size":5,"node_id":208,"layer_id":6,"lon":1.8215631137931259,"address":6291664},{"lat":41.93981724348612,"kind":"border","table_size":5,"node_id":209,"layer_id":6,"lon":-2.4076081466513295,"address":6291665},{"lat":38.56868738124445,"kind":"border","table_size":5,"node_id":210,"layer_id":6,"lon":-8.300046054260372,"address":6291666},{"lat":41.01268812514955,"kind":"border","table_size":5,"node_id":211,"layer_id":6,"lon":-8.26126320421015,"address":6291667}],"edges":[[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19]],"level":1}]}, hier: {"floats_over":{"6":[1,3,4],"7":[2,5],"8":[6,7,9]},"layers":[{"name":"member-1","id":1,"border_node":193,"gupfs":[{"lat":41.43041939226513,"kind":"edge","table_size":3621,"node_id":1,"layer_id":1,"lon":2.0891543646408803,"address":1048577},{"lat":43.05586512605041,"kind":"edge","table_size":239,"node_id":2,"layer_id":1,"lon":-5.001189495798322,"address":1048578},{"lat":36.93210995542347,"kind":"edge","table_size":674,"node_id":3,"layer_id":1,"lon":-2.6158109955423465,"address":1048579},{"lat":43.22245789473682,"kind":"edge","table_size":799,"node_id":4,"layer_id":1,"lon":-8.343276441102756,"address":1048580},{"lat":36.412612217194585,"kind":"edge","table_size":664,"node_id":5,"layer_id":1,"lon":-5.23342926093514,"address":1048581},{"lat":39.63890095693778,"kind":"edge","table_size":419,"node_id":6,"layer_id":1,"lon":3.258345933014353,"address":1048582},{"lat":40.41398104805873,"kind":"edge","table_size":7367,"node_id":7,"layer_id":1,"lon":-3.6555375916372643,"address":1048583},{"lat":40.6994764957265,"kind":"edge","table_size":469,"node_id":8,"layer_id":1,"lon":-5.925855555555559,"address":1048584},{"lat":39.45759733746131,"kind":"edge","table_size":1616,"node_id":9,"layer_id":1,"lon":-0.42620458204334416,"address":1048585},{"lat":42.20182524752475,"kind":"edge","table_size":607,"node_id":10,"layer_id":1,"lon":-1.708552145214521,"address":1048586},{"lat":38.88876684684684,"kind":"edge","table_size":556,"node_id":11,"layer_id":1,"lon":1.408751531531531,"address":1048587},{"lat":42.645652178649264,"kind":"edge","table_size":919,"node_id":12,"layer_id":1,"lon":-2.7171192810457505,"address":1048588},{"lat":40.81003220720723,"kind":"edge","table_size":445,"node_id":13,"layer_id":1,"lon":0.5595957207207203,"address":1048589},{"lat":41.7505952830189,"kind":"edge","table_size":637,"node_id":14,"layer_id":1,"lon":-4.65118364779875,"address":1048590},{"lat":40.826260414269264,"kind":"edge","table_size":870,"node_id":15,"layer_id":1,"lon":-4.11720425776755,"address":1048591},{"lat":38.48860395721928,"kind":"edge","table_size":936,"node_id":16,"layer_id":1,"lon":-0.49930534759358297,"address":1048592},{"lat":38.929720916030504,"kind":"edge","table_size":656,"node_id":17,"layer_id":1,"lon":-6.47311114503817,"address":1048593},{"lat":43.25748056680162,"kind":"edge","table_size":248,"node_id":18,"layer_id":1,"lon":-7.278480566801621,"address":1048594},{"lat":37.385961562500015,"kind":"edge","table_size":321,"node_id":19,"layer_id":1,"lon":-6.932057499999999,"address":1048595},{"lat":41.37323504273504,"kind":"edge","table_size":820,"node_id":20,"layer_id":1,"lon":-2.5172786324786305,"address":1048596},{"lat":41.63440822027127,"kind":"edge","table_size":1254,"node_id":21,"layer_id":1,"lon":-1.0185430167597767,"address":1048597},{"lat":42.05257611668185,"kind":"edge","table_size":1098,"node_id":22,"layer_id":1,"lon":2.9360442114858722,"address":1048598},{"lat":36.74865124045805,"kind":"edge","table_size":1049,"node_id":23,"layer_id":1,"lon":-4.510641698473275,"address":1048599},{"lat":43.03634943609026,"kind":"edge","table_size":1065,"node_id":24,"layer_id":1,"lon":-1.8544296992481222,"address":1048600},{"lat":42.38404216027872,"kind":"edge","table_size":862,"node_id":25,"layer_id":1,"lon":-5.614777235772355,"address":1048601},{"lat":41.962051367781186,"kind":"edge","table_size":330,"node_id":26,"layer_id":1,"lon":-6.301755015197572,"address":1048602},{"lat":43.39504060324829,"kind":"edge","table_size":2156,"node_id":27,"layer_id":1,"lon":-5.806168306264506,"address":1048603},{"lat":43.29335498392283,"kind":"edge","table_size":312,"node_id":28,"layer_id":1,"lon":-3.654044694533762,"address":1048604},{"lat":40.03277750611244,"kind":"edge","table_size":410,"node_id":29,"layer_id":1,"lon":-0.01236650366748167,"address":1048605},{"lat":43.22930058004642,"kind":"edge","table_size":863,"node_id":30,"layer_id":1,"lon":-2.8194524361948954,"address":1048606},{"lat":37.400193796159506,"kind":"edge","table_size":1355,"node_id":31,"layer_id":1,"lon":-5.926416617429834,"address":1048607},{"lat":43.09770686015832,"kind":"edge","table_size":380,"node_id":32,"layer_id":1,"lon":-4.135527440633246,"address":1048608},{"lat":42.19025468750001,"kind":"edge","table_size":641,"node_id":33,"layer_id":1,"lon":-3.7159728125,"address":1048609},{"lat":42.485566740088125,"kind":"edge","table_size":455,"node_id":34,"layer_id":1,"lon":-0.14767026431718075,"address":1048610},{"lat":38.201951070336406,"kind":"edge","table_size":655,"node_id":35,"layer_id":1,"lon":-3.6949444954128445,"address":1048611},{"lat":39.49794827586207,"kind":"edge","table_size":465,"node_id":36,"layer_id":1,"lon":-3.250078017241378,"address":1048612},{"lat":42.35469819121452,"kind":"edge","table_size":775,"node_id":37,"layer_id":1,"lon":-8.722734625322998,"address":1048613},{"lat":41.73889169675086,"kind":"edge","table_size":555,"node_id":38,"layer_id":1,"lon":0.5463711191335742,"address":1048614},{"lat":36.623193023255794,"kind":"edge","table_size":474,"node_id":39,"layer_id":1,"lon":-6.100893023255814,"address":1048615},{"lat":37.484924065420586,"kind":"edge","table_size":429,"node_id":40,"layer_id":1,"lon":-1.8337086448598123,"address":1048616},{"lat":40.46460283400807,"kind":"edge","table_size":248,"node_id":41,"layer_id":1,"lon":-1.1892417004048597,"address":1048617},{"lat":42.30303110047847,"kind":"edge","table_size":210,"node_id":42,"layer_id":1,"lon":-7.743406220095693,"address":1048618},{"lat":42.247223847695395,"kind":"edge","table_size":500,"node_id":43,"layer_id":1,"lon":1.5721991983967936,"address":1048619},{"lat":41.32501673003803,"kind":"edge","table_size":1053,"node_id":44,"layer_id":1,"lon":1.394067015209124,"address":1048620},{"lat":41.410037899543376,"kind":"edge","table_size":220,"node_id":45,"layer_id":1,"lon":-0.3208812785388128,"address":1048621},{"lat":37.8944111657303,"kind":"edge","table_size":1425,"node_id":46,"layer_id":1,"lon":-1.1139936095505603,"address":1048622},{"lat":37.768359324758805,"kind":"edge","table_size":623,"node_id":47,"layer_id":1,"lon":-4.7705757234726685,"address":1048623},{"lat":39.81601138790036,"kind":"edge","table_size":282,"node_id":48,"layer_id":1,"lon":-5.0336202846975056,"address":1048624},{"lat":37.157799020568085,"kind":"edge","table_size":1022,"node_id":49,"layer_id":1,"lon":-3.59968090107738,"address":1048625},{"lat":41.37030407079647,"kind":"edge","table_size":566,"node_id":50,"layer_id":1,"lon":-5.204770973451337,"address":1048626},{"lat":41.79446489533013,"kind":"edge","table_size":1243,"node_id":51,"layer_id":1,"lon":2.370531078904992,"address":1048627},{"lat":39.31119100169781,"kind":"edge","table_size":590,"node_id":52,"layer_id":1,"lon":-1.9950444821731745,"address":1048628},{"lat":37.73954264920397,"kind":"psa","table_size":13,"node_id":193,"layer_id":1,"lon":-4.845104971881363,"address":1048769},{"lat":39.00285933931208,"kind":"psa","table_size":9,"node_id":194,"layer_id":1,"lon":-0.7076391673451605,"address":1048770},{"lat":42.447284797533264,"kind":"psa","table_size":9,"node_id":195,"layer_id":1,"lon":-6.967056745764133,"address":1048771},{"lat":41.50613988207356,"kind":"psa","table_size":12,"node_id":196,"layer_id":1,"lon":1.2035649165355038,"address":1048772},{"lat":42.191129612216976,"kind":"psa","table_size":14,"node_id":197,"layer_id":1,"lon":-3.519404854484781,"address":1048773}],"edges":[[3,53],[5,53],[17,53],[19,53],[23,53],[31,53],[35,53],[36,53],[39,53],[47,53],[48,53],[49,53],[9,54],[11,54],[16,54],[29,54],[40,54],[41,54],[46,54],[52,54],[4,55],[8,55],[18,55],[25,55],[26,55],[27,55],[37,55],[42,55],[1,56],[6,56],[13,56],[21,56],[22,56],[34,56],[38,56],[43,56],[44,56],[45,56],[51,56],[2,57],[7,57],[10,57],[12,57],[14,57],[15,57],[20,57],[24,57],[28,57],[30,57],[32,57],[33,57],[50,57],[53,54],[54,55],[55,56],[56,57]],"level":0},{"name":"member-2","id":2,"border_node":198,"gupfs":[{"lat":38.77088341232223,"kind":"edge","table_size":1478,"node_id":53,"layer_id":2,"lon":-9.185684427894369,"address":2097205},{"lat":41.649871129707094,"kind":"edge","table_size":240,"node_id":54,"layer_id":2,"lon":-8.637829707112967,"address":2097206},{"lat":37.17775365079368,"kind":"edge","table_size":316,"node_id":55,"layer_id":2,"lon":-8.156390793650788,"address":2097207},{"lat":40.64560117647058,"kind":"edge","table_size":171,"node_id":56,"layer_id":2,"lon":-8.532264117647058,"address":2097208},{"lat":39.596274832214775,"kind":"edge","table_size":299,"node_id":57,"layer_id":2,"lon":-8.612804026845637,"address":2097209},{"lat":41.60533939393939,"kind":"edge","table_size":67,"node_id":58,"layer_id":2,"lon":-6.513654545454545,"address":2097210},{"lat":37.11622654545455,"kind":"edge","table_size":276,"node_id":59,"layer_id":2,"lon":-8.60938145454545,"address":2097211},{"lat":41.431663060686,"kind":"edge","table_size":380,"node_id":60,"layer_id":2,"lon":-8.1724580474934,"address":2097212},{"lat":38.552459310344844,"kind":"edge","table_size":581,"node_id":61,"layer_id":2,"lon":-8.98132775862069,"address":2097213},{"lat":41.21694223602482,"kind":"edge","table_size":162,"node_id":62,"layer_id":2,"lon":-7.671032298136642,"address":2097214},{"lat":38.3002673758865,"kind":"edge","table_size":142,"node_id":63,"layer_id":2,"lon":-7.661862411347517,"address":2097215},{"lat":41.164322992299226,"kind":"edge","table_size":910,"node_id":64,"layer_id":2,"lon":-8.598359625962601,"address":2097216},{"lat":40.60456204379562,"kind":"edge","table_size":138,"node_id":65,"layer_id":2,"lon":-8.01604671532847,"address":2097217},{"lat":39.240995200000015,"kind":"edge","table_size":126,"node_id":66,"layer_id":2,"lon":-7.440337599999999,"address":2097218},{"lat":40.105573415132916,"kind":"edge","table_size":490,"node_id":67,"layer_id":2,"lon":-8.429456237218817,"address":2097219},{"lat":40.53626323529413,"kind":"edge","table_size":69,"node_id":68,"layer_id":2,"lon":-7.236704411764704,"address":2097220},{"lat":39.15999561403504,"kind":"edge","table_size":343,"node_id":69,"layer_id":2,"lon":-8.965966666666674,"address":2097221},{"lat":38.027912835820864,"kind":"edge","table_size":336,"node_id":70,"layer_id":2,"lon":-8.550297014925375,"address":2097222},{"lat":40.99557096481664,"kind":"psa","table_size":10,"node_id":198,"layer_id":2,"lon":-7.97864507845769,"address":2097350},{"lat":38.438085419652495,"kind":"psa","table_size":10,"node_id":199,"layer_id":2,"lon":-8.46267246161072,"address":2097351}],"edges":[[2,19],[4,19],[6,19],[8,19],[10,19],[12,19],[13,19],[15,19],[16,19],[1,20],[3,20],[5,20],[7,20],[9,20],[11,20],[14,20],[17,20],[18,20],[19,20]],"level":0},{"name":"member-3","id":3,"border_node":200,"gupfs":[{"lat":37.21103421052632,"kind":"edge","table_size":457,"node_id":71,"layer_id":3,"lon":-3.635499999999998,"address":3145799},{"lat":41.34729705882351,"kind":"edge","table_size":817,"node_id":72,"layer_id":3,"lon":1.5012495098039216,"address":3145800},{"lat":42.49228949044587,"kind":"edge","table_size":315,"node_id":73,"layer_id":3,"lon":-8.032046178343952,"address":3145801},{"lat":43.292165557729966,"kind":"edge","table_size":512,"node_id":74,"layer_id":3,"lon":-3.908620743639924,"address":3145802},{"lat":39.087921491228066,"kind":"edge","table_size":229,"node_id":75,"layer_id":3,"lon":-0.7903109649122809,"address":3145803},{"lat":38.34047640449439,"kind":"edge","table_size":179,"node_id":76,"layer_id":3,"lon":-1.4689320224719107,"address":3145804},{"lat":42.75219543281985,"kind":"edge","table_size":1884,"node_id":77,"layer_id":3,"lon":-2.738312055231014,"address":3145805},{"lat":36.46126690647494,"kind":"edge","table_size":1113,"node_id":78,"layer_id":3,"lon":-4.948383183453235,"address":3145806},{"lat":39.95548157894737,"kind":"edge","table_size":305,"node_id":79,"layer_id":3,"lon":-4.002727960526316,"address":3145807},{"lat":41.685421803653036,"kind":"edge","table_size":877,"node_id":80,"layer_id":3,"lon":-0.9394092465753419,"address":3145808},{"lat":43.39045063897759,"kind":"edge","table_size":1879,"node_id":81,"layer_id":3,"lon":-5.839807294994676,"address":3145809},{"lat":38.279685795454554,"kind":"edge","table_size":353,"node_id":82,"layer_id":3,"lon":-0.7868923295454547,"address":3145810},{"lat":38.87344859154924,"kind":"edge","table_size":285,"node_id":83,"layer_id":3,"lon":1.4087827464788725,"address":3145811},{"lat":37.420882407407426,"kind":"edge","table_size":649,"node_id":84,"layer_id":3,"lon":-5.9429614197530825,"address":3145812},{"lat":42.22332095959596,"kind":"edge","table_size":397,"node_id":85,"layer_id":3,"lon":-1.849017171717171,"address":3145813},{"lat":37.48104794520546,"kind":"edge","table_size":74,"node_id":86,"layer_id":3,"lon":-6.868724657534248,"address":3145814},{"lat":41.50772713310581,"kind":"edge","table_size":587,"node_id":87,"layer_id":3,"lon":-4.9046300341296885,"address":3145815},{"lat":43.059133136094644,"kind":"edge","table_size":508,"node_id":88,"layer_id":3,"lon":-2.356997238658777,"address":3145816},{"lat":41.28989958217271,"kind":"edge","table_size":719,"node_id":89,"layer_id":3,"lon":0.6161330083565457,"address":3145817},{"lat":41.348664819944645,"kind":"edge","table_size":362,"node_id":90,"layer_id":3,"lon":-2.3266454293628795,"address":3145818},{"lat":42.07943727008708,"kind":"edge","table_size":1034,"node_id":91,"layer_id":3,"lon":2.876188383349463,"address":3145819},{"lat":39.58457171717174,"kind":"edge","table_size":199,"node_id":92,"layer_id":3,"lon":-2.503968181818181,"address":3145820},{"lat":41.54167308970105,"kind":"edge","table_size":302,"node_id":93,"layer_id":3,"lon":-3.6857810631229246,"address":3145821},{"lat":38.06494356955379,"kind":"edge","table_size":382,"node_id":94,"layer_id":3,"lon":-3.7407207349081366,"address":3145822},{"lat":38.788086127167624,"kind":"edge","table_size":347,"node_id":95,"layer_id":3,"lon":-6.699702601156071,"address":3145823},{"lat":39.91609494584839,"kind":"edge","table_size":278,"node_id":96,"layer_id":3,"lon":-3.4520978339350186,"address":3145824},{"lat":38.457859514169996,"kind":"edge","table_size":248,"node_id":97,"layer_id":3,"lon":-0.4089161943319835,"address":3145825},{"lat":37.80977648437496,"kind":"edge","table_size":1281,"node_id":98,"layer_id":3,"lon":-1.1140457812499986,"address":3145826},{"lat":40.02874375939852,"kind":"edge","table_size":666,"node_id":99,"layer_id":3,"lon":-0.006433082706766943,"address":3145827},{"lat":39.562155523255804,"kind":"edge","table_size":345,"node_id":100,"layer_id":3,"lon":2.694602906976745,"address":3145828},{"lat":42.39329128712873,"kind":"edge","table_size":506,"node_id":101,"layer_id":3,"lon":-3.6418170297029606,"address":3145829},{"lat":42.59222824207502,"kind":"edge","table_size":1042,"node_id":102,"layer_id":3,"lon":-5.601760230547555,"address":3145830},{"lat":36.9039422442244,"kind":"edge","table_size":607,"node_id":103,"layer_id":3,"lon":-2.4382957095709585,"address":3145831},{"lat":41.89302746781116,"kind":"edge","table_size":467,"node_id":104,"layer_id":3,"lon":-5.656903218884121,"address":3145832},{"lat":43.257410872235816,"kind":"edge","table_size":1629,"node_id":105,"layer_id":3,"lon":-2.977909705159692,"address":3145833},{"lat":40.454196237218795,"kind":"edge","table_size":2446,"node_id":106,"layer_id":3,"lon":-3.6380440899795587,"address":3145834},{"lat":39.53386342756187,"kind":"edge","table_size":567,"node_id":107,"layer_id":3,"lon":-0.4320955830388686,"address":3145835},{"lat":40.560442763157894,"kind":"edge","table_size":153,"node_id":108,"layer_id":3,"lon":-1.1325309210526322,"address":3145836},{"lat":38.96937762557078,"kind":"edge","table_size":220,"node_id":109,"layer_id":3,"lon":-3.36333607305936,"address":3145837},{"lat":37.463882035928144,"kind":"edge","table_size":168,"node_id":110,"layer_id":3,"lon":-5.013292814371255,"address":3145838},{"lat":39.457970854271366,"kind":"edge","table_size":200,"node_id":111,"layer_id":3,"lon":-6.149345728643218,"address":3145839},{"lat":42.94949568965518,"kind":"edge","table_size":233,"node_id":112,"layer_id":3,"lon":-4.45621594827586,"address":3145840},{"lat":41.520627320125186,"kind":"edge","table_size":2878,"node_id":113,"layer_id":3,"lon":2.169310184219676,"address":3145841},{"lat":39.194586904761906,"kind":"edge","table_size":169,"node_id":114,"layer_id":3,"lon":-1.8266922619047619,"address":3145842},{"lat":43.04689696969696,"kind":"edge","table_size":265,"node_id":115,"layer_id":3,"lon":-8.326803030303038,"address":3145843},{"lat":40.376199473684224,"kind":"edge","table_size":191,"node_id":116,"layer_id":3,"lon":-5.8115073684210525,"address":3145844},{"lat":37.30961407407409,"kind":"edge","table_size":271,"node_id":117,"layer_id":3,"lon":-3.010220370370369,"address":3145845},{"lat":43.21982607973416,"kind":"edge","table_size":603,"node_id":118,"layer_id":3,"lon":-1.905395847176082,"address":3145846},{"lat":37.894398467432914,"kind":"edge","table_size":262,"node_id":119,"layer_id":3,"lon":-4.616150574712641,"address":3145847},{"lat":36.64417366412212,"kind":"edge","table_size":263,"node_id":120,"layer_id":3,"lon":-6.06218816793893,"address":3145848},{"lat":43.36443272727273,"kind":"edge","table_size":276,"node_id":121,"layer_id":3,"lon":-5.101694909090912,"address":3145849},{"lat":43.23269811023619,"kind":"edge","table_size":636,"node_id":122,"layer_id":3,"lon":-2.7170984251968497,"address":3145850},{"lat":40.027702445727314,"kind":"psa","table_size":9,"node_id":200,"layer_id":3,"lon":-4.228207158814049,"address":3145928},{"lat":39.85322773089179,"kind":"psa","table_size":17,"node_id":201,"layer_id":3,"lon":0.14750052196220145,"address":3145929},{"lat":42.66089773044329,"kind":"psa","table_size":12,"node_id":202,"layer_id":3,"lon":-2.9603464233858303,"address":3145930},{"lat":37.422115604737925,"kind":"psa","table_size":12,"node_id":203,"layer_id":3,"lon":-4.8160127485244475,"address":3145931},{"lat":42.796554256046555,"kind":"psa","table_size":7,"node_id":204,"layer_id":3,"lon":-6.426502477027376,"address":3145932}],"edges":[[9,53],[17,53],[22,53],[26,53],[36,53],[39,53],[41,53],[46,53],[2,54],[5,54],[6,54],[10,54],[12,54],[13,54],[19,54],[21,54],[27,54],[28,54],[29,54],[30,54],[37,54],[38,54],[43,54],[44,54],[4,55],[7,55],[15,55],[18,55],[20,55],[23,55],[31,55],[35,55],[42,55],[48,55],[52,55],[1,56],[8,56],[14,56],[16,56],[24,56],[25,56],[33,56],[40,56],[47,56],[49,56],[50,56],[3,57],[11,57],[32,57],[34,57],[45,57],[51,57],[53,54],[54,55],[55,56],[56,57]],"level":0},{"name":"member-4","id":4,"border_node":205,"gupfs":[{"lat":36.779178205128204,"kind":"edge","table_size":625,"node_id":123,"layer_id":4,"lon":-4.3942229166666635,"address":4194427},{"lat":40.909826285714296,"kind":"edge","table_size":176,"node_id":124,"layer_id":4,"lon":-5.698602285714287,"address":4194428},{"lat":41.85280605590066,"kind":"edge","table_size":645,"node_id":125,"layer_id":4,"lon":2.662410869565218,"address":4194429},{"lat":37.292964912280695,"kind":"edge","table_size":229,"node_id":126,"layer_id":4,"lon":-2.007025438596491,"address":4194430},{"lat":42.51852267080745,"kind":"edge","table_size":323,"node_id":127,"layer_id":4,"lon":-5.6423518633540395,"address":4194431},{"lat":38.782268367346944,"kind":"edge","table_size":295,"node_id":128,"layer_id":4,"lon":-0.2479874149659864,"address":4194432},{"lat":38.892237873754155,"kind":"edge","table_size":302,"node_id":129,"layer_id":4,"lon":-3.3521960132890363,"address":4194433},{"lat":43.113629566854975,"kind":"edge","table_size":532,"node_id":130,"layer_id":4,"lon":-1.8947564971751436,"address":4194434},{"lat":42.24656255813954,"kind":"edge","table_size":431,"node_id":131,"layer_id":4,"lon":3.0449399999999995,"address":4194435},{"lat":42.43645564516128,"kind":"edge","table_size":125,"node_id":132,"layer_id":4,"lon":0.4893193548387096,"address":4194436},{"lat":40.53526166666672,"kind":"edge","table_size":901,"node_id":133,"layer_id":4,"lon":-3.4629900000000027,"address":4194437},{"lat":38.44490234741784,"kind":"edge","table_size":214,"node_id":134,"layer_id":4,"lon":-1.1043281690140845,"address":4194438},{"lat":42.71706221198162,"kind":"edge","table_size":218,"node_id":135,"layer_id":4,"lon":-7.5930723502304165,"address":4194439},{"lat":41.5470817555938,"kind":"edge","table_size":582,"node_id":136,"layer_id":4,"lon":1.4663848537005164,"address":4194440},{"lat":39.61314791208792,"kind":"edge","table_size":456,"node_id":137,"layer_id":4,"lon":-0.40130175824175823,"address":4194441},{"lat":40.44338301886791,"kind":"edge","table_size":160,"node_id":138,"layer_id":4,"lon":-1.142725786163522,"address":4194442},{"lat":40.28045896057345,"kind":"edge","table_size":1117,"node_id":139,"layer_id":4,"lon":-3.7570884408602154,"address":4194443},{"lat":41.61688738532112,"kind":"edge","table_size":873,"node_id":140,"layer_id":4,"lon":-0.9631188073394495,"address":4194444},{"lat":39.69295714285712,"kind":"edge","table_size":134,"node_id":141,"layer_id":4,"lon":3.716685714285715,"address":4194445},{"lat":38.79739537572254,"kind":"edge","table_size":174,"node_id":142,"layer_id":4,"lon":-6.5381410404624285,"address":4194446},{"lat":36.87374570135746,"kind":"edge","table_size":443,"node_id":143,"layer_id":4,"lon":-2.878007918552037,"address":4194447},{"lat":41.97748686327078,"kind":"edge","table_size":374,"node_id":144,"layer_id":4,"lon":-3.6288906166219825,"address":4194448},{"lat":43.366462142857124,"kind":"edge","table_size":141,"node_id":145,"layer_id":4,"lon":-4.8121800000000015,"address":4194449},{"lat":43.42787500000001,"kind":"edge","table_size":45,"node_id":146,"layer_id":4,"lon":-6.591545454545454,"address":4194450},{"lat":38.11227482014389,"kind":"edge","table_size":140,"node_id":147,"layer_id":4,"lon":-6.439528776978418,"address":4194451},{"lat":38.88249426751593,"kind":"edge","table_size":315,"node_id":148,"layer_id":4,"lon":1.4119585987261138,"address":4194452},{"lat":43.258043149466154,"kind":"edge","table_size":1125,"node_id":149,"layer_id":4,"lon":-2.9025987544483987,"address":4194453},{"lat":36.30668128078816,"kind":"edge","table_size":204,"node_id":150,"layer_id":4,"lon":-5.320305418719212,"address":4194454},{"lat":42.65861263537911,"kind":"edge","table_size":278,"node_id":151,"layer_id":4,"lon":-8.45765631768955,"address":4194455},{"lat":43.41841851453177,"kind":"edge","table_size":930,"node_id":152,"layer_id":4,"lon":-5.788504305705054,"address":4194456},{"lat":42.13940821917812,"kind":"edge","table_size":366,"node_id":153,"layer_id":4,"lon":-1.7399567123287671,"address":4194457},{"lat":37.80733401360545,"kind":"edge","table_size":295,"node_id":154,"layer_id":4,"lon":-4.682319727891158,"address":4194458},{"lat":42.68775205223884,"kind":"edge","table_size":537,"node_id":155,"layer_id":4,"lon":-2.777672201492538,"address":4194459},{"lat":39.48474626865673,"kind":"edge","table_size":135,"node_id":156,"layer_id":4,"lon":-6.082835820895525,"address":4194460},{"lat":39.17648614457832,"kind":"edge","table_size":167,"node_id":157,"layer_id":4,"lon":-1.8407506024096392,"address":4194461},{"lat":41.806177385159,"kind":"edge","table_size":284,"node_id":158,"layer_id":4,"lon":-5.817366077738518,"address":4194462},{"lat":41.47696428571425,"kind":"edge","table_size":309,"node_id":159,"layer_id":4,"lon":0.4278636363636365,"address":4194463},{"lat":37.07760649819504,"kind":"edge","table_size":555,"node_id":160,"layer_id":4,"lon":-6.027663537906137,"address":4194464},{"lat":39.97634497041421,"kind":"edge","table_size":170,"node_id":161,"layer_id":4,"lon":-4.766845562130176,"address":4194465},{"lat":35.29806363636364,"kind":"edge","table_size":12,"node_id":162,"layer_id":4,"lon":-2.939963636363636,"address":4194466},{"lat":37.63826403162052,"kind":"edge","table_size":507,"node_id":163,"layer_id":4,"lon":-3.715802766798414,"address":4194467},{"lat":41.994991752577306,"kind":"edge","table_size":195,"node_id":164,"layer_id":4,"lon":-4.3864500000000035,"address":4194468},{"lat":41.46662645228215,"kind":"edge","table_size":965,"node_id":165,"layer_id":4,"lon":2.145497614107887,"address":4194469},{"lat":43.22103599257889,"kind":"edge","table_size":540,"node_id":166,"layer_id":4,"lon":-3.7823250463821876,"address":4194470},{"lat":41.38267921348312,"kind":"edge","table_size":357,"node_id":167,"layer_id":4,"lon":-2.3593157303370766,"address":4194471},{"lat":42.621780833333354,"kind":"edge","table_size":121,"node_id":168,"layer_id":4,"lon":-0.47985916666666656,"address":4194472},{"lat":41.4608197368421,"kind":"edge","table_size":381,"node_id":169,"layer_id":4,"lon":-4.956018684210532,"address":4194473},{"lat":37.85927495291902,"kind":"edge","table_size":532,"node_id":170,"layer_id":4,"lon":-1.1044981167608294,"address":4194474},{"lat":39.50155146198831,"kind":"edge","table_size":172,"node_id":171,"layer_id":4,"lon":-2.5902771929824557,"address":4194475},{"lat":37.29496898395721,"kind":"edge","table_size":188,"node_id":172,"layer_id":4,"lon":-5.216912299465241,"address":4194476},{"lat":40.285239072847695,"kind":"edge","table_size":152,"node_id":173,"layer_id":4,"lon":-6.206927152317881,"address":4194477},{"lat":41.05084653243849,"kind":"edge","table_size":448,"node_id":174,"layer_id":4,"lon":1.029007382550336,"address":4194478},{"lat":42.23309158260886,"kind":"psa","table_size":12,"node_id":205,"layer_id":4,"lon":-5.995515862864158,"address":4194509},{"lat":38.124809758337705,"kind":"psa","table_size":12,"node_id":206,"layer_id":4,"lon":-2.016558093452215,"address":4194510},{"lat":37.9596144907346,"kind":"psa","table_size":10,"node_id":207,"layer_id":4,"lon":-5.49653056679055,"address":4194511},{"lat":41.183643855067025,"kind":"psa","table_size":10,"node_id":208,"layer_id":4,"lon":1.8215631137931259,"address":4194512},{"lat":41.93981724348612,"kind":"psa","table_size":13,"node_id":209,"layer_id":4,"lon":-2.4076081466513295,"address":4194513}],"edges":[[2,53],[5,53],[13,53],[23,53],[24,53],[29,53],[30,53],[36,53],[42,53],[47,53],[51,53],[4,54],[6,54],[7,54],[12,54],[15,54],[21,54],[35,54],[40,54],[41,54],[48,54],[49,54],[1,55],[20,55],[25,55],[28,55],[32,55],[34,55],[38,55],[39,55],[50,55],[3,56],[9,56],[10,56],[14,56],[19,56],[26,56],[37,56],[43,56],[52,56],[8,57],[11,57],[16,57],[17,57],[18,57],[22,57],[27,57],[31,57],[33,57],[44,57],[45,57],[46,57],[53,54],[54,55],[55,56],[56,57]],"level":0},{"name":"member-5","id":5,"border_node":210,"gupfs":[{"lat":38.74306594863296,"kind":"edge","table_size":2415,"node_id":175,"layer_id":5,"lon":-9.189479411764713,"address":5243055},{"lat":40.6760924050633,"kind":"edge","table_size":317,"node_id":176,"layer_id":5,"lon":-8.584135443037972,"address":5243056},{"lat":38.54356497175144,"kind":"edge","table_size":178,"node_id":177,"layer_id":5,"lon":-8.09041412429379,"address":5243057},{"lat":41.611416170212756,"kind":"edge","table_size":236,"node_id":178,"layer_id":5,"lon":-8.3256114893617,"address":5243058},{"lat":39.606673789173776,"kind":"edge","table_size":352,"node_id":179,"layer_id":5,"lon":-8.809188034188033,"address":5243059},{"lat":41.67713862928348,"kind":"edge","table_size":322,"node_id":180,"layer_id":5,"lon":-8.728642367601251,"address":5243060},{"lat":37.2227439163498,"kind":"edge","table_size":527,"node_id":181,"layer_id":5,"lon":-8.587080228136886,"address":5243061},{"lat":38.00490952380952,"kind":"edge","table_size":22,"node_id":182,"layer_id":5,"lon":-7.426261904761906,"address":5243062},{"lat":40.615588888888894,"kind":"edge","table_size":100,"node_id":183,"layer_id":5,"lon":-7.99271313131313,"address":5243063},{"lat":41.253920622568096,"kind":"edge","table_size":258,"node_id":184,"layer_id":5,"lon":-7.958401167315178,"address":5243064},{"lat":40.147447129909374,"kind":"edge","table_size":332,"node_id":185,"layer_id":5,"lon":-8.536668277945624,"address":5243065},{"lat":39.235082254196676,"kind":"edge","table_size":418,"node_id":186,"layer_id":5,"lon":-9.125716306954436,"address":5243066},{"lat":39.020103508771925,"kind":"edge","table_size":115,"node_id":187,"layer_id":5,"lon":-7.3019096491228055,"address":5243067},{"lat":38.386703058103976,"kind":"edge","table_size":328,"node_id":188,"layer_id":5,"lon":-8.792003669724767,"address":5243068},{"lat":41.167371285140646,"kind":"edge","table_size":997,"node_id":189,"layer_id":5,"lon":-8.611718172690766,"address":5243069},{"lat":37.23493656387665,"kind":"edge","table_size":228,"node_id":190,"layer_id":5,"lon":-7.902594713656389,"address":5243070},{"lat":40.95252987012986,"kind":"edge","table_size":78,"node_id":191,"layer_id":5,"lon":-7.352215584415584,"address":5243071},{"lat":39.68909027777777,"kind":"edge","table_size":145,"node_id":192,"layer_id":5,"lon":-7.775812500000001,"address":5243072},{"lat":38.56868738124445,"kind":"psa","table_size":11,"node_id":210,"layer_id":5,"lon":-8.300046054260372,"address":5243090},{"lat":41.01268812514955,"kind":"psa","table_size":9,"node_id":211,"layer_id":5,"lon":-8.26126320421015,"address":5243091}],"edges":[[1,19],[3,19],[5,19],[7,19],[8,19],[12,19],[13,19],[14,19],[16,19],[18,19],[2,20],[4,20],[6,20],[9,20],[10,20],[11,20],[15,20],[17,20],[19,20]],"level":0},{"name":"exchange-es","id":6,"border_node":193,"gupfs":[{"lat":37.73954264920397,"kind":"border","table_size":3,"node_id":193,"layer_id":6,"lon":-4.845104971881363,"address":6291649},{"lat":40.027702445727314,"kind":"border","table_size":3,"node_id":200,"layer_id":6,"lon":-4.228207158814049,"address":6291656},{"lat":42.23309158260886,"kind":"border","table_size":3,"node_id":205,"layer_id":6,"lon":-5.995515862864158,"address":6291661}],"edges":[[1,2],[2,3]],"level":1},{"name":"exchange-pt","id":7,"border_node":198,"gupfs":[{"lat":40.99557096481664,"kind":"border","table_size":2,"node_id":198,"layer_id":7,"lon":-7.97864507845769,"address":7340230},{"lat":38.56868738124445,"kind":"border","table_size":2,"node_id":210,"layer_id":7,"lon":-8.300046054260372,"address":7340242}],"edges":[[1,2]],"level":1},{"name":"eu-root","id":8,"border_node":193,"gupfs":[{"lat":37.73954264920397,"kind":"border","table_size":3,"node_id":193,"layer_id":8,"lon":-4.845104971881363,"address":8388801},{"lat":40.99557096481664,"kind":"border","table_size":3,"node_id":198,"layer_id":8,"lon":-7.97864507845769,"address":8388806},{"lat":42.47812372393478,"kind":"border","table_size":3,"node_id":212,"layer_id":8,"lon":-7.548578986402697,"address":8388820}],"edges":[[1,2],[2,3]],"level":2},{"name":"ntn-starlink","id":9,"border_node":212,"gupfs":[{"lat":42.47812372393478,"kind":"member","table_size":1,"node_id":212,"layer_id":9,"lon":-7.548578986402697,"address":9437396},{"lat":45.24624319785839,"kind":"member","table_size":1,"node_id":213,"layer_id":9,"lon":-1.7749402445689397,"address":9437397},{"lat":30.984658212007158,"kind":"member","table_size":1,"node_id":214,"layer_id":9,"lon":-7.768664492320375,"address":9437398},{"lat":34.494054257196545,"kind":"member","table_size":1,"node_id":215,"layer_id":9,"lon":-3.5200255004642096,"address":9437399},{"lat":37.84171546249445,"kind":"member","table_size":1,"node_id":216,"layer_id":9,"lon":1.0902231308254124,"address":9437400},{"lat":39.44362138752689,"kind":"member","table_size":1,"node_id":217,"layer_id":9,"lon":-7.121499278957378,"address":9437401},{"lat":36.19011938757438,"kind":"member","table_size":1,"node_id":218,"layer_id":9,"lon":-2.308017126550727,"address":9437402},{"lat":32.75742762683648,"kind":"member","table_size":1,"node_id":219,"layer_id":9,"lon":2.1140275898325203,"address":9437403},{"lat":43.89859338835059,"kind":"member","table_size":1,"node_id":220,"layer_id":9,"lon":1.1566938182685078,"address":9437404}],"edges":[[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9]],"level":0}]} };
+let DATASETS = {};
+let current = "flat";
+let selA = null, selB = null;
+const $ = (s) => document.querySelector(s);
 
 const MEMBER_LABELS = {
   "member-1": "Movistar ES", "member-2": "MEO PT", "member-3": "Orange ES",
-  "member-4": "Vodafone ES", "member-5": "Vodafone PT",
-  "ntn-starlink": "Starlink (NTN)",
+  "member-4": "Vodafone ES", "member-5": "Vodafone PT", "ntn-starlink": "Starlink (NTN)",
 };
 const MEMBER_COLORS = {
   "member-1": "var(--m1)", "member-2": "var(--m2)", "member-3": "var(--m3)",
@@ -225,33 +160,20 @@ const SIGMA = {
   crossing: { g5: 3250, g5ideal: 1300, rupa: 450, label: "member crossing" },
 };
 
-let current = "flat";
-let selA = null, selB = null;   // {layerId, nodeId}
-const $ = (s) => document.querySelector(s);
-
-function colorOf(layer, data) {
-  if (layer.level === 0) return MEMBER_COLORS[layer.name] || "var(--fed)";
-  return "var(--fed)";
-}
-// Color of a border GUPF = color of the base member whose node it sits on.
+function colorOf(layer) { return layer.level === 0 ? (MEMBER_COLORS[layer.name] || "var(--fed)") : "var(--fed)"; }
 function nodeBaseColor(data, nodeId) {
   for (const l of data.layers)
     if (l.level === 0 && l.gupfs.some(g => g.node_id === nodeId))
       return MEMBER_COLORS[l.name] || "var(--fed)";
   return "var(--fed)";
 }
-function layersAtNode(data, nodeId) {
-  return data.layers.filter(l => l.gupfs.some(g => g.node_id === nodeId));
-}
+function layersAtNode(data, nodeId) { return data.layers.filter(l => l.gupfs.some(g => g.node_id === nodeId)); }
 function parentsMap(data) {
-  const p = {};
-  for (const l of data.layers) p[l.id] = [];
-  for (const [up, lows] of Object.entries(data.floats_over))
-    for (const lo of lows) p[lo].push(Number(up));
+  const p = {}; for (const l of data.layers) p[l.id] = [];
+  for (const [up, lows] of Object.entries(data.floats_over)) for (const lo of lows) p[lo].push(Number(up));
   return p;
 }
-// Same BFS as Simulation.classify_move (Layers.jl) — recomputed client-side
-// from the exported DAG.
+// Mirrors Simulation.classify_move (Layers.jl), recomputed from the exported DAG.
 function classify(data, a, b) {
   if (a.layerId === b.layerId)
     return { cls: a.nodeId === b.nodeId ? "intra" : "inter", climb: 0, common: a.layerId };
@@ -266,55 +188,42 @@ function classify(data, a, b) {
   }
   return { cls: "disconnected", climb: -1, common: null };
 }
+const gupfAt = (layer, nodeId) => layer.gupfs.find(g => g.node_id === nodeId);
+function sharedPrefixLen(a, b) { let n = 0; for (let i = 0; i < Math.min(a.length, b.length); i++) { if (a[i] === b[i]) n++; else break; } return n; }
 
-function fmtAddr(a) { return "0x" + a.toString(16).padStart(8, "0"); }
-
-/* ---------- layer panels ---------- */
 const PW = 290, PH = 205, PAD = 14;
-
 function projection(data) {
   const pts = data.layers.flatMap(l => l.gupfs).filter(g => g.lat || g.lon);
   const lats = pts.map(p => p.lat), lons = pts.map(p => p.lon);
-  const la0 = Math.min(...lats), la1 = Math.max(...lats);
-  const lo0 = Math.min(...lons), lo1 = Math.max(...lons);
-  const kx = (PW - 2 * PAD) / (lo1 - lo0 || 1), ky = (PH - 2 * PAD) / (la1 - la0 || 1);
-  const k = Math.min(kx, ky);
+  const la0 = Math.min(...lats), la1 = Math.max(...lats), lo0 = Math.min(...lons), lo1 = Math.max(...lons);
+  const k = Math.min((PW - 2*PAD) / (lo1 - lo0 || 1), (PH - 2*PAD) / (la1 - la0 || 1));
   return (g) => [
-    PAD + (g.lon - lo0) * k + (PW - 2 * PAD - (lo1 - lo0) * k) / 2,
-    PH - PAD - (g.lat - la0) * k - (PH - 2 * PAD - (la1 - la0) * k) / 2,
+    PAD + (g.lon - lo0) * k + (PW - 2*PAD - (lo1 - lo0) * k) / 2,
+    PH - PAD - (g.lat - la0) * k - (PH - 2*PAD - (la1 - la0) * k) / 2,
   ];
 }
-
 function markFor(g, xy, color) {
   const [x, y] = xy;
-  if (g.kind === "psa")
-    return `<circle cx="${x}" cy="${y}" r="5" fill="${color}" stroke="var(--panel)" stroke-width="1.5"/>`;
-  if (g.kind === "border") {
-    const d = 5.5;
-    return `<path d="M ${x} ${y - d} L ${x + d} ${y} L ${x} ${y + d} L ${x - d} ${y} Z"
-              fill="${color}" stroke="var(--panel)" stroke-width="1.5"/>`;
-  }
-  if (g.kind === "member")
-    return `<circle cx="${x}" cy="${y}" r="4" fill="none" stroke="${color}" stroke-width="2"/>`;
+  if (g.kind === "psa") return `<circle cx="${x}" cy="${y}" r="5" fill="${color}" stroke="var(--panel)" stroke-width="1.5"/>`;
+  if (g.kind === "border") { const d = 5.5;
+    return `<path d="M ${x} ${y-d} L ${x+d} ${y} L ${x} ${y+d} L ${x-d} ${y} Z" fill="${color}" stroke="var(--panel)" stroke-width="1.5"/>`; }
+  if (g.kind === "member") return `<circle cx="${x}" cy="${y}" r="4" fill="none" stroke="${color}" stroke-width="2"/>`;
   return `<circle cx="${x}" cy="${y}" r="2.6" fill="${color}"/>`;
 }
 
 function render() {
   const data = DATASETS[current];
-  selA = selB = null;
-  $("#clf-result").innerHTML = "";
-  $("#clf-hint").style.display = "";
+  selA = selB = null; $("#clf-result").innerHTML = ""; $("#clf-hint").style.display = "";
   const proj = projection(data);
   const stack = $("#stack");
   stack.querySelectorAll(".level-row").forEach(e => e.remove());
-
   const levels = [...new Set(data.layers.map(l => l.level))].sort((a, b) => b - a);
   for (const lv of levels) {
     const row = document.createElement("div");
     row.className = "level-row";
     row.innerHTML = `<div class="level-tag">level ${lv}${lv === 0 ? " · member layers" : " · federation layers"}</div>`;
     for (const layer of data.layers.filter(l => l.level === lv)) {
-      const color = colorOf(layer, data);
+      const color = colorOf(layer);
       const label = MEMBER_LABELS[layer.name] ? `${layer.name} · ${MEMBER_LABELS[layer.name]}` : layer.name;
       const entries = layer.gupfs.reduce((s, g) => s + g.table_size, 0);
       let svg = "";
@@ -326,12 +235,10 @@ function render() {
         const c = layer.level > 0 ? nodeBaseColor(data, g.node_id) : color;
         svg += `<g class="gupf" data-layer="${layer.id}" data-idx="${i}" style="cursor:pointer">
                   ${markFor(g, proj(g), c)}
-                  <circle cx="${proj(g)[0]}" cy="${proj(g)[1]}" r="9" fill="transparent"/>
-                </g>`;
+                  <circle cx="${proj(g)[0]}" cy="${proj(g)[1]}" r="9" fill="transparent"/></g>`;
       });
       const div = document.createElement("div");
-      div.className = "panel";
-      div.dataset.layer = layer.id;
+      div.className = "panel"; div.dataset.layer = layer.id;
       div.innerHTML = `<h3><span class="swatch" style="background:${layer.level === 0 ? color : "var(--fed)"}"></span>
           ${label}<span class="meta">${layer.gupfs.length} GUPFs · ${entries.toLocaleString()} entries</span></h3>
         <svg width="${PW}" height="${PH}" viewBox="0 0 ${PW} ${PH}" role="img" aria-label="${label}">${svg}</svg>`;
@@ -339,47 +246,33 @@ function render() {
     }
     stack.appendChild(row);
   }
-  renderDag(data);
-  renderTable(data);
-  wireEvents(data, proj);
+  renderDag(data); renderTable(data); wireEvents(data);
 }
 
-/* ---------- DAG ---------- */
 function renderDag(data, highlight = null) {
   const byLevel = {};
   for (const l of data.layers) (byLevel[l.level] ??= []).push(l);
   const levels = Object.keys(byLevel).map(Number).sort((a, b) => b - a);
-  const W = 268, RH = 52, H = levels.length * RH + 8;
-  const pos = {};
+  const W = 268, RH = 52, H = levels.length * RH + 8, pos = {};
   let svg = "";
-  levels.forEach((lv, r) => {
-    const ls = byLevel[lv], w = W / ls.length;
-    ls.forEach((l, i) => { pos[l.id] = [w * i + w / 2, r * RH + 26]; });
-  });
-  for (const [up, lows] of Object.entries(data.floats_over)) {
-    for (const lo of lows) {
-      const [x1, y1] = pos[up], [x2, y2] = pos[lo];
-      const hot = highlight && highlight.edges.some(([a, b]) => (a == up && b == lo));
-      svg += `<line x1="${x1}" y1="${y1 + 10}" x2="${x2}" y2="${y2 - 10}"
-                stroke="${hot ? "var(--hl)" : "var(--line)"}" stroke-width="${hot ? 2 : 1}"/>`;
-    }
+  levels.forEach((lv, r) => { const ls = byLevel[lv], w = W / ls.length;
+    ls.forEach((l, i) => { pos[l.id] = [w * i + w / 2, r * RH + 26]; }); });
+  for (const [up, lows] of Object.entries(data.floats_over)) for (const lo of lows) {
+    const [x1, y1] = pos[up], [x2, y2] = pos[lo];
+    const hot = highlight && highlight.edges.some(([a, b]) => (a == up && b == lo));
+    svg += `<line x1="${x1}" y1="${y1+10}" x2="${x2}" y2="${y2-10}" stroke="${hot ? "var(--hl)" : "var(--line)"}" stroke-width="${hot ? 2 : 1}"/>`;
   }
   for (const l of data.layers) {
-    const [x, y] = pos[l.id];
-    const hot = highlight && highlight.layers.includes(l.id);
+    const [x, y] = pos[l.id], hot = highlight && highlight.layers.includes(l.id);
     const c = l.level === 0 ? (MEMBER_COLORS[l.name] || "var(--fed)") : "var(--fed)";
     const short = l.name.replace("member-", "m").replace("exchange-", "ex-").replace("ntn-starlink", "ntn");
-    svg += `<g class="dag-pill">
-      <rect x="${x - 26}" y="${y - 10}" width="52" height="20" rx="10"
-        fill="${hot ? "var(--hl)" : "var(--surface-2)"}" stroke="${c}" stroke-width="1.4"/>
-      <text x="${x}" y="${y + 3.5}" text-anchor="middle" font-size="9.5"
-        fill="${hot ? "var(--surface)" : "var(--ink-2)"}" font-family="ui-monospace,monospace">${short}</text>
+    svg += `<g><rect x="${x-26}" y="${y-10}" width="52" height="20" rx="10" fill="${hot ? "var(--hl)" : "var(--surface-2)"}" stroke="${c}" stroke-width="1.4"/>
+      <text x="${x}" y="${y+3.5}" text-anchor="middle" font-size="9.5" fill="${hot ? "var(--surface)" : "var(--ink-2)"}" font-family="ui-monospace,monospace">${short}</text>
       <title>${l.name}</title></g>`;
   }
   $("#dag").innerHTML = `<h2>Layer DAG (floats over)</h2><svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${svg}</svg>`;
 }
 
-/* ---------- layers table ---------- */
 function renderTable(data) {
   const rows = data.layers.map(l => {
     const sizes = l.gupfs.map(g => g.table_size);
@@ -391,47 +284,35 @@ function renderTable(data) {
     `<tr><th>layer</th><th>lvl</th><th>GUPFs</th><th>Σ entries</th><th>table size</th></tr>${rows}`;
 }
 
-/* ---------- interaction ---------- */
-function wireEvents(data, proj) {
-  const tip = $("#tooltip");
-  const overlay = $("#connector-overlay");
-
+function wireEvents(data) {
+  const tip = $("#tooltip"), overlay = $("#connector-overlay");
   document.querySelectorAll(".gupf").forEach(el => {
     const layer = data.layers.find(l => l.id == el.dataset.layer);
     const g = layer.gupfs[el.dataset.idx];
-
     el.addEventListener("mousemove", (ev) => {
       tip.style.display = "block";
-      tip.style.left = (ev.clientX + 14) + "px";
-      tip.style.top = (ev.clientY + 10) + "px";
+      tip.style.left = (ev.clientX + 14) + "px"; tip.style.top = (ev.clientY + 10) + "px";
       const hosts = layersAtNode(data, g.node_id).map(l => l.name).join(", ");
       tip.innerHTML = `<b>${layer.name}</b> · ${g.kind}<br>
-        node ${g.node_id} · <span class="mono">${fmtAddr(g.address)}</span><br>
+        addr <span class="mono">${g.topo_str}</span><br>
         table: ${g.table_size.toLocaleString()} entries<br>
         hosted with: ${hosts}`;
-      drawConnectors(data, g.node_id);
-      renderInspector(data, layer, g);
+      drawConnectors(data, g.node_id); renderInspector(data, layer, g);
     });
     el.addEventListener("mouseleave", () => { tip.style.display = "none"; overlay.innerHTML = ""; });
     el.addEventListener("click", () => {
       if (!(g.kind === "edge" || g.kind === "member")) return;
       const pick = { layerId: layer.id, nodeId: g.node_id, name: layer.name };
-      if (!selA || (selA && selB)) { selA = pick; selB = null; }
-      else selB = pick;
+      if (!selA || (selA && selB)) { selA = pick; selB = null; } else selB = pick;
       renderClassifier(data);
     });
   });
 }
 
-// Cross-layer connectors: the recursion made visible — one physical node,
-// one GUPF instance per layer it participates in.
 function drawConnectors(data, nodeId) {
-  const overlay = $("#connector-overlay");
-  const stackBox = $("#stack").getBoundingClientRect();
-  overlay.setAttribute("width", stackBox.width);
-  overlay.setAttribute("height", stackBox.height);
-  overlay.style.width = stackBox.width + "px";
-  overlay.style.height = stackBox.height + "px";
+  const overlay = $("#connector-overlay"), stackBox = $("#stack").getBoundingClientRect();
+  overlay.setAttribute("width", stackBox.width); overlay.setAttribute("height", stackBox.height);
+  overlay.style.width = stackBox.width + "px"; overlay.style.height = stackBox.height + "px";
   const pts = [];
   document.querySelectorAll(".gupf").forEach(el => {
     const layer = data.layers.find(l => l.id == el.dataset.layer);
@@ -444,10 +325,8 @@ function drawConnectors(data, nodeId) {
   pts.sort((a, b) => a[1] - b[1]);
   let svg = "";
   for (let i = 1; i < pts.length; i++)
-    svg += `<line x1="${pts[i - 1][0]}" y1="${pts[i - 1][1]}" x2="${pts[i][0]}" y2="${pts[i][1]}"
-      stroke="var(--hl)" stroke-width="1.5" stroke-dasharray="4 3"/>`;
-  for (const [x, y] of pts)
-    svg += `<circle cx="${x}" cy="${y}" r="7" fill="none" stroke="var(--hl)" stroke-width="1.5"/>`;
+    svg += `<line x1="${pts[i-1][0]}" y1="${pts[i-1][1]}" x2="${pts[i][0]}" y2="${pts[i][1]}" stroke="var(--hl)" stroke-width="1.5" stroke-dasharray="4 3"/>`;
+  for (const [x, y] of pts) svg += `<circle cx="${x}" cy="${y}" r="7" fill="none" stroke="var(--hl)" stroke-width="1.5"/>`;
   overlay.innerHTML = svg;
 }
 
@@ -458,14 +337,21 @@ function renderInspector(data, layer, g) {
     <dt>layer</dt><dd>${layer.name}</dd>
     <dt>kind</dt><dd>${g.kind}</dd>
     <dt>physical node</dt><dd>${g.node_id}</dd>
-    <dt>address</dt><dd class="mono">${fmtAddr(g.address)}</dd>
+    <dt>topo address</dt><dd class="mono">${g.topo_str}</dd>
     <dt>table entries</dt><dd>${g.table_size.toLocaleString()}</dd>
     <dt>GUPF instances at node</dt><dd>${hosts.length}</dd>`;
 }
 
+// Render an address with its shared prefix (vs a reference) bolded — the climb made visible.
+function prefixMarkup(addr, ref) {
+  const n = sharedPrefixLen(addr, ref);
+  const head = addr.slice(0, n).join("."), tail = addr.slice(n).join(".");
+  return `<span class="pfx"><b>${head}</b>${head && tail ? "." : ""}${tail}</span>`;
+}
+
 function renderClassifier(data) {
   const el = $("#clf-result");
-  document.querySelectorAll(".panel").forEach(p => p.classList.remove("sel", "dim"));
+  document.querySelectorAll(".panel").forEach(p => p.classList.remove("sel"));
   if (!selA) { el.innerHTML = ""; return; }
   if (!selB) {
     $("#clf-hint").style.display = "none";
@@ -476,50 +362,64 @@ function renderClassifier(data) {
   const r = classify(data, { layerId: selA.layerId, nodeId: selA.nodeId },
                             { layerId: selB.layerId, nodeId: selB.nodeId });
   const commonName = r.common ? data.layers.find(l => l.id === r.common).name : "—";
-  // Highlight climb path in the DAG: layers on either ancestry up to common.
   const par = parentsMap(data);
-  const pathLayers = new Set([selA.layerId, selB.layerId]);
-  const pathEdges = [];
+  const pathLayers = new Set([selA.layerId, selB.layerId]), pathEdges = [];
   for (const start of [selA.layerId, selB.layerId]) {
     let frontier = [start];
     for (let k = 0; k < (r.climb ?? 0); k++) {
       const next = [];
-      for (const l of frontier) for (const p of (par[l] || [])) {
-        pathEdges.push([p, l]); next.push(p); pathLayers.add(p);
-      }
+      for (const l of frontier) for (const p of (par[l] || [])) { pathEdges.push([p, l]); next.push(p); pathLayers.add(p); }
       frontier = next;
     }
   }
   renderDag(data, { layers: [...pathLayers], edges: pathEdges });
-  [selA.layerId, selB.layerId, r.common].forEach(id =>
-    document.querySelector(`.panel[data-layer="${id}"]`)?.classList.add("sel"));
+  [selA.layerId, selB.layerId, r.common].forEach(id => document.querySelector(`.panel[data-layer="${id}"]`)?.classList.add("sel"));
 
+  const la = data.layers.find(l => l.id === selA.layerId), lb = data.layers.find(l => l.id === selB.layerId);
+  const ga = gupfAt(la, selA.nodeId), gb = gupfAt(lb, selB.nodeId);
   const s = SIGMA[r.cls];
   const sig = r.cls === "disconnected"
-    ? `<p class="hint" style="color:var(--bad)">No common federation layer — members are not federated. (This is the ArgumentError case in Layers.jl.)</p>`
+    ? `<p class="hint" style="color:var(--bad)">No common federation layer — members are not federated. (The ArgumentError case in Layers.jl.)</p>`
     : `<table class="sigma">
         <tr><th>σ per event</th><th>5G</th><th>6G-RUPA</th><th>adv</th></tr>
         <tr><td>${s.label}</td><td>${s.g5.toLocaleString()} B${r.cls === "crossing" ? " <span class='hint'>(re-est.)</span>" : ""}</td>
             <td>${s.rupa} B</td><td class="adv">${Math.round((1 - s.rupa / s.g5) * 100)}%</td></tr>
-        ${r.cls === "crossing" ? `<tr><td class="hint">ideal-HO sensitivity</td><td>${s.g5ideal.toLocaleString()} B</td>
-            <td>${s.rupa} B</td><td class="adv">${Math.round((1 - s.rupa / s.g5ideal) * 100)}%</td></tr>` : ""}
-       </table>
-       ${r.cls === "crossing" ? `<p class="hint">5G re-establish breaks the session; RUPA renumber keeps flows alive (0 breaks). σ_RUPA is flat in climb depth by design.</p>` : ""}`;
+        ${r.cls === "crossing" ? `<tr><td class="hint">ideal-HO sensitivity</td><td>${s.g5ideal.toLocaleString()} B</td><td>${s.rupa} B</td><td class="adv">${Math.round((1 - s.rupa / s.g5ideal) * 100)}%</td></tr>` : ""}
+       </table>`;
   el.innerHTML = `
     <dl class="kv">
-      <dt>A</dt><dd>${selA.name} · node ${selA.nodeId}</dd>
-      <dt>B</dt><dd>${selB.name} · node ${selB.nodeId}</dd>
+      <dt>A addr</dt><dd class="mono">${prefixMarkup(ga.topo, gb.topo)}</dd>
+      <dt>B addr</dt><dd class="mono">${prefixMarkup(gb.topo, ga.topo)}</dd>
       <dt>class</dt><dd><b>${r.cls}</b></dd>
       <dt>climb</dt><dd>${r.climb}</dd>
       <dt>common layer</dt><dd>${commonName}</dd>
-    </dl>${sig}`;
+    </dl>
+    <p class="hint">Bold = shared address prefix (the aggregate both share). Climb = how far above the members that prefix ends.</p>
+    ${sig}
+    ${r.cls === "crossing" ? `<p class="hint">5G re-establish breaks the session; RUPA renumber keeps flows alive (0 breaks). σ_RUPA is flat in climb depth by design.</p>` : ""}`;
 }
 
 $("#btn-flat").addEventListener("click", () => { current = "flat"; setToggle(); render(); });
 $("#btn-hier").addEventListener("click", () => { current = "hier"; setToggle(); render(); });
-function setToggle() {
-  $("#btn-flat").classList.toggle("on", current === "flat");
-  $("#btn-hier").classList.toggle("on", current === "hier");
+function setToggle() { $("#btn-flat").classList.toggle("on", current === "flat"); $("#btn-hier").classList.toggle("on", current === "hier"); }
+
+async function boot() {
+  try {
+    const [flat, hier] = await Promise.all([
+      fetch("./data/layers_flat.json").then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }),
+      fetch("./data/layers_hierarchy.json").then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }),
+    ]);
+    DATASETS = { flat, hier };
+    render();
+  } catch (e) {
+    $("#err").style.display = "block";
+    $("#err").innerHTML = `Could not load <code>data/layers_*.json</code> (${e.message}). ` +
+      `Browsers block <code>fetch</code> over <code>file://</code> — serve the folder over HTTP: ` +
+      `run <code>python3 -m http.server</code> from the repo root, then open <code>/viz/layers.html</code>. ` +
+      `Regenerate the data with <code>julia --project runs/layers_viz.jl</code>.`;
+  }
 }
-render();
+boot();
 </script>
+</body>
+</html>

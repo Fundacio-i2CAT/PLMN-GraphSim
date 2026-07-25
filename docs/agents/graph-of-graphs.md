@@ -93,15 +93,38 @@ Correct sentence: *same reachability, O(K²) configured mesh vs O(K) enrollment 
 relay.* Do **not** state it as "RUPA sparse vs 5G complete" — both are complete
 at the service level.
 
-## Addressing (planned, not yet built)
+## Topological addresses
 
-`_address(layer, node) = (layer<<20)|node` today is a **synthetic id**, not
-topological. Planned: real **hierarchical topological addresses** whose prefix
-reflects position in the aggregation tree, so forwarding-by-aggregate becomes
-real longest-prefix matching instead of the current placeholder entries. Not
-needed for the σ numbers (constant-based); valuable as an explanation asset and
-to make "the aggregate prefix already exists → renumber just adopts it" (ΔS_core
-= 0) concrete. To be added when the address-aware visualization is built.
+Each GUPF has a **hierarchical topological address** = its path down the layer
+DAG, so a *prefix is an aggregate*. `topo_address(stack, layer_id, node_id)`
+returns the component vector; `topo_address_str` renders it dotted.
+
+Structure: `root . exchange . member . psa . edge`. Example (hierarchy stack):
+
+| GUPF | address | meaning |
+|------|---------|---------|
+| Movistar edge | `1.1.1.5.1` | root·exchange-es·member-1·psa-5·edge-1 |
+| Orange edge | `1.1.2.3.1` | shares `1.1` (exchange-es) → climb 1 |
+| MEO edge | `1.2.1.2.1` | shares only `1` (root) → climb 2 |
+| exchange-es border | `1.1` | the aggregate for exchange-es |
+
+This makes climb depth a **literal prefix comparison**:
+
+```
+climb = (member layer-path length) − (shared prefix length of the two addresses)
+```
+
+and makes "renumber adopts an address under the destination aggregate" concrete:
+edges under one PSA share `…psa` and differ only in the last component — a move
+between them keeps the aggregate prefix, so ΔS_core = 0 is *visible*. Asserted in
+`test/LayerTests.jl` ("topological addresses: climb = prefix divergence").
+
+Addresses are **stack-scoped** (a layer-scoped synonym): the flat and
+hierarchical stacks give the same node different addresses, as expected. A member
+enrolled directly at a high layer (NTN at the root) gets a *shorter* address — it
+sits higher in the tree, correctly. Forwarding tables still use placeholder
+prefix entries; wiring real longest-prefix matching onto these addresses is a
+possible next step but not needed for the σ numbers (constant-based).
 
 ## Files
 
@@ -110,5 +133,16 @@ to make "the aggregate prefix already exists → renumber just adopts it" (ΔS_c
 - `runs/hierarchy.jl` — the N-level scenario (climb histogram, per-layer table
   sizes, membership axis).
 - `runs/layers_viz.jl` — exports `viz/data/layers_{flat,hierarchy}.json`.
+- `viz/layers.html` — self-contained inspector; fetches `viz/data/*.json` at
+  runtime (no build step). Serve locally over HTTP — browsers block `fetch` over
+  `file://`:
+
+  ```
+  julia --project runs/layers_viz.jl        # (re)generate the data
+  python3 -m http.server                     # from the repo root
+  # open http://localhost:8000/viz/layers.html
+  ```
+
 - `viz/graph_of_graphs.svg` — the schematic figure (paper-figure candidate).
-- `test/LayerTests.jl` — 50 assertions incl. the legacy-equivalence safety net.
+- `test/LayerTests.jl` — 61 assertions incl. the legacy-equivalence safety net
+  and the address↔climb correspondence.

@@ -299,6 +299,51 @@ using Random
         @test sum(state.ho_climb; init = 0) == state.roam_entries
     end
 
+    @testset "topological addresses: climb = prefix divergence" begin
+        t = _composed()
+        h = Simulation.build_layer_stack(t; internetwork = false)
+        m = [Simulation.layer_by_name(h, "member-$i").id for i in 1:3]
+        x = Simulation.add_federation_layer!(h, [m[1], m[2]]; name = "x")
+        Simulation.add_federation_layer!(h, [m[3]]; name = "y")
+        Simulation.add_federation_layer!(h,
+            [Simulation.layer_by_name(h, "x").id,
+             Simulation.layer_by_name(h, "y").id]; name = "root")
+
+        # Member layer-paths nest under the DAG: m1,m2 under x; m3 under y.
+        p1 = Simulation.layer_path(h, m[1])
+        p2 = Simulation.layer_path(h, m[2])
+        p3 = Simulation.layer_path(h, m[3])
+        @test length(p1) == length(p2) == length(p3) == 3   # root.exchange.member
+        shared(a, b) = (n = 0; for (u, v) in zip(a, b); u == v || break; n += 1 end; n)
+        @test shared(p1, p2) == 2      # both under x → diverge at member
+        @test shared(p1, p3) == 1      # different exchange → diverge one up
+
+        # The headline: climb == member path length − shared prefix length.
+        for (a, b) in [(m[1], m[2]), (m[1], m[3]), (m[2], m[3])]
+            r = Simulation.classify_move(h, Simulation.Attachment(a, 1),
+                                         Simulation.Attachment(b, 1))
+            pa, pb = Simulation.layer_path(h, a), Simulation.layer_path(h, b)
+            @test r.climb == length(pa) - shared(pa, pb)
+        end
+
+        # Edge GUPFs under the same PSA share the whole member prefix + PSA
+        # component; only the edge suffix differs (a renumber under the aggregate).
+        la = Simulation.layer_by_name(h, "member-1")
+        psa_node = la.gupfs[findfirst(g -> g.kind == :psa, la.gupfs)].node_id
+        child_edges = [la.gupfs[a].node_id for (a, b) in la.edges
+                       if la.gupfs[b].node_id == psa_node && la.gupfs[a].kind == :edge]
+        @test length(child_edges) >= 2
+        addrs = [Simulation.topo_address(h, la.id, e) for e in child_edges]
+        @test all(a[1:end-1] == addrs[1][1:end-1] for a in addrs)   # shared aggregate
+        @test length(unique(last.(addrs))) == length(addrs)          # distinct suffixes
+
+        # A border GUPF's address IS the aggregate of the layer it represents.
+        xl = Simulation.layer_by_name(h, "x")
+        bnode = Simulation.layer_by_name(h, "member-1").border_node
+        @test Simulation.topo_address(h, xl.id, bnode) == p1
+        @test Simulation.topo_address_str(h, la.id, psa_node) isa String
+    end
+
     @testset "JSON export for the layer visualization" begin
         t = _composed()
         stack = Simulation.build_layer_stack(t)
