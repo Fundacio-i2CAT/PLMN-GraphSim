@@ -114,18 +114,32 @@ reproduce bit-for-bit when `mobility.enabled = false`.
     assigned_upf_index = connect_agent_to_gnb_and_upf(env, topology, user_id, agent_location, gnb_index)
 
     # Track this agent's session contexts so we can migrate them on handover.
+    attach_operator = serving_operator(topology, gnb_index)
     num_sessions = rand(sim_state.config.min_sessions:sim_state.config.max_sessions)
     agent_sessions = Vector{SessionContext5G}(undef, num_sessions)
     for i in 1:num_sessions
-        ctx = create_session_context(assigned_upf_index, topology)
+        ctx = create_session_context(assigned_upf_index, topology,
+                                     assigned_upf_index, attach_operator)
         push!(sim_state.upf_sessions_5g[assigned_upf_index], ctx)
         agent_sessions[i] = ctx
     end
 
+    # Roaming (phase-1 injection, §7.4 / roaming-plan 6b): a fraction of agents are
+    # inbound roamers whose HOME operator differs from the simulated field
+    # (operator 1 = the visited network). Their attach IS the border-entry event:
+    # registration + HR PDU-session establishment (5G) / enrollment + renumber
+    # (6G-RUPA). Their mid-run moves stay inside the visited operator, so no further
+    # operator-change events fire in phase 1 (geometric border crossings arrive with
+    # the two-country phase-2 topology).
+    is_roamer = rand() < sim_state.config.roaming.roamer_fraction
+    is_roamer && charge_roaming_entry!(sim_state, num_sessions)
+
     current_gnb = gnb_index
     current_upf = assigned_upf_index
     current_domain = assigned_upf_index  # Simple: domain ID = UPF index
-    current_operator = 1                 # Single operator for now
+    # Serving operator = tag of the nearest gNB (1 in single-operator topologies; in a
+    # composed Iberia topology a nearest-gNB flip across operators is a border crossing).
+    current_operator = attach_operator
     current_loc = agent_location
     update_dt = sim_state.config.mobility.update_interval
     model = sim_state.config.mobility.model
@@ -133,18 +147,58 @@ reproduce bit-for-bit when `mobility.enabled = false`.
     # Initialize mobility state for this agent
     mobility_state = MobilityState(agent_location, 0.0, 0.0, 0.0, 0.0)
 
+    ntn = sim_state.ntn                  # Constellation or nothing (§7.5.2)
+    serving_sat = 0                      # 0 = terrestrial-served
+
     while !is_simulation_time_over(env, sim_state)
         @yield timeout(env, update_dt)
         is_simulation_time_over(env, sim_state) && break
         current_loc = step_position(model, current_loc, mobility_state, update_dt)
         new_gnb = find_serving_gnb(topology, current_loc)
+
+        # NTN member (§7.5.2): no terrestrial signal within r_terr_km → the UE roams
+        # to the satellite member. While satellite-served the network moves under the
+        # UE: satellite switches are charged as N2-class handovers (5G) vs renumbers
+        # (RUPA). Sessions stay anchored at the terrestrial PSA (satellite = RAN;
+        # the anchor remains on the ground via the feeder link).
+        if ntn !== nothing
+            sim_state.ntn_total_ticks += 1
+            d_terr = new_gnb == 0 ? Inf :
+                haversine_distance(current_loc, topology.gnb_locations[new_gnb])
+            if d_terr > ntn.r_terr_km
+                # Sim time is Float64 in a numeric ConcurrentSim; narrow the
+                # Union{Float64,DateTime} that `now` is typed as so the call is
+                # type-stable (JET flagged Float64(::DateTime) on the dead branch).
+                positions_at!(ntn, now(env)::Float64)
+                sat, _ = best_satellite(ntn, current_loc)
+                if sat != 0
+                    if serving_sat == 0
+                        charge_ntn_crossing!(sim_state, num_sessions)
+                        sim_state.ntn_attach_events += 1
+                    elseif sat != serving_sat
+                        charge_ntn_sat_handover!(sim_state)
+                    end
+                    serving_sat = sat
+                    sim_state.ntn_serving_ticks += 1
+                    continue
+                end
+            end
+            if serving_sat != 0
+                # Back under terrestrial coverage (or no satellite visible):
+                # NTN → terrestrial crossing, then normal terrestrial handling.
+                charge_ntn_crossing!(sim_state, num_sessions)
+                sim_state.ntn_return_events += 1
+                serving_sat = 0
+            end
+        end
+
         if new_gnb == 0 || new_gnb == current_gnb
             continue
         end
         # Cell change detected -> handover.
         new_upf = topology.gnb_to_upf_map[new_gnb]
         new_domain = new_upf  # Domain = UPF index
-        new_operator = 1      # Single operator
+        new_operator = serving_operator(topology, new_gnb)
 
         # Update graph edges to reflect new attachment.
         if haskey(topology.graph, (:Agent, user_id), (:gNB, current_gnb))
@@ -161,9 +215,17 @@ reproduce bit-for-bit when `mobility.enabled = false`.
                                             current_upf, new_upf,
                                             current_domain, new_domain,
                                             current_operator, new_operator)
+        # Layer-DAG observation (graph-of-graphs): record the crossing climb
+        # depth when a stack is installed. Must also run before current_* moves.
+        observe_move!(sim_state, topology, current_gnb, new_gnb)
         current_upf = new_upf
         current_domain = new_domain
         current_gnb = new_gnb
+        # Track the serving operator across the handover. Leaving it stale (the
+        # attach-time value) double-charged every post-crossing move as a new
+        # border crossing and missed the crossing back home — caught by the
+        # layer-DAG observation, which recomputes both ends per move.
+        current_operator = new_operator
         @debug "User $user_id handover: gNB $(current_gnb) -> $(new_gnb), UPF -> $(new_upf) at $(now(env))"
     end
 end

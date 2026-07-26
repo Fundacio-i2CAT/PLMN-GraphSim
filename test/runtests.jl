@@ -1,6 +1,8 @@
 using Test
 using DesJulia6gRupa
 
+include("TestFixtures.jl")
+
 @testset "DesJulia6gRupa.jl" begin
     include("AgentGenerationTests.jl")
     include("SimulationTests.jl")
@@ -8,6 +10,11 @@ using DesJulia6gRupa
     include("IntegrationTests.jl")
     include("MobilityTests.jl")
     include("AccountingTests.jl")
+    include("RoamingTests.jl")
+    include("IberiaTests.jl")
+    include("FederationTests.jl")
+    include("NTNTests.jl")
+    include("LayerTests.jl")
 
     if Base.find_package("Aqua") !== nothing && Base.find_package("JET") !== nothing
         include("qa.jl")

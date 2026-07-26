@@ -1,7 +1,7 @@
 #!/usr/bin/env julia
 # National-grade mobility evaluation, parametric by country.
-#   julia --project run_national.jl spain
-#   julia --project run_national.jl usa
+#   julia --project main.jl national spain
+#   julia --project main.jl national usa
 #
 # Full OpenCellID topology (no subsampling), principled two-tier deployment matching
 # the IEEE Access paper: edge UPFs by population geography (Spain 52 provinces /
@@ -16,41 +16,51 @@ using DesJulia6gRupa.Types
 using ConcurrentSim
 import DesJulia6gRupa.Simulation as DSim
 
+#   julia --project main.jl national spain 0.05   # 5% inbound roamers (§7.4 phase-1)
 const COUNTRY = lowercase(get(ARGS, 1, "spain"))
+const ROAM = parse(Float64, get(ARGS, 2, "0.0"))  # roamer fraction (0 = legacy intra-PLMN run)
 const SCALE = 1000
-const NUM_PSA = 5                 # centralized PSAs (config.toml num_centralized_upfs)
 const ADOPTION = 0.82             # mobile_adoption_rate (config.toml)
 
-# (data subdir, gNB csv files relative to data/<sub>, operator net id, #edge UPFs, population)
+# (data subdir, gNB csv files relative to data/<sub>, operator net id, #edge UPFs,
+#  #centralized PSAs, population)
 #   usa     = OpenCellID Verizon (operator-tagged, sparse — lower density bound)
 #   usa_asr = FCC ASR all macro structures (operator-agnostic, complete — upper bound;
 #             net=999 synthetic tag so no operator filter applies). Density-invariance
 #             cross-check: same σ advantage on both real datasets.
+# Edge UPFs = second-level admin units (Spain provinces / PT distritos / USA counties
+# >50k); PSAs scale ~1 per 10M population (Spain/USA 5; Portugal 2 ≈ the real
+# MEO/Altice dual-core geography, Lisboa + Porto).
 const PROFILES = Dict(
-    "spain"   => ("spain", ["opencellid/214.csv"],                  7,   52,  49_442_844),
-    "usa"     => ("usa",   ["opencellid/310.csv","opencellid/311.csv"], 480, 817, 335_000_000),
-    "usa_asr" => ("usa",   ["asr/310.csv"],                        999, 817, 335_000_000),
+    "spain"    => ("spain", ["opencellid/214.csv"],                  7,   52, 5, 49_442_844),
+    "usa"      => ("usa",   ["opencellid/310.csv","opencellid/311.csv"], 480, 817, 5, 335_000_000),
+    "usa_asr"  => ("usa",   ["asr/310.csv"],                        999, 817, 5, 335_000_000),
+    # Iberia roaming phase 2: MEO (268-06, 6,791 cells; Vodafone PT 268-01 has 7,695),
+    # 18 mainland distritos, INE Censos 2021 mainland population (CAOP Continente cut).
+    "portugal" => ("portugal", ["opencellid/268.csv"],              6,   18, 2, 9_855_909),
 )
+const NUM_PSA = PROFILES[COUNTRY][5]
 
 function build_topology()
     haskey(PROFILES, COUNTRY) || error("unknown country $COUNTRY")
-    sub, files, opid, nedge, _pop = PROFILES[COUNTRY]
-    base = joinpath(@__DIR__, "data", sub)
+    sub, files, opid, nedge, _npsa, _pop = PROFILES[COUNTRY]
+    base = joinpath(pkgdir(DesJulia6gRupa), "data", sub)
     paths = filter(isfile, [joinpath(base, f) for f in files])
     isempty(paths) && error("no gNB data under $base for $files")
     # two_tier: nedge edge UPFs (UL-CL) clustered under NUM_PSA centralized PSAs
     cfg = SimConfig(1, 2, SCALE, 1, 1, 1, :two_tier, NUM_PSA, 1)
-    topo = DSim.load_and_deploy_network(paths, opid, nedge, joinpath(@__DIR__, "data", sub), cfg)
+    topo = DSim.load_and_deploy_network(paths, opid, nedge, joinpath(pkgdir(DesJulia6gRupa), "data", sub), cfg)
     return topo, nedge
 end
 
 # Principled agent count: effective mobile users represented at this scale_factor.
-national_agents() = ceil(Int, PROFILES[COUNTRY][5] * ADOPTION / SCALE)
+national_agents() = ceil(Int, PROFILES[COUNTRY][6] * ADOPTION / SCALE)
 
 function run_scenario(topology, nupf, name, model; n_agents, duration, dt)
     config = SimConfig(1, 2, SCALE, Float64(duration), Float64(duration)-5, 5.0,
                        :two_tier, NUM_PSA, 10.0,
-                       MobilityConfig(true, Float64(dt), model))
+                       MobilityConfig(true, Float64(dt), model),
+                       RoamingConfig(:reestablish, ROAM))
     s = DSim.init_global_state_for_simulation(topology, config)
     env = ConcurrentSim.Simulation()
     @process DSim.monitor_metrics(env, s, topology, config.scale_factor)
@@ -83,6 +93,13 @@ function run_scenario(topology, nupf, name, model; n_agents, duration, dt)
     println("Anchor path:  5G(pinned)=$(round(d5,digits=1))km  RUPA(optimal)=$(round(dop,digits=1))km  excess=$(round(d5-dop,digits=1))km (SSC-1 hairpin)")
     println("Acct reloc:   5G=$(s.acct_reloc_5g)  6G-RUPA=$(s.acct_reloc_rupa) (SSC-1 intra-PLMN: 0 both; billing orthogonal, granularity equal)")
     println("6G-RUPA σ advantage: $(round(adv,digits=1))% ($t5 vs $t6 B)")
+    if ROAM > 0
+        radv = s.sigma_roam_5g > 0 ? (1 - s.sigma_roam_rupa/s.sigma_roam_5g)*100 : 0.0
+        println("Roaming ($(round(100ROAM,digits=1))% inbound, entry semantics :reestablish):")
+        println("  entries=$(s.roam_entries)  σ_roam: 5G=$(s.sigma_roam_5g)B  6G=$(s.sigma_roam_rupa)B  adv=$(round(radv,digits=1))%")
+        println("  HR transit sessions (V-UPF+IPUPS×2+H-UPF held per roamer): $(s.roam_sessions_5g)  [RUPA: 0]")
+        println("  session breaks at border: 5G=$(s.session_breaks_5g)  [RUPA: 0, make-before-break]")
+    end
     return (; name, ho, rate, t5, t6, adv,
             l1=s.ho_l1, l2=s.ho_l2, psaX=s.ho_l3,
             cw5=s.core_writes_5g, cw6=s.core_writes_rupa,
@@ -93,7 +110,7 @@ println("Building $(uppercase(COUNTRY)) topology...")
 topology, nupf = build_topology()
 NAG = national_agents()
 println("Topology: $(length(topology.gnb_locations)) gNBs, $(length(topology.upf_locations)) edge UPFs, $NUM_PSA PSAs")
-println("Agents: $NAG  (= $(PROFILES[COUNTRY][5]) pop x $ADOPTION adoption / $SCALE scale)")
+println("Agents: $NAG  (= $(PROFILES[COUNTRY][6]) pop x $ADOPTION adoption / $SCALE scale)")
 
 res = Any[]
 push!(res, run_scenario(topology, nupf, "Pedestrian 5km/h (RWP)",

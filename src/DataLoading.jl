@@ -12,7 +12,7 @@ using MetaGraphsNext
 using ..Types
 using Logging
 
-export load_and_deploy_network, load_and_cluster, load_municipalities
+export load_and_deploy_network, load_and_cluster, load_municipalities, compose_topologies
 
 include("DataLoading/Municipalities.jl")
 include("DataLoading/Graph.jl")

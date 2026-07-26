@@ -19,9 +19,9 @@ const DUR = 1200
 const DT = 2
 const NAG = 1000
 
-paths = filter(isfile, [joinpath(@__DIR__, "data", "spain", "opencellid", "214.csv")])
+paths = filter(isfile, [joinpath(pkgdir(DesJulia6gRupa), "data", "spain", "opencellid", "214.csv")])
 cfg0 = SimConfig(1, 2, 1000, 1, 1, 1, :single_tier, 0, 1)
-topo = DSim.load_and_deploy_network(paths, 7, N_UPFS, joinpath(@__DIR__, "data", "spain"), cfg0)
+topo = DSim.load_and_deploy_network(paths, 7, N_UPFS, joinpath(pkgdir(DesJulia6gRupa), "data", "spain"), cfg0)
 ngnb = length(topo.gnb_locations)
 
 # Spain land area approx (km^2) for density.

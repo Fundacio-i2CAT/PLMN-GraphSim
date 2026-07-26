@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Graph-of-Graphs Layer Inspector</title>
+<style>
+  :root {
+    color-scheme: light;
+    --surface: #fcfcfb; --surface-2: #f2f1ee; --panel: #ffffff;
+    --ink: #0b0b0b; --ink-2: #52514e; --ink-3: #8a8983;
+    --line: #e3e2dd; --grid: #edece8;
+    --m1: #2a78d6; --m2: #eb6834; --m3: #1baf7a; --m4: #eda100; --m5: #e87ba4; --ntn: #4a3aa7;
+    --fed: #52514e; --hl: #0b0b0b; --ok: #008300; --bad: #e34948;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --surface: #1a1a19; --surface-2: #232322; --panel: #202020;
+      --ink: #ffffff; --ink-2: #c3c2b7; --ink-3: #8a8983;
+      --line: #383835; --grid: #2a2a28;
+      --m1: #3987e5; --m2: #d95926; --m3: #199e70; --m4: #c98500; --m5: #d55181; --ntn: #9085e9;
+      --fed: #c3c2b7; --hl: #ffffff; --ok: #4caf50; --bad: #e66767;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface: #1a1a19; --surface-2: #232322; --panel: #202020;
+    --ink: #ffffff; --ink-2: #c3c2b7; --ink-3: #8a8983;
+    --line: #383835; --grid: #2a2a28;
+    --m1: #3987e5; --m2: #d95926; --m3: #199e70; --m4: #c98500; --m5: #d55181; --ntn: #9085e9;
+    --fed: #c3c2b7; --hl: #ffffff; --ok: #4caf50; --bad: #e66767;
+  }
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --surface: #fcfcfb; --surface-2: #f2f1ee; --panel: #ffffff;
+    --ink: #0b0b0b; --ink-2: #52514e; --ink-3: #8a8983;
+    --line: #e3e2dd; --grid: #edece8;
+    --m1: #2a78d6; --m2: #eb6834; --m3: #1baf7a; --m4: #eda100; --m5: #e87ba4; --ntn: #4a3aa7;
+    --fed: #52514e; --hl: #0b0b0b; --ok: #008300; --bad: #e34948;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--surface); color: var(--ink);
+    font: 14px/1.45 ui-sans-serif, system-ui, sans-serif; }
+  code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.4rem 1.2rem;
+    padding: 1rem 1.4rem 0.6rem; border-bottom: 1px solid var(--line); }
+  header h1 { font-size: 1.05rem; margin: 0; letter-spacing: 0.01em; }
+  header .sub { color: var(--ink-2); font-size: 0.82rem; }
+  .toggle { margin-left: auto; display: flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+  .toggle button { border: 0; background: var(--surface-2); color: var(--ink-2);
+    padding: 0.3rem 0.85rem; font: inherit; font-size: 0.82rem; cursor: pointer; }
+  .toggle button.on { background: var(--ink); color: var(--surface); }
+  .toggle button:focus-visible { outline: 2px solid var(--m1); outline-offset: -2px; }
+  .wrap { display: flex; gap: 1rem; padding: 1rem 1.4rem 2rem; align-items: flex-start; }
+  #stack { flex: 1 1 auto; min-width: 0; position: relative; }
+  .level-row { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-bottom: 1.1rem; }
+  .level-tag { flex-basis: 100%; font-size: 0.7rem; letter-spacing: 0.09em;
+    text-transform: uppercase; color: var(--ink-3); margin-bottom: -0.35rem; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+    padding: 0.45rem 0.55rem 0.3rem; }
+  .panel h3 { margin: 0 0 0.15rem; font-size: 0.8rem; font-weight: 600;
+    display: flex; align-items: center; gap: 0.4rem; }
+  .panel h3 .swatch { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+  .panel h3 .meta { color: var(--ink-3); font-weight: 400; font-size: 0.72rem; margin-left: auto; }
+  .panel svg { display: block; }
+  .panel.sel { border-color: var(--hl); }
+  #connector-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
+  aside { flex: 0 0 300px; display: flex; flex-direction: column; gap: 0.8rem;
+    position: sticky; top: 0.8rem; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+    padding: 0.7rem 0.85rem; }
+  .card h2 { margin: 0 0 0.45rem; font-size: 0.7rem; letter-spacing: 0.09em;
+    text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: 0.1rem 0.8rem; font-size: 0.82rem; }
+  .kv dt { color: var(--ink-2); }
+  .kv dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .hint { color: var(--ink-3); font-size: 0.78rem; }
+  table.sigma { border-collapse: collapse; width: 100%; font-size: 0.8rem; }
+  table.sigma th, table.sigma td { text-align: right; padding: 0.18rem 0.3rem;
+    border-bottom: 1px solid var(--grid); font-variant-numeric: tabular-nums; }
+  table.sigma th { color: var(--ink-3); font-weight: 500; font-size: 0.72rem; }
+  table.sigma td:first-child, table.sigma th:first-child { text-align: left; }
+  .adv { color: var(--ok); font-weight: 600; }
+  .pfx { color: var(--ink-3); } .pfx b { color: var(--m1); font-weight: 700; }
+  #dag svg { display: block; margin: 0 auto; }
+  details.tbl { font-size: 0.8rem; }
+  details.tbl summary { cursor: pointer; color: var(--ink-2); }
+  details.tbl table { border-collapse: collapse; width: 100%; margin-top: 0.4rem; }
+  details.tbl th, details.tbl td { padding: 0.15rem 0.35rem; border-bottom: 1px solid var(--grid);
+    text-align: right; font-variant-numeric: tabular-nums; }
+  details.tbl th:first-child, details.tbl td:first-child { text-align: left; }
+  #tooltip { position: fixed; z-index: 10; pointer-events: none; display: none;
+    background: var(--ink); color: var(--surface); font-size: 0.75rem; line-height: 1.4;
+    padding: 0.35rem 0.55rem; border-radius: 6px; max-width: 260px; }
+  #err { margin: 1rem 1.4rem; padding: 0.8rem 1rem; border: 1px solid var(--bad);
+    border-radius: 8px; color: var(--bad); font-size: 0.85rem; display: none; }
+  @media (prefers-reduced-motion: no-preference) {
+    .panel { transition: border-color 120ms ease; }
+  }
+  @media (max-width: 900px) {
+    .wrap { flex-direction: column; }
+    aside { position: static; flex-basis: auto; width: 100%; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Graph-of-graphs layer inspector</h1>
+  <span class="sub">pan-Iberian federation · real OpenCellID fields · snapshot from <code>runs/layers_viz.jl</code></span>
+  <div class="toggle" role="group" aria-label="dataset">
+    <button id="btn-flat" class="on">flat internetwork</button>
+    <button id="btn-hier">exchange hierarchy + NTN</button>
+  </div>
+</header>
+
+<div id="err"></div>
+
+<div class="wrap">
+  <div id="stack"><svg id="connector-overlay"></svg></div>
+  <aside>
+    <div class="card" id="dag"><h2>Layer DAG (floats over)</h2></div>
+    <div class="card">
+      <h2>Move classifier</h2>
+      <div class="hint" id="clf-hint">Click two edge / satellite GUPFs (any member layers) to classify the move between their attachments.</div>
+      <div id="clf-result"></div>
+    </div>
+    <div class="card">
+      <h2>GUPF inspector</h2>
+      <div class="hint" id="insp-hint">Hover any GUPF. Border nodes (recursion points) get cross-layer connectors; the topological address shows the aggregation prefix.</div>
+      <dl class="kv" id="insp"></dl>
+    </div>
+    <div class="card">
+      <h2>Layers table</h2>
+      <details class="tbl" open><summary>per-layer forwarding state</summary>
+        <table id="layers-table"></table>
+      </details>
+    </div>
+  </aside>
+</div>
+<div id="tooltip"></div>
+
+<script>
+let DATASETS = {};
+let current = "flat";
+let selA = null, selB = null;
+const $ = (s) => document.querySelector(s);
+
+const MEMBER_LABELS = {
+  "member-1": "Movistar ES", "member-2": "MEO PT", "member-3": "Orange ES",
+  "member-4": "Vodafone ES", "member-5": "Vodafone PT", "ntn-starlink": "Starlink (NTN)",
+};
+const MEMBER_COLORS = {
+  "member-1": "var(--m1)", "member-2": "var(--m2)", "member-3": "var(--m3)",
+  "member-4": "var(--m4)", "member-5": "var(--m5)", "ntn-starlink": "var(--ntn)",
+};
+const SIGMA = {
+  intra:    { g5: 600,  rupa: 200, label: "intra-domain (Xn class)" },
+  inter:    { g5: 1150, rupa: 200, label: "inter-domain (N2 class)" },
+  crossing: { g5: 3250, g5ideal: 1300, rupa: 450, label: "member crossing" },
+};
+
+function colorOf(layer) { return layer.level === 0 ? (MEMBER_COLORS[layer.name] || "var(--fed)") : "var(--fed)"; }
+function nodeBaseColor(data, nodeId) {
+  for (const l of data.layers)
+    if (l.level === 0 && l.gupfs.some(g => g.node_id === nodeId))
+      return MEMBER_COLORS[l.name] || "var(--fed)";
+  return "var(--fed)";
+}
+function layersAtNode(data, nodeId) { return data.layers.filter(l => l.gupfs.some(g => g.node_id === nodeId)); }
+function parentsMap(data) {
+  const p = {}; for (const l of data.layers) p[l.id] = [];
+  for (const [up, lows] of Object.entries(data.floats_over)) for (const lo of lows) p[lo].push(Number(up));
+  return p;
+}
+// Mirrors Simulation.classify_move (Layers.jl), recomputed from the exported DAG.
+function classify(data, a, b) {
+  if (a.layerId === b.layerId)
+    return { cls: a.nodeId === b.nodeId ? "intra" : "inter", climb: 0, common: a.layerId };
+  const par = parentsMap(data);
+  let ra = new Set([a.layerId]), rb = new Set([b.layerId]);
+  let fa = [a.layerId], fb = [b.layerId];
+  for (let k = 1; k <= data.layers.length; k++) {
+    fa = fa.flatMap(l => par[l] || []); fb = fb.flatMap(l => par[l] || []);
+    fa.forEach(l => ra.add(l)); fb.forEach(l => rb.add(l));
+    const common = [...ra].filter(x => rb.has(x));
+    if (common.length) return { cls: "crossing", climb: k, common: Math.min(...common) };
+  }
+  return { cls: "disconnected", climb: -1, common: null };
+}
+const gupfAt = (layer, nodeId) => layer.gupfs.find(g => g.node_id === nodeId);
+function sharedPrefixLen(a, b) { let n = 0; for (let i = 0; i < Math.min(a.length, b.length); i++) { if (a[i] === b[i]) n++; else break; } return n; }
+
+const PW = 290, PH = 205, PAD = 14;
+function projection(data) {
+  const pts = data.layers.flatMap(l => l.gupfs).filter(g => g.lat || g.lon);
+  const lats = pts.map(p => p.lat), lons = pts.map(p => p.lon);
+  const la0 = Math.min(...lats), la1 = Math.max(...lats), lo0 = Math.min(...lons), lo1 = Math.max(...lons);
+  const k = Math.min((PW - 2*PAD) / (lo1 - lo0 || 1), (PH - 2*PAD) / (la1 - la0 || 1));
+  return (g) => [
+    PAD + (g.lon - lo0) * k + (PW - 2*PAD - (lo1 - lo0) * k) / 2,
+    PH - PAD - (g.lat - la0) * k - (PH - 2*PAD - (la1 - la0) * k) / 2,
+  ];
+}
+function markFor(g, xy, color) {
+  const [x, y] = xy;
+  if (g.kind === "psa") return `<circle cx="${x}" cy="${y}" r="5" fill="${color}" stroke="var(--panel)" stroke-width="1.5"/>`;
+  if (g.kind === "border") { const d = 5.5;
+    return `<path d="M ${x} ${y-d} L ${x+d} ${y} L ${x} ${y+d} L ${x-d} ${y} Z" fill="${color}" stroke="var(--panel)" stroke-width="1.5"/>`; }
+  if (g.kind === "member") return `<circle cx="${x}" cy="${y}" r="4" fill="none" stroke="${color}" stroke-width="2"/>`;
+  return `<circle cx="${x}" cy="${y}" r="2.6" fill="${color}"/>`;
+}
+
+function render() {
+  const data = DATASETS[current];
+  selA = selB = null; $("#clf-result").innerHTML = ""; $("#clf-hint").style.display = "";
+  const proj = projection(data);
+  const stack = $("#stack");
+  stack.querySelectorAll(".level-row").forEach(e => e.remove());
+  const levels = [...new Set(data.layers.map(l => l.level))].sort((a, b) => b - a);
+  for (const lv of levels) {
+    const row = document.createElement("div");
+    row.className = "level-row";
+    row.innerHTML = `<div class="level-tag">level ${lv}${lv === 0 ? " · member layers" : " · federation layers"}</div>`;
+    for (const layer of data.layers.filter(l => l.level === lv)) {
+      const color = colorOf(layer);
+      const label = MEMBER_LABELS[layer.name] ? `${layer.name} · ${MEMBER_LABELS[layer.name]}` : layer.name;
+      const entries = layer.gupfs.reduce((s, g) => s + g.table_size, 0);
+      let svg = "";
+      for (const [a, b] of layer.edges) {
+        const [x1, y1] = proj(layer.gupfs[a - 1]), [x2, y2] = proj(layer.gupfs[b - 1]);
+        svg += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="var(--grid)" stroke-width="1"/>`;
+      }
+      layer.gupfs.forEach((g, i) => {
+        const c = layer.level > 0 ? nodeBaseColor(data, g.node_id) : color;
+        svg += `<g class="gupf" data-layer="${layer.id}" data-idx="${i}" style="cursor:pointer">
+                  ${markFor(g, proj(g), c)}
+                  <circle cx="${proj(g)[0]}" cy="${proj(g)[1]}" r="9" fill="transparent"/></g>`;
+      });
+      const div = document.createElement("div");
+      div.className = "panel"; div.dataset.layer = layer.id;
+      div.innerHTML = `<h3><span class="swatch" style="background:${layer.level === 0 ? color : "var(--fed)"}"></span>
+          ${label}<span class="meta">${layer.gupfs.length} GUPFs · ${entries.toLocaleString()} entries</span></h3>
+        <svg width="${PW}" height="${PH}" viewBox="0 0 ${PW} ${PH}" role="img" aria-label="${label}">${svg}</svg>`;
+      row.appendChild(div);
+    }
+    stack.appendChild(row);
+  }
+  renderDag(data); renderTable(data); wireEvents(data);
+}
+
+function renderDag(data, highlight = null) {
+  const byLevel = {};
+  for (const l of data.layers) (byLevel[l.level] ??= []).push(l);
+  const levels = Object.keys(byLevel).map(Number).sort((a, b) => b - a);
+  const W = 268, RH = 52, H = levels.length * RH + 8, pos = {};
+  let svg = "";
+  levels.forEach((lv, r) => { const ls = byLevel[lv], w = W / ls.length;
+    ls.forEach((l, i) => { pos[l.id] = [w * i + w / 2, r * RH + 26]; }); });
+  for (const [up, lows] of Object.entries(data.floats_over)) for (const lo of lows) {
+    const [x1, y1] = pos[up], [x2, y2] = pos[lo];
+    const hot = highlight && highlight.edges.some(([a, b]) => (a == up && b == lo));
+    svg += `<line x1="${x1}" y1="${y1+10}" x2="${x2}" y2="${y2-10}" stroke="${hot ? "var(--hl)" : "var(--line)"}" stroke-width="${hot ? 2 : 1}"/>`;
+  }
+  for (const l of data.layers) {
+    const [x, y] = pos[l.id], hot = highlight && highlight.layers.includes(l.id);
+    const c = l.level === 0 ? (MEMBER_COLORS[l.name] || "var(--fed)") : "var(--fed)";
+    const short = l.name.replace("member-", "m").replace("exchange-", "ex-").replace("ntn-starlink", "ntn");
+    svg += `<g><rect x="${x-26}" y="${y-10}" width="52" height="20" rx="10" fill="${hot ? "var(--hl)" : "var(--surface-2)"}" stroke="${c}" stroke-width="1.4"/>
+      <text x="${x}" y="${y+3.5}" text-anchor="middle" font-size="9.5" fill="${hot ? "var(--surface)" : "var(--ink-2)"}" font-family="ui-monospace,monospace">${short}</text>
+      <title>${l.name}</title></g>`;
+  }
+  $("#dag").innerHTML = `<h2>Layer DAG (floats over)</h2><svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${svg}</svg>`;
+}
+
+function renderTable(data) {
+  const rows = data.layers.map(l => {
+    const sizes = l.gupfs.map(g => g.table_size);
+    return `<tr><td>${l.name}</td><td>${l.level}</td><td>${l.gupfs.length}</td>
+      <td>${sizes.reduce((a, b) => a + b, 0).toLocaleString()}</td>
+      <td>${Math.min(...sizes)}–${Math.max(...sizes)}</td></tr>`;
+  }).join("");
+  $("#layers-table").innerHTML =
+    `<tr><th>layer</th><th>lvl</th><th>GUPFs</th><th>Σ entries</th><th>table size</th></tr>${rows}`;
+}
+
+function wireEvents(data) {
+  const tip = $("#tooltip"), overlay = $("#connector-overlay");
+  document.querySelectorAll(".gupf").forEach(el => {
+    const layer = data.layers.find(l => l.id == el.dataset.layer);
+    const g = layer.gupfs[el.dataset.idx];
+    el.addEventListener("mousemove", (ev) => {
+      tip.style.display = "block";
+      tip.style.left = (ev.clientX + 14) + "px"; tip.style.top = (ev.clientY + 10) + "px";
+      const hosts = layersAtNode(data, g.node_id).map(l => l.name).join(", ");
+      tip.innerHTML = `<b>${layer.name}</b> · ${g.kind}<br>
+        addr <span class="mono">${g.topo_str}</span><br>
+        table: ${g.table_size.toLocaleString()} entries<br>
+        hosted with: ${hosts}`;
+      drawConnectors(data, g.node_id); renderInspector(data, layer, g);
+    });
+    el.addEventListener("mouseleave", () => { tip.style.display = "none"; overlay.innerHTML = ""; });
+    el.addEventListener("click", () => {
+      if (!(g.kind === "edge" || g.kind === "member")) return;
+      const pick = { layerId: layer.id, nodeId: g.node_id, name: layer.name };
+      if (!selA || (selA && selB)) { selA = pick; selB = null; } else selB = pick;
+      renderClassifier(data);
+    });
+  });
+}
+
+function drawConnectors(data, nodeId) {
+  const overlay = $("#connector-overlay"), stackBox = $("#stack").getBoundingClientRect();
+  overlay.setAttribute("width", stackBox.width); overlay.setAttribute("height", stackBox.height);
+  overlay.style.width = stackBox.width + "px"; overlay.style.height = stackBox.height + "px";
+  const pts = [];
+  document.querySelectorAll(".gupf").forEach(el => {
+    const layer = data.layers.find(l => l.id == el.dataset.layer);
+    const g = layer.gupfs[el.dataset.idx];
+    if (g.node_id !== nodeId) return;
+    const r = el.getBoundingClientRect();
+    pts.push([r.x + r.width / 2 - stackBox.x, r.y + r.height / 2 - stackBox.y]);
+  });
+  if (pts.length < 2) { overlay.innerHTML = ""; return; }
+  pts.sort((a, b) => a[1] - b[1]);
+  let svg = "";
+  for (let i = 1; i < pts.length; i++)
+    svg += `<line x1="${pts[i-1][0]}" y1="${pts[i-1][1]}" x2="${pts[i][0]}" y2="${pts[i][1]}" stroke="var(--hl)" stroke-width="1.5" stroke-dasharray="4 3"/>`;
+  for (const [x, y] of pts) svg += `<circle cx="${x}" cy="${y}" r="7" fill="none" stroke="var(--hl)" stroke-width="1.5"/>`;
+  overlay.innerHTML = svg;
+}
+
+function renderInspector(data, layer, g) {
+  $("#insp-hint").style.display = "none";
+  const hosts = layersAtNode(data, g.node_id);
+  $("#insp").innerHTML = `
+    <dt>layer</dt><dd>${layer.name}</dd>
+    <dt>kind</dt><dd>${g.kind}</dd>
+    <dt>physical node</dt><dd>${g.node_id}</dd>
+    <dt>topo address</dt><dd class="mono">${g.topo_str}</dd>
+    <dt>table entries</dt><dd>${g.table_size.toLocaleString()}</dd>
+    <dt>GUPF instances at node</dt><dd>${hosts.length}</dd>`;
+}
+
+// Render an address with its shared prefix (vs a reference) bolded — the climb made visible.
+function prefixMarkup(addr, ref) {
+  const n = sharedPrefixLen(addr, ref);
+  const head = addr.slice(0, n).join("."), tail = addr.slice(n).join(".");
+  return `<span class="pfx"><b>${head}</b>${head && tail ? "." : ""}${tail}</span>`;
+}
+
+function renderClassifier(data) {
+  const el = $("#clf-result");
+  document.querySelectorAll(".panel").forEach(p => p.classList.remove("sel"));
+  if (!selA) { el.innerHTML = ""; return; }
+  if (!selB) {
+    $("#clf-hint").style.display = "none";
+    el.innerHTML = `<p class="hint">A = ${selA.name} / node ${selA.nodeId}. Pick B.</p>`;
+    document.querySelector(`.panel[data-layer="${selA.layerId}"]`)?.classList.add("sel");
+    return;
+  }
+  const r = classify(data, { layerId: selA.layerId, nodeId: selA.nodeId },
+                            { layerId: selB.layerId, nodeId: selB.nodeId });
+  const commonName = r.common ? data.layers.find(l => l.id === r.common).name : "—";
+  const par = parentsMap(data);
+  const pathLayers = new Set([selA.layerId, selB.layerId]), pathEdges = [];
+  for (const start of [selA.layerId, selB.layerId]) {
+    let frontier = [start];
+    for (let k = 0; k < (r.climb ?? 0); k++) {
+      const next = [];
+      for (const l of frontier) for (const p of (par[l] || [])) { pathEdges.push([p, l]); next.push(p); pathLayers.add(p); }
+      frontier = next;
+    }
+  }
+  renderDag(data, { layers: [...pathLayers], edges: pathEdges });
+  [selA.layerId, selB.layerId, r.common].forEach(id => document.querySelector(`.panel[data-layer="${id}"]`)?.classList.add("sel"));
+
+  const la = data.layers.find(l => l.id === selA.layerId), lb = data.layers.find(l => l.id === selB.layerId);
+  const ga = gupfAt(la, selA.nodeId), gb = gupfAt(lb, selB.nodeId);
+  const s = SIGMA[r.cls];
+  const sig = r.cls === "disconnected"
+    ? `<p class="hint" style="color:var(--bad)">No common federation layer — members are not federated. (The ArgumentError case in Layers.jl.)</p>`
+    : `<table class="sigma">
+        <tr><th>σ per event</th><th>5G</th><th>6G-RUPA</th><th>adv</th></tr>
+        <tr><td>${s.label}</td><td>${s.g5.toLocaleString()} B${r.cls === "crossing" ? " <span class='hint'>(re-est.)</span>" : ""}</td>
+            <td>${s.rupa} B</td><td class="adv">${Math.round((1 - s.rupa / s.g5) * 100)}%</td></tr>
+        ${r.cls === "crossing" ? `<tr><td class="hint">ideal-HO sensitivity</td><td>${s.g5ideal.toLocaleString()} B</td><td>${s.rupa} B</td><td class="adv">${Math.round((1 - s.rupa / s.g5ideal) * 100)}%</td></tr>` : ""}
+       </table>`;
+  el.innerHTML = `
+    <dl class="kv">
+      <dt>A addr</dt><dd class="mono">${prefixMarkup(ga.topo, gb.topo)}</dd>
+      <dt>B addr</dt><dd class="mono">${prefixMarkup(gb.topo, ga.topo)}</dd>
+      <dt>class</dt><dd><b>${r.cls}</b></dd>
+      <dt>climb</dt><dd>${r.climb}</dd>
+      <dt>common layer</dt><dd>${commonName}</dd>
+    </dl>
+    <p class="hint">Bold = shared address prefix (the aggregate both share). Climb = how far above the members that prefix ends.</p>
+    ${sig}
+    ${r.cls === "crossing" ? `<p class="hint">5G re-establish breaks the session; RUPA renumber keeps flows alive (0 breaks). σ_RUPA is flat in climb depth by design.</p>` : ""}`;
+}
+
+$("#btn-flat").addEventListener("click", () => { current = "flat"; setToggle(); render(); });
+$("#btn-hier").addEventListener("click", () => { current = "hier"; setToggle(); render(); });
+function setToggle() { $("#btn-flat").classList.toggle("on", current === "flat"); $("#btn-hier").classList.toggle("on", current === "hier"); }
+
+async function boot() {
+  try {
+    const [flat, hier] = await Promise.all([
+      fetch("./data/layers_flat.json").then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }),
+      fetch("./data/layers_hierarchy.json").then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }),
+    ]);
+    DATASETS = { flat, hier };
+    render();
+  } catch (e) {
+    $("#err").style.display = "block";
+    $("#err").innerHTML = `Could not load <code>data/layers_*.json</code> (${e.message}). ` +
+      `Browsers block <code>fetch</code> over <code>file://</code> — serve the folder over HTTP: ` +
+      `run <code>python3 -m http.server</code> from the repo root, then open <code>/viz/layers.html</code>. ` +
+      `Regenerate the data with <code>julia --project runs/layers_viz.jl</code>.`;
+  }
+}
+boot();
+</script>
+</body>
+</html>
