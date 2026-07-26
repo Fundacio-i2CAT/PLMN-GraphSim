@@ -67,6 +67,27 @@ vodafone = { id = 1, enabled = true }
 orange = { id = 3, enabled = true }
 movistar = { id = 7, enabled = true }
 
+[countries.portugal]
+# Iberia roaming scenario (phase 2). Official sources mirroring Spain's INE+IGN pair:
+# INE Portugal Censos 2021 population (indicator 0011609) + DGT CAOP2025 polygons
+# (mainland/Continente only — Madeira/Azores excluded like the Canary Islands).
+# gNBs: OpenCellID MCC 268 (22,627 cells).
+enabled = true
+data_dir = "data/portugal"
+mccs = [268]
+population = 9_855_909
+mobile_adoption_rate = 0.82
+num_psas = 2 # MEO/Altice dual core (Lisboa + Porto); ~1 PSA per 10M pop, cf. Spain/USA 5
+
+[countries.portugal.scenarios]
+"Portugal Distributed" = 18 # 18 mainland distritos
+
+[countries.portugal.operators]
+# net ids verified against the OpenCellID 268 data (cell counts):
+vodafone_pt = { id = 1, enabled = true } # 7,695 cells
+meo = { id = 6, enabled = true }         # 6,791 cells (+4,091 under net 2, also MEO/ex-TMN allocation)
+nos = { id = 3, enabled = true }         # 4,050 cells
+
 [countries.usa]
 enabled = true
 data_dir = "data/usa"

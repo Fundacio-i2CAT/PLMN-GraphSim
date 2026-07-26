@@ -43,6 +43,9 @@ function save_mobility_evolution(operator_name::String, scenario_name::String,
         Sigma_Roam_RUPA = state.history_sigma_roam_rupa,
         CoreWrites_5G = state.history_core_writes_5g,
         CoreWrites_RUPA = state.history_core_writes_rupa,
+        Roam_Entries = state.history_roam_entries,
+        Session_Breaks_5G = state.history_session_breaks_5g,
+        Roam_Sessions_5G = state.history_roam_sessions_5g,
     )
     safe_op = replace(operator_name, " " => "_")
     safe_scen = replace(scenario_name, " " => "_")

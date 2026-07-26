@@ -36,7 +36,7 @@ Key properties (both countries): handover rate scales with speed and gNB density
 inter-domain events == 5G N2 events by construction; advantage ~66.7% invariant
 to speed, mobility model, and country (it is the per-event cost ratio).
 
-Reproduce: `julia --project run_national.jl spain` / `... usa`.
+Reproduce: `julia --project main.jl national spain` / `... usa`.
 
 ---
 
@@ -66,13 +66,13 @@ integrated dispatch. Replaced with motion assertions (path ≈ speed × time) an
 
 ## Artifacts
 
-- `docs/mobility-formal-model.md` — σ derivation (Xn 600 / N2 1150 / intra 200 /
-  inter 400 / roam HR 1180 / roam RUPA 300 B), generalized mobility theorem,
-  3GPP/RINA grounding.
+- `docs/scenarios/mobility/analysis.md` — σ derivation and diagrams (Xn 600 /
+  N2 1150 / RUPA renumber 200 / HR entry 3250 / RUPA entry 450 B), generalized
+  mobility theorem, 3GPP/RINA grounding.
 - `docs/mechanism-and-evaluation-strategy.md` — mechanism + national results.
 - `infocom-mobility-paper/outline.md` — living 8-section outline (national-scale
   results in §5–6).
-- `run_national.jl` — parametric national eval (spain|usa).
+- `main.jl national` (runs/national.jl) — parametric national eval (spain|usa).
 - `test/MobilityTests.jl`, `test_mobility_displacement.jl` — motion + dispatch tests.
 - `test/features/handover_classification.feature` — Gherkin spec (corrected;
   currently documentation-only — not wired to a runner).
@@ -85,7 +85,7 @@ integrated dispatch. Replaced with motion assertions (path ≈ speed × time) an
    (Home-Routed) and `sigma_roam_rupa` (N+1 internetwork) counters exist but the
    national sim is single-operator. Build terrestrial-to-terrestrial roaming
    first, validate, then reuse for satellite/NTN.
-2. **Figures & CSV** — `run_national.jl` doesn't persist results; need
+2. **Figures & CSV** — `main.jl national` doesn’t persist results; need
    forwarding-state-over-time, σ cumulative, Xn/N2 split, advantage-vs-speed plots.
 3. **Population-weighted placement** — currently a silent uniform-over-gNBs
    fallback (municipality polygons not attached to the topology struct). Enabling
@@ -101,4 +101,4 @@ integrated dispatch. Replaced with motion assertions (path ≈ speed × time) an
 `run_spain_coarse_subset.jl`, `run_spain_focused.jl`, `run_spain_forced_handover.jl`,
 `run_spain_minimal_pattern.jl`, `run_mobility_eval*.jl` — all were attempts to work
 around the mobility bug (subsampling, forced handovers). Superseded by
-`run_national.jl`. `run_minimal_topology.jl` kept as the mechanism micro-check.
+`main.jl national`. `runs/legacy/run_minimal_topology.jl` kept as the mechanism micro-check.

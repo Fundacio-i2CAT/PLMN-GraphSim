@@ -8,13 +8,13 @@ It does not run Julia and does not need a backend.
 Generate one bundle:
 
 ```bash
-julia --project=. gen_trajectories.jl usa verizon 100000 urban_50 1200 2
+julia --project=. main.jl trajectories usa verizon 100000 urban_50 1200 2
 ```
 
 Generate several country/operator/scale bundles:
 
 ```bash
-julia --project=. gen_trajectories.jl all all 100000,50000,25000 all 1200 2
+julia --project=. main.jl trajectories all all 100000,50000,25000 all 1200 2
 ```
 
 Lower scale factor means more simulated agents and heavier browser load. For US,

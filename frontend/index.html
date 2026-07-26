@@ -463,7 +463,7 @@
       trips = [];
       rebuildCounters();
       el('meta').textContent = `${countryInfo(country).label || country} / ${operator || 'operator'} / ${mobilityInfo(mobility).short_label || mobility} - ${scaleLabel(scale)}`;
-      el('status').textContent = `bundle not precomputed. Run: julia --project=. gen_trajectories.jl ${country} ${operator} ${scale} ${mobility} ${DEFAULT_DURATION} ${DEFAULT_DT}`;
+      el('status').textContent = `bundle not precomputed. Run: julia --project=. main.jl trajectories ${country} ${operator} ${scale} ${mobility} ${DEFAULT_DURATION} ${DEFAULT_DT}`;
       render();
       return;
     }

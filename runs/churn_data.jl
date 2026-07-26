@@ -6,8 +6,8 @@
 using DesJulia6gRupa, DesJulia6gRupa.Types, ConcurrentSim
 import DesJulia6gRupa.Simulation as DSim
 
-paths = filter(isfile, [joinpath(@__DIR__, "data", "spain", "opencellid", "214.csv")])
-topo = DSim.load_and_deploy_network(paths, 7, 52, joinpath(@__DIR__, "data", "spain"),
+paths = filter(isfile, [joinpath(pkgdir(DesJulia6gRupa), "data", "spain", "opencellid", "214.csv")])
+topo = DSim.load_and_deploy_network(paths, 7, 52, joinpath(pkgdir(DesJulia6gRupa), "data", "spain"),
                                     SimConfig(1,2,1000,1,1,1,:two_tier,5,1))
 const SCALE = 1000
 

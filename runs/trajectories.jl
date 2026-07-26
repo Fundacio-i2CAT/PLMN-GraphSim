@@ -22,9 +22,8 @@ using DesJulia6gRupa, DesJulia6gRupa.Types
 import DesJulia6gRupa.Simulation as DSim
 import DesJulia6gRupa: select_agent_location
 
-const CONFIG_PATH = joinpath(@__DIR__, "config.toml")
-const OUTDIR = get(ENV, "FRONTEND_DATA_DIR", joinpath(@__DIR__, "frontend", "data"))
-const NUM_PSA = 5
+const CONFIG_PATH = joinpath(pkgdir(DesJulia6gRupa), "config.toml")
+const OUTDIR = get(ENV, "FRONTEND_DATA_DIR", joinpath(pkgdir(DesJulia6gRupa), "frontend", "data"))
 const DEFAULT_COUNTRY = "spain"
 const DEFAULT_OPERATOR = "movistar"
 const SCALE_PRESETS = [100_000, 50_000, 25_000, 10_000, 5_000, 1_000]
@@ -225,6 +224,10 @@ function country_edge_upfs(country_config)
     return maximum(Int.(collect(values(scenarios))))
 end
 
+# Centralized PSAs per country (config.toml `num_psas`; default 5 = Spain/USA scale,
+# ~1 per 10M population — Portugal uses 2, the MEO Lisboa+Porto dual core).
+country_num_psas(country_config) = Int(get(country_config, "num_psas", 5))
+
 function gnb_paths(data_dir::String, country_config)
     if haskey(country_config, "gnb_files")
         return filter(isfile, [joinpath(data_dir, f) for f in country_config["gnb_files"]])
@@ -234,15 +237,16 @@ function gnb_paths(data_dir::String, country_config)
 end
 
 function build_topology(country::String, operator::String, country_config, scale_factor::Int)
-    data_dir = joinpath(@__DIR__, String(country_config["data_dir"]))
+    data_dir = joinpath(pkgdir(DesJulia6gRupa), String(country_config["data_dir"]))
     paths = gnb_paths(data_dir, country_config)
     isempty(paths) && error("no OpenCellID data files found under $data_dir/opencellid")
 
     operator_id = Int(country_config["operators"][operator]["id"])
     nedge = country_edge_upfs(country_config)
-    cfg = SimConfig(1, 2, scale_factor, 1, 1, 1, :two_tier, NUM_PSA, 1)
+    npsa = country_num_psas(country_config)
+    cfg = SimConfig(1, 2, scale_factor, 1, 1, 1, :two_tier, npsa, 1)
 
-    println("Building $(country_label(country)) / $(operator_label(operator)) topology ($nedge edge / $NUM_PSA PSA)...")
+    println("Building $(country_label(country)) / $(operator_label(operator)) topology ($nedge edge / $npsa PSA)...")
     topo = DSim.load_and_deploy_network(paths, operator_id, nedge, data_dir, cfg)
     println("gNBs=$(length(topo.gnb_locations)) edgeUPF=$(length(topo.upf_locations)) PSA=$(length(topo.centralized_upf_locations))")
     return topo, nedge
@@ -315,7 +319,7 @@ function gen_trips(io, topo, model, n_agents::Int, nsteps::Int, dt::Float64)
 end
 
 function write_meta(path::String; country, operator, scale_factor, n_agents, duration, dt,
-                    profile, nsteps, nedge, nho, trajectories_file, gnbs_file)
+                    profile, nsteps, nedge, npsas, nho, trajectories_file, gnbs_file)
     meta = Dict(
         "country" => country,
         "country_label" => country_label(country),
@@ -331,7 +335,7 @@ function write_meta(path::String; country, operator, scale_factor, n_agents, dur
         "speed_kmh" => profile["speed_kmh"],
         "nsteps" => nsteps,
         "edge_upfs" => nedge,
-        "psas" => NUM_PSA,
+        "psas" => npsas,
         "handovers" => nho,
         "trajectories_file" => trajectories_file,
         "gnbs_file" => gnbs_file,
@@ -372,7 +376,8 @@ function generate_bundle(toml_data, country::String, operator::String, scale_fac
         print(io, "]")
         write_meta(joinpath(OUTDIR, meta_file);
                    country, operator, scale_factor, n_agents, duration, dt, profile,
-                   nsteps, nedge, nho, trajectories_file=traj_file, gnbs_file=gnb_file)
+                   nsteps, nedge, npsas=country_num_psas(country_config), nho,
+                   trajectories_file=traj_file, gnbs_file=gnb_file)
         println("Wrote $traj_file ($n_agents agents, $nho handovers)")
     end
 end

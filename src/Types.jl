@@ -11,6 +11,7 @@ export FAR, SessionContext5G, ForwardingEntry6GRUPA, ForwardingState5G, SessionS
 export SimGlobalState, GeoPoint, NetworkTopology, GUPFState6GRUPA, Municipality, SimConfig
 export haversine_distance, UserType, eMBB, mMTC, URLLC
 export MobilityConfig, MobilityModel, NoMobility, RandomWaypoint, GaussMarkov, MobilityState
+export RoamingConfig
 
 @enum UserType begin
     eMBB
@@ -131,6 +132,20 @@ end
 
 MobilityConfig() = MobilityConfig(false, 1.0, NoMobility())
 
+# --- Roaming (§7.4; infocom-mobility-paper/notes/roaming-internetworking.md) ---
+# border_semantics — what a 5G operator-change (border) event costs (B7a, both modelled):
+#   :reestablish — deployed reality: PLMN reselection + registration + NEW HR PDU
+#                  session (TS 23.122; TS 23.502 §4.2.2.2.2/§4.3.2.2.2); flow breaks.
+#   :ideal_ho    — sensitivity: idealized connected-mode inter-PLMN N2 handover
+#                  (equivalent-PLMN + inter-operator config, rarely deployed); flow survives.
+# roamer_fraction — phase-1 injection: fraction of agents tagged as inbound roamers.
+struct RoamingConfig
+    border_semantics::Symbol
+    roamer_fraction::Float64
+end
+
+RoamingConfig() = RoamingConfig(:reestablish, 0.0)
+
 struct SimConfig
     min_sessions::Int
     max_sessions::Int
@@ -142,15 +157,23 @@ struct SimConfig
     num_centralized_upfs::Int # For :two_tier scenario
     sampling_interval::Float64
     mobility::MobilityConfig
+    roaming::RoamingConfig
 end
 
-# Backward-compatible constructor (mobility disabled by default).
+# Backward-compatible constructors (mobility disabled / default roaming).
 SimConfig(min_sessions, max_sessions, scale_factor, duration,
           mean_session_duration, mean_offline_duration, scenario,
           num_centralized_upfs, sampling_interval) =
     SimConfig(min_sessions, max_sessions, scale_factor, duration,
               mean_session_duration, mean_offline_duration, scenario,
-              num_centralized_upfs, sampling_interval, MobilityConfig())
+              num_centralized_upfs, sampling_interval, MobilityConfig(), RoamingConfig())
+
+SimConfig(min_sessions, max_sessions, scale_factor, duration,
+          mean_session_duration, mean_offline_duration, scenario,
+          num_centralized_upfs, sampling_interval, mobility::MobilityConfig) =
+    SimConfig(min_sessions, max_sessions, scale_factor, duration,
+              mean_session_duration, mean_offline_duration, scenario,
+              num_centralized_upfs, sampling_interval, mobility, RoamingConfig())
 
 # --- Simulation State ---
 mutable struct SimGlobalState
@@ -174,8 +197,8 @@ mutable struct SimGlobalState
     sigma_5g_n2::Int64                   # 5G N2 handover signaling bytes (1150 B/handover)
     sigma_rupa_intra::Int64              # 6G-RUPA intra-domain renumbering bytes (200 B/handover)
     sigma_rupa_inter::Int64              # 6G-RUPA inter-domain renumbering bytes (flat 200 B/handover)
-    sigma_roam_5g::Int64                 # 5G Home-Routed roaming bytes (1180 B/handover)
-    sigma_roam_rupa::Int64               # 6G-RUPA inter-layer roaming bytes (300 B/handover)
+    sigma_roam_5g::Int64                 # 5G Home-Routed roaming bytes (3250 B entry; 1300 B ideal HO)
+    sigma_roam_rupa::Int64               # 6G-RUPA inter-layer roaming bytes (450 B first entry)
     # Per-sampling-tick history (parallel to history_time).
     history_handovers::Vector{Int}
     history_sigma_5g_xn::Vector{Int64}
@@ -221,6 +244,35 @@ mutable struct SimGlobalState
     anchor_dist_5g_sum::Float64          # Σ dist(serving edge UPF, pinned PSA)
     anchor_dist_opt_sum::Float64         # Σ dist(serving edge UPF, nearest PSA)
     anchor_stretch_samples::Int64        # number of handover samples accumulated
+
+    # --- Roaming counters (§7.4; notes/roaming-internetworking.md §4-§5) ---
+    # roam_entries: operator-change (border) events, counted once per physical event.
+    # session_breaks_5g: sessions broken at the border under :reestablish semantics
+    # (deployed 5G reality — the flow does not survive PLMN reselection + new HR PDU
+    # session), scaled by scale_factor. 6G-RUPA breaks NO session at the border in
+    # either semantics (EFCP keyed on port-ids, renumber is make-before-break), so it
+    # needs no counter — the comparison row is session_breaks_5g vs an architectural 0.
+    roam_entries::Int64
+    session_breaks_5g::Int64
+    # HR transit-state gauge: scaled sessions of currently-active roamers. Each such
+    # session holds per-roamer state along the HR chain (V-UPF + IPUPS×2 + H-UPF,
+    # NG.113 §5.1.2/§8.3.2); 6G-RUPA holds none (aggregate forwarding), so the
+    # comparison row is roam_sessions_5g vs an architectural 0.
+    roam_sessions_5g::Int64
+    # Per-sampling-tick history (parallel to history_time).
+    history_roam_entries::Vector{Int64}
+    history_session_breaks_5g::Vector{Int64}
+    history_roam_sessions_5g::Vector{Int64}
+
+    # --- Roaming path-stretch (Iberia phase 2; the §7.4 hairpin, measured) ---
+    # Sampled per handover while the agent is in a ROAMING state (serving-gNB operator
+    # ≠ anchor-PSA operator): 5G HR hairpins to the pinned HOME-country PSA, RUPA
+    # egresses at the nearest aggregate. Kept separate from the domestic
+    # anchor_dist_* accumulators so the intra-PLMN (~0 excess) and roaming
+    # (country-scale) results stay distinct.
+    roam_dist_5g_sum::Float64
+    roam_dist_opt_sum::Float64
+    roam_stretch_samples::Int64
 end
 
 # Backward-compatible constructor: all σ counters and histories initialized to 0/empty.
@@ -241,6 +293,9 @@ SimGlobalState(config, upf_sessions_5g, forwarding_tables_6grupa,
                    Int64(0), Int64(0), Int64[], Int64[],
                    Int64(0), Int64(0), Int64(0), Int64(0),
                    Int64(0), Int64(0),
+                   0.0, 0.0, Int64(0),
+                   Int64(0), Int64(0), Int64(0),
+                   Int64[], Int64[], Int64[],
                    0.0, 0.0, Int64(0))
 
 struct GUPFState6GRUPA
@@ -265,6 +320,24 @@ struct NetworkTopology
 
     # Graph Representation
     graph::AbstractGraph
+
+    # --- Multi-operator composition (Iberia roaming, §7.4 phase 2) ---
+    # Operator tag per gNB / per PSA (1 = home, 2+ = visited operators). A composed
+    # topology concatenates two operator fields; the serving operator of an agent is
+    # the tag of its nearest gNB, so a nearest-gNB flip across operators IS the
+    # geometric border crossing that triggers the roaming branch.
+    gnb_operator::Vector{Int}
+    psa_operator::Vector{Int}
 end
+
+# Backward-compatible constructor: single-operator topology, everything tagged 1.
+NetworkTopology(gnb_locations, upf_locations, gnb_to_upf_map,
+                centralized_upf_locations, edge_upf_parent_map,
+                municipalities, municipality_bins, municipality_probs, graph) =
+    NetworkTopology(gnb_locations, upf_locations, gnb_to_upf_map,
+                    centralized_upf_locations, edge_upf_parent_map,
+                    municipalities, municipality_bins, municipality_probs, graph,
+                    fill(1, length(gnb_locations)),
+                    fill(1, length(centralized_upf_locations)))
 
 end
