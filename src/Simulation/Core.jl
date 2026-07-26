@@ -166,7 +166,10 @@ reproduce bit-for-bit when `mobility.enabled = false`.
             d_terr = new_gnb == 0 ? Inf :
                 haversine_distance(current_loc, topology.gnb_locations[new_gnb])
             if d_terr > ntn.r_terr_km
-                positions_at!(ntn, Float64(now(env)))
+                # Sim time is Float64 in a numeric ConcurrentSim; narrow the
+                # Union{Float64,DateTime} that `now` is typed as so the call is
+                # type-stable (JET flagged Float64(::DateTime) on the dead branch).
+                positions_at!(ntn, now(env)::Float64)
                 sat, _ = best_satellite(ntn, current_loc)
                 if sat != 0
                     if serving_sat == 0
