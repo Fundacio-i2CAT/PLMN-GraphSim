@@ -54,26 +54,6 @@ function save_mobility_evolution(operator_name::String, scenario_name::String,
     println("  -> Mobility Evolution: results/$filename")
 end
 
-# function save_topology_map(operator_name::String, scenario_name::String, topology::NetworkTopology, results_dir::String)
-#     if isempty(topology.edge_upf_parent_map)
-#         return
-#     end
-#     
-#     # Create DataFrame for Edge UPF -> PSA mapping
-#     # Edge UPFs are 1-indexed in the map
-#     edge_upfs = 1:length(topology.edge_upf_parent_map)
-#     psa_upfs = topology.edge_upf_parent_map
-#     
-#     df_map = DataFrame(
-#         Edge_UPF_ID = edge_upfs,
-#         PSA_UPF_ID = psa_upfs
-#     )
-#     
-#     filename = "topology_map_$(operator_name)_$(scenario_name).csv"
-#     CSV.write(joinpath(results_dir, filename), df_map)
-#     println("  -> Topology Map: results/$filename")
-# end
-
 function save_detailed_evolution(operator_name::String, scenario_name::String, state::SimGlobalState, topology::NetworkTopology, results_dir::String)
     times = Float64[]
     upf_ids = Int[]
