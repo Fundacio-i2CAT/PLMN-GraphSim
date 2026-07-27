@@ -65,9 +65,9 @@ The entry point opens a small menu for running simulations or plotting topology 
 ### Run A Scenario Script
 
 ```bash
-julia --project=. run_minimal_topology.jl
-julia --project=. run_synthetic_handover.jl
-julia --project=. run_national_spain.jl
+julia --project=. main.jl run_minimal_topology
+julia --project=. main.jl run_synthetic_handover
+julia --project=. main.jl national spain
 ```
 
 Use the smaller scripts first while validating an environment, then move to national or mobility-evaluation runs.
@@ -99,10 +99,10 @@ Data follows this layout:
 
 | Scenario | Useful files |
 | --- | --- |
-| Minimal topology sanity checks | `run_minimal_topology.jl`, `run_synthetic_direct.jl` |
-| Synthetic handover behavior | `run_synthetic_handover.jl`, `test/features/handover_classification.feature` |
-| Spain national evaluation | `run_national_spain.jl`, `run_spain_focused.jl`, `run_spain_forced_handover.jl` |
-| Mobility evaluation matrix | `run_mobility_eval.jl`, `run_mobility_eval_v3.jl` |
+| Minimal topology sanity checks | `main.jl run_minimal_topology`, `main.jl run_synthetic_direct` |
+| Synthetic handover behavior | `main.jl run_synthetic_handover`, `test/features/handover_classification.feature` |
+| Spain national evaluation | `main.jl national spain` |
+| Mobility evaluation matrix | `main.jl run_mobility_eval`, `main.jl run_mobility_eval_v3` |
 | Deployment sweep | `main.jl deployment_sweep` |
 | Static mobility frontend | `frontend/index.html` |
 
