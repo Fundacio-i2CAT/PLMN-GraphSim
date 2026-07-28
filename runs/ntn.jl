@@ -4,6 +4,8 @@
 #   julia --project main.jl ntn ideal_ho                 # 5G best-case sensitivity
 #   julia --project main.jl ntn reestablish 2000 600     # smoke: 2000 agents, 600 s
 #   julia --project main.jl ntn reestablish 0 1200 starlink 5,10,20,30
+#   julia --project main.jl ntn reestablish 2000 600 starlink 5,30 20260728 xn,n2
+#   julia --project main.jl ntn reestablish 1200 300 starlink 10 42 n2 /tmp/ntn.csv stationary
 #
 # Iberia composed field (Movistar + MEO, §7.4) plus a LEO constellation (LEOPath
 # TLE sets under data/ntn/, SGP4-propagated; cross-validated in test/NTNTests.jl).
@@ -15,9 +17,8 @@
 # undersamples rural sites, so gaps (and satellite roaming) are overestimated:
 # disclose next to the results.
 #
-# While satellite-served the network moves under the UE: satellite→satellite
-# switches are N2-class (NG-RAN node change; NR satellite access is a RAT of the
-# 5GS, TS 23.501 §5.4.10) vs one RUPA renumber. 5G's NTN integration is per-tier
+# While satellite-served the network moves under the UE. Satellite switches sweep
+# Xn/N2 handover costs (TS 23.501 Sec. 5.4.14.3) against one RUPA renumber. 5G's NTN integration is per-tier
 # anchor special cases (TS 23.501 §5.43.x); RUPA composes the constellation as a
 # member via the same compose/enrollment mechanism as §7.5.1.
 
@@ -26,12 +27,19 @@ using DesJulia6gRupa.Types
 using ConcurrentSim
 import DesJulia6gRupa.Simulation as DSim
 import DesJulia6gRupa.DataLoading as DL
+using Random
+using CSV
+using DataFrames
 
 const SEMANTICS = Symbol(lowercase(get(ARGS, 1, "reestablish")))
 const AGENT_OVERRIDE = parse(Int, get(ARGS, 2, "0"))
 const DURATION = parse(Int, get(ARGS, 3, "1200"))
 const CONSTELLATION = lowercase(get(ARGS, 4, "starlink"))
 const R_SWEEP = [parse(Float64, x) for x in split(get(ARGS, 5, "5,10,20,30"), ",")]
+const SEED = parse(Int, get(ARGS, 6, "20260728"))
+const HO_SWEEP = [Symbol(lowercase(x)) for x in split(get(ARGS, 7, "xn,n2"), ",")]
+const OUTPUT = get(ARGS, 8, joinpath(pkgdir(DesJulia6gRupa), "results", "ntn-scenarios.csv"))
+const MODEL_SWEEP = Set(lowercase.(split(get(ARGS, 9, "stationary,pedestrian,highway"), ",")))
 const SCALE = 1000
 const ADOPTION = 0.82
 const MIN_ELEV = 25.0
@@ -54,14 +62,29 @@ function build_country(sub, files, opid, nedge, npsa)
     return DL.load_and_deploy_network(paths, opid, nedge, base, cfg)
 end
 
-function run_scenario(topology, tle_path, r_terr, name, model; n_agents, duration, dt)
+# Only the graph is mutable during a run. Share immutable topology arrays so all
+# sweep cases reuse one nearest-gNB spatial index instead of retaining one per copy.
+function topology_for_run(t)
+    return NetworkTopology(t.gnb_locations, t.upf_locations, t.gnb_to_upf_map,
+                           t.centralized_upf_locations, t.edge_upf_parent_map,
+                           t.municipalities, t.municipality_bins, t.municipality_probs,
+                           deepcopy(t.graph), t.gnb_operator, t.psa_operator)
+end
+
+function run_scenario(base_topology, tle_path, r_terr, model_id, name, model, ho_semantics;
+                      n_agents, duration, dt, seed)
+    Random.seed!(seed)
+    topology = topology_for_run(base_topology)
     config = SimConfig(1, 2, SCALE, Float64(duration), Float64(duration)-5, 5.0,
                        :two_tier, length(topology.centralized_upf_locations), 10.0,
                        MobilityConfig(true, Float64(dt), model),
                        RoamingConfig(SEMANTICS, 0.0))
     s = DSim.init_global_state_for_simulation(topology, config)
-    s.ntn = DSim.load_constellation(tle_path; operator_id = 9,
-                                    min_elevation_deg = MIN_ELEV, r_terr_km = r_terr)
+    c = DSim.load_constellation(tle_path; operator_id = 9,
+                                min_elevation_deg = MIN_ELEV, r_terr_km = r_terr,
+                                handover_semantics = ho_semantics,
+                                snapshot_interval_sec = 1.0)
+    DSim.install_ntn_member!(s, topology, c)
     env = ConcurrentSim.Simulation()
     @process DSim.monitor_metrics(env, s, topology, config.scale_factor)
     for uid in 1:n_agents
@@ -70,6 +93,7 @@ function run_scenario(topology, tle_path, r_terr, name, model; n_agents, duratio
     run(env, config.duration)
 
     frac = s.ntn_total_ticks > 0 ? s.ntn_serving_ticks / s.ntn_total_ticks * 100 : 0.0
+    outage_frac = s.ntn_total_ticks > 0 ? s.ntn_outage_ticks / s.ntn_total_ticks * 100 : 0.0
     cadv = s.sigma_ntn_cross_5g > 0 ?
         (1 - s.sigma_ntn_cross_rupa / s.sigma_ntn_cross_5g) * 100 : 0.0
     hadv = s.sigma_ntn_ho_5g > 0 ?
@@ -77,9 +101,14 @@ function run_scenario(topology, tle_path, r_terr, name, model; n_agents, duratio
     t5 = s.sigma_5g_xn + s.sigma_5g_n2
     t6 = s.sigma_rupa_intra + s.sigma_rupa_inter
     iadv = t5 > 0 ? (1 - t6/t5) * 100 : 0.0
+    sat_hos_per_visit = s.ntn_attach_events > 0 ?
+        s.ntn_sat_handovers / s.ntn_attach_events : 0.0
+    seconds_per_sat_ho = s.ntn_sat_handovers > 0 ?
+        s.ntn_serving_ticks * dt / s.ntn_sat_handovers : 0.0
 
-    println("\n  [r_terr=$(r_terr)km  $name]")
+    println("\n  [r_terr=$(r_terr)km  $name  sat-HO=:$ho_semantics]")
     println("    satellite-served: $(round(frac, digits=2))% of agent-ticks" *
+            "   outage: $(round(outage_frac, digits=3))%" *
             "   crossings: $(s.ntn_attach_events)↑ $(s.ntn_return_events)↓" *
             "   sat-HOs (network moved): $(s.ntn_sat_handovers)")
     println("    σ crossing: 5G=$(s.sigma_ntn_cross_5g)B 6G=$(s.sigma_ntn_cross_rupa)B" *
@@ -87,15 +116,34 @@ function run_scenario(topology, tle_path, r_terr, name, model; n_agents, duratio
             " 6G=$(s.sigma_ntn_ho_rupa)B adv=$(round(hadv, digits=1))%")
     println("    breaks at crossings: 5G=$(s.ntn_session_breaks_5g)  [RUPA: 0]" *
             "   terrestrial intra σ adv=$(round(iadv, digits=1))% (must match §6)")
-    return (; r_terr, model = name, frac, up = s.ntn_attach_events,
-            down = s.ntn_return_events, satho = s.ntn_sat_handovers,
-            cadv, hadv, breaks = s.ntn_session_breaks_5g, iadv)
+    return (; constellation = CONSTELLATION,
+            border_semantics = String(SEMANTICS),
+            satellite_ho_semantics = String(ho_semantics),
+            topology_seed = SEED, seed, agents = n_agents, duration_s = duration,
+            update_interval_s = dt, min_elevation_deg = MIN_ELEV,
+            r_terr_km = r_terr, mobility_model_id = model_id, mobility_model = name,
+            satellite_served_pct = frac, outage_pct = outage_frac,
+            ntn_attach_events = s.ntn_attach_events,
+            ntn_return_events = s.ntn_return_events,
+            satellite_handovers = s.ntn_sat_handovers,
+            satellite_handovers_per_visit = sat_hos_per_visit,
+            seconds_per_satellite_handover = seconds_per_sat_ho,
+            sigma_crossing_5g = s.sigma_ntn_cross_5g,
+            sigma_crossing_rupa = s.sigma_ntn_cross_rupa,
+            crossing_advantage_pct = cadv,
+            sigma_satellite_ho_5g = s.sigma_ntn_ho_5g,
+            sigma_satellite_ho_rupa = s.sigma_ntn_ho_rupa,
+            satellite_ho_advantage_pct = hadv,
+            session_breaks_5g = s.ntn_session_breaks_5g,
+            terrestrial_advantage_pct = iadv,
+            classified_crossing_climbs = sum(s.ho_climb; init = 0))
 end
 
 tle_path = joinpath(pkgdir(DesJulia6gRupa), "data", "ntn", TLE_FILES[CONSTELLATION])
 isfile(tle_path) || error("no TLE file $tle_path")
 
 println("Building Iberia composed topology (Movistar + MEO) + $CONSTELLATION member...")
+Random.seed!(SEED)
 home = build_country(HOME[1], HOME[2], HOME[3], HOME[4], HOME[5])
 visited = build_country(VISITED[1], VISITED[2], VISITED[3], VISITED[4], VISITED[5])
 topology = DL.compose_topologies(home, visited)
@@ -105,24 +153,39 @@ println("Composed: $(length(topology.gnb_locations)) gNBs; agents=$NAG; " *
         "semantics=:$SEMANTICS; r_terr sweep=$(R_SWEEP) km")
 
 const MODELS = [
-    ("Pedestrian 5km/h (RWP)",        RandomWaypoint(5.0, 0.0, 2.0)),
-    ("Highway 120km/h (GaussMarkov)", GaussMarkov(120.0, 0.85, 5.0)),
+    ("stationary", "Stationary",                       NoMobility()),
+    ("pedestrian", "Pedestrian 5km/h (RWP)",           RandomWaypoint(5.0, 0.0, 2.0)),
+    ("highway",    "Highway 120km/h (GaussMarkov)",    GaussMarkov(120.0, 0.85, 5.0)),
 ]
 
 results = Any[]
-for r_terr in R_SWEEP, (mname, model) in MODELS
-    push!(results, run_scenario(topology, tle_path, r_terr, mname, model;
-                                n_agents = NAG, duration = DURATION, dt = 2))
+for (ri, r_terr) in enumerate(R_SWEEP), (mi, (model_id, mname, model)) in enumerate(MODELS),
+    ho_semantics in HO_SWEEP
+    model_id in MODEL_SWEEP || continue
+    case_seed = SEED + 100 * ri + mi
+    push!(results, run_scenario(topology, tle_path, r_terr, model_id, mname, model, ho_semantics;
+                                n_agents = NAG, duration = DURATION, dt = 2,
+                                seed = case_seed))
 end
 
 println("\n", "#"^78)
 println("NTN SWEEP SUMMARY ($CONSTELLATION, semantics=:$SEMANTICS, $NAG agents)")
 println("#"^78)
-println(rpad("r_terr", 8), rpad("model", 30), rpad("sat%", 7), rpad("↑/↓", 12),
-        rpad("satHO", 8), rpad("cross-adv", 10), rpad("satHO-adv", 10), "breaks")
+println(rpad("r_terr", 8), rpad("model", 30), rpad("HO", 5), rpad("sat%", 7),
+        rpad("out%", 7), rpad("up/down", 12), rpad("satHO", 8),
+        rpad("cross-adv", 10), rpad("satHO-adv", 10), "breaks")
 for r in results
-    println(rpad(r.r_terr, 8), rpad(r.model, 30), rpad(round(r.frac, digits=2), 7),
-            rpad(string(r.up, "/", r.down), 12), rpad(r.satho, 8),
-            rpad(string(round(r.cadv, digits=1), "%"), 10),
-            rpad(string(round(r.hadv, digits=1), "%"), 10), r.breaks)
+    println(rpad(r.r_terr_km, 8), rpad(r.mobility_model, 30),
+            rpad(r.satellite_ho_semantics, 5),
+            rpad(round(r.satellite_served_pct, digits=2), 7),
+            rpad(round(r.outage_pct, digits=3), 7),
+            rpad(string(r.ntn_attach_events, "/", r.ntn_return_events), 12),
+            rpad(r.satellite_handovers, 8),
+            rpad(string(round(r.crossing_advantage_pct, digits=1), "%"), 10),
+            rpad(string(round(r.satellite_ho_advantage_pct, digits=1), "%"), 10),
+            r.session_breaks_5g)
 end
+
+mkpath(dirname(OUTPUT))
+CSV.write(OUTPUT, DataFrame(results))
+println("\nWrote reproducible NTN results: $OUTPUT")

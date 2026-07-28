@@ -148,7 +148,14 @@ reproduce bit-for-bit when `mobility.enabled = false`.
     mobility_state = MobilityState(agent_location, 0.0, 0.0, 0.0, 0.0)
 
     ntn = sim_state.ntn                  # Constellation or nothing (§7.5.2)
-    serving_sat = 0                      # 0 = terrestrial-served
+    serving_sat = 0
+    service_mode = :terrestrial
+    current_attachment = if ntn === nothing
+        nothing
+    else
+        ntn.member_layer_id != 0 || error("install NTN member before starting users")
+        attachment_of(sim_state.layer_stack::LayerStack, topology, current_gnb)
+    end
 
     while !is_simulation_time_over(env, sim_state)
         @yield timeout(env, update_dt)
@@ -156,39 +163,94 @@ reproduce bit-for-bit when `mobility.enabled = false`.
         current_loc = step_position(model, current_loc, mobility_state, update_dt)
         new_gnb = find_serving_gnb(topology, current_loc)
 
-        # NTN member (§7.5.2): no terrestrial signal within r_terr_km → the UE roams
-        # to the satellite member. While satellite-served the network moves under the
-        # UE: satellite switches are charged as N2-class handovers (5G) vs renumbers
-        # (RUPA). Sessions stay anchored at the terrestrial PSA (satellite = RAN;
-        # the anchor remains on the ground via the feeder link).
+        # NTN member: resolve the next service attachment, then classify it through
+        # the same layer DAG as terrestrial and federation moves.
         if ntn !== nothing
             sim_state.ntn_total_ticks += 1
             d_terr = new_gnb == 0 ? Inf :
                 haversine_distance(current_loc, topology.gnb_locations[new_gnb])
+            sat = 0
             if d_terr > ntn.r_terr_km
-                # Sim time is Float64 in a numeric ConcurrentSim; narrow the
-                # Union{Float64,DateTime} that `now` is typed as so the call is
-                # type-stable (JET flagged Float64(::DateTime) on the dead branch).
                 positions_at!(ntn, now(env)::Float64)
                 sat, _ = best_satellite(ntn, current_loc)
-                if sat != 0
-                    if serving_sat == 0
-                        charge_ntn_crossing!(sim_state, num_sessions)
-                        sim_state.ntn_attach_events += 1
-                    elseif sat != serving_sat
-                        charge_ntn_sat_handover!(sim_state)
-                    end
-                    serving_sat = sat
-                    sim_state.ntn_serving_ticks += 1
-                    continue
-                end
             end
-            if serving_sat != 0
-                # Back under terrestrial coverage (or no satellite visible):
-                # NTN → terrestrial crossing, then normal terrestrial handling.
-                charge_ntn_crossing!(sim_state, num_sessions)
-                sim_state.ntn_return_events += 1
+
+            if d_terr > ntn.r_terr_km && sat == 0
+                # Neither access exists. Do not invent a terrestrial return event.
+                if service_mode == :terrestrial &&
+                   haskey(topology.graph, (:Agent, user_id), (:gNB, current_gnb))
+                    delete!(topology.graph, (:Agent, user_id), (:gNB, current_gnb))
+                end
+                service_mode = :outage
                 serving_sat = 0
+                sim_state.ntn_outage_ticks += 1
+                continue
+            elseif sat != 0
+                next_attachment = ntn_attachment(ntn, sat)
+                changed = service_mode != :satellite || sat != serving_sat
+                if service_mode == :terrestrial
+                    dispatch_ntn_move!(sim_state, ntn,
+                                       current_attachment::Attachment, next_attachment;
+                                       num_sessions = num_sessions)
+                    sim_state.ntn_attach_events += 1
+                    if haskey(topology.graph, (:Agent, user_id), (:gNB, current_gnb))
+                        delete!(topology.graph, (:Agent, user_id), (:gNB, current_gnb))
+                    end
+                elseif service_mode == :satellite && sat != serving_sat
+                    dispatch_ntn_move!(sim_state, ntn,
+                                       current_attachment::Attachment, next_attachment;
+                                       num_sessions = num_sessions)
+                end
+                if changed
+                    agent_sessions = migrate_session_contexts!(sim_state, agent_sessions,
+                                                               current_upf, current_upf,
+                                                               next_attachment.domain_id,
+                                                               ntn.operator_id)
+                    if service_mode == :outage
+                        sim_state.core_writes_5g +=
+                            Int64(num_sessions) * Int64(sim_state.config.scale_factor)
+                    end
+                end
+                current_attachment = next_attachment
+                current_domain = next_attachment.domain_id
+                current_operator = ntn.operator_id
+                service_mode = :satellite
+                serving_sat = sat
+                sim_state.ntn_serving_ticks += 1
+                continue
+            elseif service_mode != :terrestrial
+                # Restore terrestrial service. A satellite return is a member
+                # crossing; outage recovery has no source attachment to classify.
+                next_attachment = attachment_of(sim_state.layer_stack::LayerStack,
+                                                topology, new_gnb)
+                if service_mode == :satellite
+                    dispatch_ntn_move!(sim_state, ntn,
+                                       current_attachment::Attachment, next_attachment;
+                                       num_sessions = num_sessions)
+                    sim_state.ntn_return_events += 1
+                end
+                next_upf = topology.gnb_to_upf_map[new_gnb]
+                next_operator = serving_operator(topology, new_gnb)
+                agent_sessions = migrate_session_contexts!(sim_state, agent_sessions,
+                                                           current_upf, next_upf,
+                                                           next_attachment.domain_id,
+                                                           next_operator)
+                if service_mode == :outage
+                    sim_state.core_writes_5g +=
+                        Int64(num_sessions) * Int64(sim_state.config.scale_factor)
+                end
+                if !haskey(topology.graph, (:Agent, user_id), (:gNB, new_gnb))
+                    d = haversine_distance(current_loc, topology.gnb_locations[new_gnb])
+                    add_edge!(topology.graph, (:Agent, user_id), (:gNB, new_gnb), d)
+                end
+                current_gnb = new_gnb
+                current_upf = next_upf
+                current_domain = next_attachment.domain_id
+                current_operator = next_operator
+                current_attachment = next_attachment
+                service_mode = :terrestrial
+                serving_sat = 0
+                continue
             end
         end
 
@@ -226,6 +288,9 @@ reproduce bit-for-bit when `mobility.enabled = false`.
         # border crossing and missed the crossing back home — caught by the
         # layer-DAG observation, which recomputes both ends per move.
         current_operator = new_operator
+        current_attachment !== nothing &&
+            (current_attachment = attachment_of(sim_state.layer_stack::LayerStack,
+                                                topology, new_gnb))
         @debug "User $user_id handover: gNB $(current_gnb) -> $(new_gnb), UPF -> $(new_upf) at $(now(env))"
     end
 end
@@ -249,4 +314,3 @@ end
         @yield @process lifecycle_mmtc(env, user_id, sim_state, topology)
     end
 end
-
