@@ -30,6 +30,8 @@ member's border is a satellite, an exchange's border is another border.
 `add_federation_layer!(stack, lowers)` stacks further layers (exchange layers, a
 root over exchanges — the N+1/N+2 case). `add_member_layer!` + `enroll!` add a
 member after the fact (e.g. an NTN constellation) — O(1) per join.
+`install_ntn_member!` applies both operations to the live simulation: every
+satellite is a domain inside one constellation member, enrolled once at the root.
 
 The hierarchy demo (`runs/hierarchy.jl`): members 1,3,4 → `exchange-es`;
 members 2,5 → `exchange-pt`; both exchanges → `eu-root`. Three levels.
@@ -55,8 +57,11 @@ wrote yet (a continent layer = climb 3).
 `charge_move!` walking this rule reproduces the legacy `dispatch_handover!` σ
 counters **exactly** (asserted in `test/LayerTests.jl`) — the generalization is a
 provable superset, not a rewrite of the paper's numbers. In the live loop,
-`observe_move!` records the crossing climb depth into `SimGlobalState.ho_climb`
-(observation only; σ charging stays with the legacy dispatch).
+`observe_move!` records the crossing climb depth into `SimGlobalState.ho_climb`.
+Terrestrial moves retain legacy charging; `dispatch_ntn_move!` uses the same
+classifier and writes dedicated NTN reporting buckets. Thus terrestrial-to-NTN is
+a member crossing and satellite-to-satellite is an inter-domain move inside that
+member; NTN does not define another classification branch.
 
 ## Connectivity: two graphs per layer (do not conflate)
 

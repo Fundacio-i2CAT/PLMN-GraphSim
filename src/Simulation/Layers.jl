@@ -502,9 +502,15 @@ function observe_move!(sim_state::SimGlobalState, topology::NetworkTopology,
                        old_gnb::Int, new_gnb::Int)
     stack = sim_state.layer_stack
     stack === nothing && return nothing
-    r = classify_move(stack::LayerStack,
-                      attachment_of(stack, topology, old_gnb),
-                      attachment_of(stack, topology, new_gnb))
+    return observe_move!(sim_state, stack::LayerStack,
+                         attachment_of(stack, topology, old_gnb),
+                         attachment_of(stack, topology, new_gnb))
+end
+
+"Classify two explicit attachments and record their federation climb depth."
+function observe_move!(sim_state::SimGlobalState, stack::LayerStack,
+                       old::Attachment, new::Attachment)
+    r = classify_move(stack, old, new)
     if r.class == :crossing
         while length(sim_state.ho_climb) < r.climb
             push!(sim_state.ho_climb, Int64(0))

@@ -82,6 +82,28 @@ Returns the new vector of SessionContext5G with updated metadata.
 const SIGMA_ROAM_5G_REESTABLISH = Int64(3250)
 const SIGMA_ROAM_5G_IDEAL_HO    = Int64(1300)
 const SIGMA_ROAM_RUPA_ENTRY     = Int64(450)
+
+"Move an agent's session contexts between serving domains without charging an event."
+function migrate_session_contexts!(sim_state::SimGlobalState,
+                                   agent_sessions::Vector{SessionContext5G},
+                                   old_upf::Int, new_upf::Int,
+                                   new_domain_id::Int, new_operator_id::Int)
+    isempty(agent_sessions) && return agent_sessions
+    filter!(s -> !(s in agent_sessions), sim_state.upf_sessions_5g[old_upf])
+    new_sessions = Vector{SessionContext5G}(undef, length(agent_sessions))
+    for i in eachindex(agent_sessions)
+        ctx = agent_sessions[i]
+        metadata = SessionSimMetadata(new_upf, ctx.metadata.anchor_upf_index,
+                                      new_domain_id, new_operator_id)
+        forwarding = ForwardingState5G(rand(UInt32), rand(UInt32),
+                                       ctx.forwarding.ul_far, ctx.forwarding.dl_far)
+        new_ctx = SessionContext5G(forwarding, metadata)
+        push!(sim_state.upf_sessions_5g[new_upf], new_ctx)
+        new_sessions[i] = new_ctx
+    end
+    return new_sessions
+end
+
 function handle_handover_5g!(sim_state::SimGlobalState,
                              topology::NetworkTopology,
                              agent_sessions::Vector{SessionContext5G},
@@ -132,28 +154,10 @@ function handle_handover_5g!(sim_state::SimGlobalState,
         600
     end
 
-    # Remove the agent's sessions from old UPF
-    old_list = sim_state.upf_sessions_5g[old_upf]
-    filter!(s -> !(s in agent_sessions), old_list)
-
-    # Re-establish sessions at new UPF with updated metadata
-    new_sessions = Vector{SessionContext5G}(undef, length(agent_sessions))
-    for i in eachindex(agent_sessions)
-        ctx = agent_sessions[i]
-        # SSC mode 1: the PSA anchor is PINNED for the session lifetime — it does NOT
-        # change when the serving edge UPF changes (TS 23.501 §5.6.9). Only the
-        # serving UPF (new_upf) and domain update; the anchor stays as established.
-        pinned_anchor = ctx.metadata.anchor_upf_index
-        new_metadata = SessionSimMetadata(new_upf, pinned_anchor, new_domain_id, new_operator_id)
-        new_forwarding = ForwardingState5G(
-            rand(UInt32), rand(UInt32),  # New TEIDs
-            ctx.forwarding.ul_far,
-            ctx.forwarding.dl_far
-        )
-        new_ctx = SessionContext5G(new_forwarding, new_metadata)
-        push!(sim_state.upf_sessions_5g[new_upf], new_ctx)
-        new_sessions[i] = new_ctx
-    end
+    # SSC mode 1 preserves the PSA anchor while the serving context moves.
+    new_sessions = migrate_session_contexts!(sim_state, agent_sessions,
+                                             old_upf, new_upf,
+                                             new_domain_id, new_operator_id)
 
     # Core forwarding-state churn: every session's per-session tunnel state
     # (TEID/FAR/PDR) is (re)written at the serving UPF for this handover (L1 N3

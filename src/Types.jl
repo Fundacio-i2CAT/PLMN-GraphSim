@@ -278,9 +278,9 @@ mutable struct SimGlobalState
     # ntn: Union{Nothing, Simulation.Constellation} (Any to avoid a module cycle);
     # nothing = NTN disabled. Crossings terrestrial↔NTN follow the same B7a
     # semantics as any member crossing but live in their OWN buckets so §7.4 roam
-    # counters stay clean. Satellite→satellite switches (the network moving under
-    # the UE) are N2-class for 5G (NG-RAN node change, TS 23.501 §5.4.10) vs one
-    # renumber for RUPA.
+    # counters stay clean. Satellite-to-satellite switches (the network moving
+    # under the UE) are evaluated as Xn/N2 sensitivity cases (TS 23.501
+    # Sec. 5.4.14.3) versus one renumber for RUPA.
     ntn::Any
     ntn_attach_events::Int64             # terrestrial → satellite crossings
     ntn_return_events::Int64             # satellite → terrestrial crossings
@@ -292,6 +292,7 @@ mutable struct SimGlobalState
     ntn_session_breaks_5g::Int64         # breaks at crossings (:reestablish only)
     ntn_serving_ticks::Int64             # agent-ticks served by the satellite member
     ntn_total_ticks::Int64               # all mobile agent-ticks (serving fraction)
+    ntn_outage_ticks::Int64              # no terrestrial or qualifying satellite service
 
     # --- Graph-of-graphs layer stack (recursive internetworking) ---
     # layer_stack: Union{Nothing, Simulation.LayerStack} (Any to avoid module
@@ -328,7 +329,7 @@ SimGlobalState(config, upf_sessions_5g, forwarding_tables_6grupa,
                    Int64[], Int64[], Int64[],
                    0.0, 0.0, Int64(0),
                    nothing, Int64(0), Int64(0), Int64(0), Int64(0), Int64(0),
-                   Int64(0), Int64(0), Int64(0), Int64(0), Int64(0),
+                   Int64(0), Int64(0), Int64(0), Int64(0), Int64(0), Int64(0),
                    nothing, Int64[])
 
 struct GUPFState6GRUPA

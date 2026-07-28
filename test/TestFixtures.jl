@@ -28,7 +28,7 @@ const SIGMA_RUPA           = 200     # 6G-RUPA renumber — FLAT: intra == inter
 const SIGMA_ROAM_5G_REEST  = 3250    # crossing, :reestablish (+ break + acct reloc)
 const SIGMA_ROAM_5G_IDEAL  = 1300    # crossing, :ideal_ho (no break)
 const SIGMA_ROAM_RUPA      = 450     # crossing entry (then SIGMA_RUPA per move)
-const SIGMA_NTN_SATHO_5G   = 1150    # satellite→satellite switch (NG-RAN node change)
+const SIGMA_NTN_SATHO_5G   = 1150    # satellite switch N2 endpoint; Xn endpoint = SIGMA_XN
 const SIGMA_NTN_SATHO_RUPA = 200
 
 # --- topology builders ---

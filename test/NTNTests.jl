@@ -2,6 +2,9 @@ using Test
 using DesJulia6gRupa
 using DesJulia6gRupa.Simulation
 using DesJulia6gRupa.Types
+using DesJulia6gRupa.DataLoading
+using ConcurrentSim: ConcurrentSim, Process, @process
+using Random
 
 if !isdefined(Main, :TestFixtures)
     include("TestFixtures.jl")
@@ -85,10 +88,12 @@ const TLE_STARLINK = joinpath(pkgdir(DesJulia6gRupa), "data", "ntn",
         c = Simulation.load_constellation(TLE_STARLINK; operator_id = 9)
         Simulation.positions_at!(c, 0.0)
         lat0 = c.cache_lat[1]
-        Simulation.positions_at!(c, 0.0)
+        Simulation.positions_at!(c, 0.9)
         @test c.cache_lat[1] == lat0
-        Simulation.positions_at!(c, 300.0)
+        @test c.cache_t == 0.0
+        Simulation.positions_at!(c, 1.1)
         @test c.cache_lat[1] != lat0
+        @test c.cache_t == 1.0
     end
 
     @testset "NTN charge functions: crossing + intra-constellation handover" begin
@@ -123,5 +128,103 @@ const TLE_STARLINK = joinpath(pkgdir(DesJulia6gRupa), "data", "ntn",
         @test s.ntn_sat_handovers == 1
         @test s.sigma_ntn_ho_5g == SIGMA_NTN_SATHO_5G
         @test s.sigma_ntn_ho_rupa == SIGMA_NTN_SATHO_RUPA
+
+        Simulation.charge_ntn_sat_handover!(s2; semantics = :xn)
+        @test s2.sigma_ntn_ho_5g == SIGMA_XN
+        @test_throws ArgumentError Simulation.charge_ntn_sat_handover!(s2; semantics = :invalid)
+    end
+
+    @testset "live NTN member uses graph-of-graphs classification" begin
+        topology = DataLoading.compose_topologies([
+            op_field(2, -4.0, 1000, "a"),
+            op_field(2, -7.0, 1000, "b"),
+        ])
+        config = SimConfig(1, 1, 10, 20.0, 10.0, 0.001, :two_tier, 2, 1.0,
+                           MobilityConfig(true, 1.0, NoMobility()),
+                           RoamingConfig(:reestablish, 0.0))
+        state = Simulation.init_global_state_for_simulation(topology, config)
+        c = Simulation.load_constellation(TLE_STARLINK; operator_id = 9,
+                                          r_terr_km = 0.0,
+                                          handover_semantics = :n2)
+        member = Simulation.install_ntn_member!(state, topology, c)
+        @test state.ntn === c
+        @test c.member_layer_id == member
+        @test state.layer_stack.member_of[9] == member
+
+        terrestrial = Simulation.attachment_of(state.layer_stack, topology, 1)
+        satellite_1 = Simulation.ntn_attachment(c, 1)
+        satellite_2 = Simulation.ntn_attachment(c, 2)
+        crossing = Simulation.dispatch_ntn_move!(state, c, terrestrial, satellite_1)
+        @test crossing.class == :crossing && crossing.climb == 1
+        @test state.ho_climb == [1]
+        internal = Simulation.dispatch_ntn_move!(state, c, satellite_1, satellite_2)
+        @test internal.class == :inter && internal.climb == 0
+        @test state.ntn_sat_handovers == 1
+        @test state.handover_count == 2
+        @test state.core_writes_5g == 2 * config.scale_factor
+
+        c.operator_id = 1
+        @test_throws ArgumentError Simulation.install_ntn_member!(state, topology, c)
+    end
+
+    @testset "live lifecycle distinguishes satellite service from outage" begin
+        function run_one(min_elevation; recover_to = nothing)
+            topology = DataLoading.compose_topologies([
+                op_field(2, -4.0, 1000, "a"),
+                op_field(2, -7.0, 1000, "b"),
+            ])
+            config = SimConfig(1, 1, 1, 6.0, 10.0, 0.001, :two_tier, 2, 1.0,
+                               MobilityConfig(true, 1.0, NoMobility()),
+                               RoamingConfig(:reestablish, 0.0))
+            state = Simulation.init_global_state_for_simulation(topology, config)
+            c = Simulation.load_constellation(TLE_STARLINK; operator_id = 9,
+                                              min_elevation_deg = min_elevation,
+                                              r_terr_km = 0.0)
+            Simulation.install_ntn_member!(state, topology, c)
+            Random.seed!(42)
+            env = ConcurrentSim.Simulation()
+            @process Simulation.user_lifecycle(env, 1, state, topology, eMBB)
+            if recover_to !== nothing
+                ConcurrentSim.run(env, 3.0)
+                if recover_to == :terrestrial
+                    c.r_terr_km = Inf
+                elseif recover_to == :satellite
+                    c.min_elevation_deg = 25.0
+                else
+                    error("unknown recovery target $recover_to")
+                end
+            end
+            ConcurrentSim.run(env, config.duration)
+            return state, topology
+        end
+
+        served, served_topology = run_one(25.0)
+        @test served.ntn_attach_events == 1
+        @test served.ntn_serving_ticks > 0
+        @test served.ntn_outage_ticks == 0
+        @test sum(served.ho_climb; init = 0) == served.ntn_attach_events + served.ntn_return_events
+        @test all(!haskey(served_topology.graph, (:Agent, 1), (:gNB, g))
+                  for g in eachindex(served_topology.gnb_locations))
+
+        outage, _ = run_one(91.0)
+        @test outage.ntn_attach_events == 0
+        @test outage.ntn_return_events == 0
+        @test outage.ntn_serving_ticks == 0
+        @test outage.ntn_outage_ticks > 0
+
+        recovered, recovered_topology = run_one(91.0; recover_to = :terrestrial)
+        @test recovered.ntn_outage_ticks > 0
+        @test recovered.handover_count == 0
+        @test recovered.core_writes_5g == 1
+        @test any(haskey(recovered_topology.graph, (:Agent, 1), (:gNB, g))
+                  for g in eachindex(recovered_topology.gnb_locations))
+
+        recovered_sat, recovered_sat_topology = run_one(91.0; recover_to = :satellite)
+        @test recovered_sat.ntn_outage_ticks > 0
+        @test recovered_sat.ntn_serving_ticks > 0
+        @test recovered_sat.handover_count == 0
+        @test recovered_sat.core_writes_5g == 1
+        @test all(!haskey(recovered_sat_topology.graph, (:Agent, 1), (:gNB, g))
+                  for g in eachindex(recovered_sat_topology.gnb_locations))
     end
 end
