@@ -2,7 +2,7 @@
 # Anchor-count sensitivity: how many session anchors (PSAs) does a country need,
 # and what does the choice actually change?
 #
-#   julia --project main.jl anchor_sweep                 # spain + usa, 2..40 anchors
+#   julia --project main.jl anchor_sweep                 # all six countries, 2..40 anchors
 #   julia --project main.jl anchor_sweep spain 2,5,10,20 # one country, chosen counts
 #   julia --project main.jl anchor_sweep all 2,5 3000 300  # smoke
 #
@@ -33,8 +33,12 @@ const ADOPTION = 0.82
 
 # country, subdir, csvs, operator, mnc, edge UPFs, population
 const TARGETS = [
-    ("spain", "spain", ["opencellid/214.csv"], "Movistar", 7, 52, 49_442_844),
-    ("usa",   "usa",   ["opencellid/310.csv", "opencellid/311.csv"], "Verizon", 480, 817, 335_000_000),
+    ("spain",    "spain",    ["opencellid/214.csv"], "Movistar", 7,   52,  49_442_844),
+    ("usa",      "usa",      ["opencellid/310.csv", "opencellid/311.csv"], "Verizon", 480, 817, 335_000_000),
+    ("portugal", "portugal", ["opencellid/268.csv"], "MEO",      6,   18,  9_855_909),
+    ("france",   "france",   ["opencellid/208.csv"], "Orange",   1,   96,  66_165_815),
+    ("canada",   "canada",   ["opencellid/302.csv"], "Telus",    220, 126, 36_991_981),
+    ("mexico",   "mexico",   ["opencellid/334.csv"], "Telcel",   20,  445, 125_822_502),
 ]
 
 const MODELS = [

@@ -75,6 +75,7 @@ nav = [
       { "Under the Hood" = "simulation-details/how-simulator-works.md" }
     ]},
     { "Algorithms & Models" = [
+      { "Signaling Cost Model" = "simulation-details/signaling-cost-model.md" },
       { "UPF Placement Strategy" = "simulation-details/k-means.md" },
       { "Mobility Models" = "simulation-details/mobility-models.md" },
       { "eMBB Focus" = "simulation-details/embb.md" },
