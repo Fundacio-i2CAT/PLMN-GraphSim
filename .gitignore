@@ -23,3 +23,6 @@ data.zip
 data/france/
 data/canada/
 data/mexico/
+
+# Orphaned 104 MB viz artifact, regenerate with runs/trajectories.jl if needed
+viz/data/trajectories.json
