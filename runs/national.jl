@@ -38,6 +38,29 @@ const PROFILES = Dict(
     # Iberia roaming phase 2: MEO (268-06, 6,791 cells; Vodafone PT 268-01 has 7,695),
     # 18 mainland distritos, INE Censos 2021 mainland population (CAOP Continente cut).
     "portugal" => ("portugal", ["opencellid/268.csv"],              6,   18, 2, 9_855_909),
+    # Second wave, same rule: edge UPFs = second-level admin units above 50k
+    # inhabitants, PSAs = round(pop / 10M) clamped to [2, 5]. Populations are the
+    # sums of the municipal tables actually loaded, not headline national figures.
+    #   france = metropolitan France, Orange (208-01, 116,993 cells; Bouygues 208-20
+    #            has 94,931, Free 208-15 87,410, SFR 208-10 86,758), 96 departments,
+    #            INSEE legal population over 34,746 communes.
+    #   canada = Telus (302-220, 20,077 cells; Rogers 302-720 18,303, Bell 302-610
+    #            11,237), 126 census divisions above 50k, StatCan 2021 census over
+    #            4,830 census subdivisions.
+    #   mexico = Telcel (334-20, 163,116 cells; Movistar 334-03 14,146, AT&T MX
+    #            334-50 12,461), 445 municipios above 50k, INEGI Censo 2020 ITER.
+    "france"   => ("france", ["opencellid/208.csv"],                1,   96, 5, 66_165_815),
+    # france_anfr = ANFR BNIR declared sites for the same operator. OpenCellID rows
+    # are cells, ANFR rows are sites, so this field is about 3.5x sparser (Orange:
+    # 116,994 cells against 33,665 sites) and is the site-level counterpart of the
+    # crowdsourced field, in the same role the FCC registry plays for the USA.
+    "france_anfr" => ("france", ["anfr/208.csv"],                   1,   96, 5, 66_165_815),
+    "canada"   => ("canada", ["opencellid/302.csv"],              220,  126, 4, 36_991_981),
+    # canada_ised = ISED Terrestrial Spectrum Licence Site Data Extract, the sites
+    # carriers must declare under their area licences. Official counterpart of the
+    # OpenCellID field, in the same role as usa_asr and france_anfr.
+    "canada_ised" => ("canada", ["ised/302.csv"],                 220,  126, 4, 36_991_981),
+    "mexico"   => ("mexico", ["opencellid/334.csv"],               20,  445, 5, 125_822_502),
 )
 const NUM_PSA = PROFILES[COUNTRY][5]
 

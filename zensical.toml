@@ -47,7 +47,11 @@ nav = [
     { "Data Preparation" = [
       { "Overview" = "agents/getting-data-ready.md" },
       { "Spain" = "agents/countries/spain.md" },
-      { "USA" = "agents/countries/usa.md" }
+      { "USA" = "agents/countries/usa.md" },
+      { "France" = "agents/countries/france.md" },
+      { "Canada" = "agents/countries/canada.md" },
+      { "Mexico" = "agents/countries/mexico.md" },
+      { "Portugal" = "agents/countries/portugal.md" }
     ]},
     { "Configuration" = "simulation-details/simulation-configuration.md" }
   ]},

@@ -19,3 +19,7 @@ data.zip
 # Static frontend generated bundles
 /frontend/data/*.json
 !/frontend/data/manifest.json
+
+data/france/
+data/canada/
+data/mexico/
