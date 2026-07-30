@@ -161,13 +161,28 @@ function DesJulia6gRupa.Plotting.plot_topology_map(
 end
 
 function DesJulia6gRupa.Plotting.plot_network_graph(
-    topology::NetworkTopology, 
-    operator_name::String, 
+    topology::NetworkTopology,
+    operator_name::String,
     scenario_name::String;
     agent_locations::Vector{GeoPoint} = GeoPoint[],
-    output_dir::String = joinpath(@__DIR__, "../images")
+    output_dir::String = joinpath(@__DIR__, "../images"),
+    show_legend::Bool = true,
+    marker_scale::Union{Nothing,Real} = nothing,
+    file_suffix::String = ""
 )
     println("Generating Graph Visualization for $operator_name...")
+
+    # Marker and line sizes were originally tuned by hand for a ~50-cluster field.
+    # Applied unchanged to a 817-cluster one they overlap into a solid mass, which
+    # is why dense countries used to be unreadable. Scale them by cluster and gNB
+    # density instead, so the same call renders a coarse and a fine partition at
+    # comparable ink coverage. Pass marker_scale to override.
+    num_upfs = length(topology.upf_locations)
+    num_gnbs = length(topology.gnb_locations)
+    ms = marker_scale === nothing ?
+         clamp(sqrt(50 / max(num_upfs, 1)), 0.22, 1.6) : Float64(marker_scale)
+    gs = clamp(sqrt(46_000 / max(num_gnbs, 1)), 0.35, 1.6)
+    println("  density scaling: $(num_upfs) clusters, $(num_gnbs) gNBs -> marker x$(round(ms, digits=2)), gnb x$(round(gs, digits=2))")
     
     # Determine Plot Limits from Data
     # Include agents in limits calculation if present
@@ -181,7 +196,8 @@ function DesJulia6gRupa.Plotting.plot_network_graph(
         # title="6G-RUPA Network Graph: $operator_name",
         xlabel="Longitude",
         ylabel="Latitude",
-        legend=false,
+        legend = show_legend ? :bottomleft : false,
+        legendfontsize=16,
         size=(2400, 2000),
         dpi=300,
         aspect_ratio=:equal,
@@ -264,10 +280,11 @@ function DesJulia6gRupa.Plotting.plot_network_graph(
         end
 
         # Plot this cluster's edges
-        plot!(p, seg_lons, seg_lats, 
-            linecolor=cluster_colors[upf_idx], 
-            linewidth=0.5, 
-            alpha=0.6
+        plot!(p, seg_lons, seg_lats,
+            label="",
+            linecolor=cluster_colors[upf_idx],
+            linewidth=max(0.5 * ms, 0.35),
+            alpha=0.75
         )
     end
 
@@ -289,9 +306,9 @@ function DesJulia6gRupa.Plotting.plot_network_graph(
         plot!(p, n9_lons, n9_lats,
             label="N9 Interface",
             linecolor=:purple,
-            linewidth=2.0,
+            linewidth=max(2.0 * ms, 0.6),
             linestyle=:dash,
-            alpha=0.8
+            alpha=clamp(0.8 * ms, 0.18, 0.8)
         )
     end
 
@@ -317,15 +334,15 @@ function DesJulia6gRupa.Plotting.plot_network_graph(
 
     scatter!(p, gnb_lons, gnb_lats,
         label="gNBs",
-        markersize=2,
+        markersize=2 * gs,
         markercolor=:grey,
-        markeralpha=0.5,
+        markeralpha=clamp(0.5 * gs, 0.18, 0.5),
         markerstrokewidth=0
     )
 
     scatter!(p, upf_lons, upf_lats,
-        label="Edge UPFs",
-        markersize=6,
+        label="Edge UPFs ($num_upfs)",
+        markersize=6 * ms,
         markercolor=:black,
         markershape=:rect,
         markerstrokewidth=1
@@ -336,8 +353,8 @@ function DesJulia6gRupa.Plotting.plot_network_graph(
         cen_lats = [p.lat for p in topology.centralized_upf_locations]
         
         scatter!(p, cen_lons, cen_lats,
-            label="Centralized UPFs",
-            markersize=10,
+            label="Centralized UPFs ($(length(topology.centralized_upf_locations)))",
+            markersize=10 * ms,
             markercolor=:purple,
             markershape=:diamond,
             markerstrokewidth=2
@@ -348,12 +365,12 @@ function DesJulia6gRupa.Plotting.plot_network_graph(
     if !isdir(output_dir)
         mkpath(output_dir)
     end
-    output_filename_pdf = "graph_viz_$(lowercase(operator_name))_$(lowercase(scenario_name)).pdf"
+    output_filename_pdf = "graph_viz_$(lowercase(operator_name))_$(lowercase(scenario_name))$(file_suffix).pdf"
     output_path_pdf = joinpath(output_dir, output_filename_pdf)
     savefig(p, output_path_pdf)
     println("Graph visualization saved to $output_path_pdf")
 
-    output_filename_png = "graph_viz_$(lowercase(operator_name))_$(lowercase(scenario_name)).png"
+    output_filename_png = "graph_viz_$(lowercase(operator_name))_$(lowercase(scenario_name))$(file_suffix).png"
     output_path_png = joinpath(output_dir, output_filename_png)
     savefig(p, output_path_png)
     println("Graph visualization saved to $output_path_png")
