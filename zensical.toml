@@ -47,7 +47,11 @@ nav = [
     { "Data Preparation" = [
       { "Overview" = "agents/getting-data-ready.md" },
       { "Spain" = "agents/countries/spain.md" },
-      { "USA" = "agents/countries/usa.md" }
+      { "USA" = "agents/countries/usa.md" },
+      { "France" = "agents/countries/france.md" },
+      { "Canada" = "agents/countries/canada.md" },
+      { "Mexico" = "agents/countries/mexico.md" },
+      { "Portugal" = "agents/countries/portugal.md" }
     ]},
     { "Configuration" = "simulation-details/simulation-configuration.md" }
   ]},
@@ -71,6 +75,8 @@ nav = [
       { "Under the Hood" = "simulation-details/how-simulator-works.md" }
     ]},
     { "Algorithms & Models" = [
+      { "Signaling Cost Model" = "simulation-details/signaling-cost-model.md" },
+      { "Handover Sequence Diagrams" = "simulation-details/handover-sequence-diagrams.md" },
       { "UPF Placement Strategy" = "simulation-details/k-means.md" },
       { "Mobility Models" = "simulation-details/mobility-models.md" },
       { "eMBB Focus" = "simulation-details/embb.md" },

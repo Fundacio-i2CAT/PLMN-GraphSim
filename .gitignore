@@ -19,3 +19,10 @@ data.zip
 # Static frontend generated bundles
 /frontend/data/*.json
 !/frontend/data/manifest.json
+
+data/france/
+data/canada/
+data/mexico/
+
+# Orphaned 104 MB viz artifact, regenerate with runs/trajectories.jl if needed
+viz/data/trajectories.json

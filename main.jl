@@ -10,8 +10,8 @@
 #   julia --project main.jl federation reestablish 0 1200 all
 #   julia --project main.jl trajectories
 #
-# Runs live in runs/*.jl (one file per evaluation; legacy one-offs under
-# runs/legacy/, runnable by name too). Each run script documents its own
+# Runs live in runs/*.jl (one file per evaluation). A runs/legacy/ directory is
+# still discovered if present, but is no longer shipped. Each run script documents its own
 # arguments in its header comment, shown by the menu and by `list`.
 
 using Pkg
