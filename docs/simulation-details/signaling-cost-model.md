@@ -8,6 +8,10 @@ reader can recompute or contest any of them without rerunning anything.
 That split is deliberate and is what makes the results checkable: simulation supplies
 the **event mix**, analysis supplies the **per-event cost**, and the two never touch.
 
+The procedure behind each constant on this page is drawn out message by message in
+[Handover Sequence Diagrams](handover-sequence-diagrams.md), which is where to check a
+byte count against the message set it came from.
+
 ## What $\sigma$ Is
 
 $\sigma$ is the transient control-plane traffic exchanged to complete one mobility
