@@ -72,7 +72,8 @@ nav = [
   ]},
   { "Simulator in-depth" = [
     { "Core Concepts" = [
-      { "Under the Hood" = "simulation-details/how-simulator-works.md" }
+      { "Under the Hood" = "simulation-details/how-simulator-works.md" },
+      { "6G-RUPA Graph of Graphs" = "simulation-details/graph-of-graphs.md" }
     ]},
     { "Algorithms & Models" = [
       { "Signaling Cost Model" = "simulation-details/signaling-cost-model.md" },

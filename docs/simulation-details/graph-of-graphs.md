@@ -1,8 +1,50 @@
-# Graph-of-graphs layer model
+# 6G-RUPA graph of graphs
 
-How `src/Simulation/Layers.jl` represents a federation as a DAG of layers, and
-how handover classification generalizes. Terminology is 6G-RUPA's: **GUPF** (not
-"IPC process"), **layer** (not "DIF").
+6G-RUPA does not model a network as one flat, global graph. It composes many
+bounded graphs recursively:
+
+1. Each **layer** is a graph. Its vertices are GUPF instances and its edges are
+   flows provided by a lower layer.
+2. The **layer stack** is another graph: a directed acyclic graph (DAG) whose
+   vertices are layers and whose links record which lower layers participate in
+   each upper federation layer.
+3. A physical border node connects levels by hosting one GUPF instance in each
+   layer. Each instance has a separate, layer-scoped forwarding table.
+
+That recursive composition is the **graph of graphs**. It lets the same model
+represent an operator network, an operator exchange, a continental federation,
+or further levels without introducing a new kind of network object at each
+scope.
+
+```mermaid
+flowchart BT
+    M1["Movistar member layer"] --> ES["Spain exchange layer"]
+    M2["Orange member layer"] --> ES
+    M3["Vodafone ES member layer"] --> ES
+    M4["MEO member layer"] --> PT["Portugal exchange layer"]
+    M5["Vodafone PT member layer"] --> PT
+    ES --> ROOT["European root layer"]
+    PT --> ROOT
+```
+
+An arrow means "the lower layer is enrolled in the upper layer." Every box is
+itself a graph of GUPFs. The diagram between boxes is the layer DAG.
+
+Terminology on this page is 6G-RUPA's: **GUPF** and **layer**.
+
+## Why this matters
+
+A flat model can distinguish movement inside one operator from movement across
+one operator border. It cannot naturally describe another level above that
+border. The graph-of-graphs model turns scope into a depth:
+
+- a move inside one edge domain stays in the current member layer;
+- a move between edge domains reaches the member layer;
+- a move between members of one exchange climbs to that exchange layer;
+- a move between exchanges climbs again to their first common parent.
+
+No new handover category is required when another federation level is added.
+Classification and topological aggregation both follow the same layer DAG.
 
 ## The four types
 
