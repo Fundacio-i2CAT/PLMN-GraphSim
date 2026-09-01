@@ -2,7 +2,20 @@
 
 Explore the different simulation scenarios available in the project.
 
+If you are looking for what the published runs actually measure — which run produced a
+figure, what it holds fixed, and what it is evidence for — start with
+[What Gets Evaluated](evaluation-runs.md).
+
 <div class="grid cards" markdown>
+
+-   :material-clipboard-check: **What Gets Evaluated**
+
+    ---
+
+    The six evaluation runs behind every reported number: what each varies, what it
+    controls for, and the known artifacts.
+
+    [:octicons-arrow-right-24: Read](evaluation-runs.md)
 
 -   :material-server: **Single-Tier Architecture**
 

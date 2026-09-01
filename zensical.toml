@@ -57,6 +57,7 @@ nav = [
   ]},
   { "Scenarios" = [
     "scenarios/index.md",
+    { "What Gets Evaluated" = "scenarios/evaluation-runs.md" },
     { "Single-Tier Architecture" = [
       "scenarios/single_tier_architecture/setup.md",
       "scenarios/single_tier_architecture/analysis.md"

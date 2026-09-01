@@ -139,13 +139,17 @@ inspects the RAN procedure.
 
 Depth names used from here on, keyed to what changes in the user plane:
 
-*   $d=1$, serving UPF unchanged. Only the N3 tunnel endpoint moves.
-*   $d=2$, serving/intermediate UPF changes, PSA preserved, SSC mode 1.
-*   $d=3$, PSA or anchor changes. SSC mode 2 or 3 only, a policy decision rather than a
-    geometric one.
-*   $d=4$, PLMN changes. Not a handover in the deployed default, a session rebuild.
+Each depth names what the move changes, and the depths ascend in reach. Depths 1 to 3
+stay within one operator; only $d=4$ crosses an operator boundary.
 
-## 3. 5G $d=1$, Serving UPF Unchanged
+*   $d=1$, the access tunnel endpoint changes. The serving UPF is unchanged.
+*   $d=2$, the serving or intermediate UPF changes, PSA preserved, SSC mode 1.
+*   $d=3$, the session anchor (PSA) changes. SSC mode 2 or 3 only, a policy decision
+    rather than a geometric one.
+*   $d=4$, the operator changes. Not a handover in the deployed default, a session
+    rebuild.
+
+## 3. 5G $d=1$, the Access Tunnel Endpoint Changes
 
 Xn path switch, TS 23.502 Sec. 4.9.1.2.2. The SMF decides the existing UPF can continue
 to serve, so only the AN tunnel endpoint is rewritten. $\sigma = 600$ B.
@@ -346,7 +350,7 @@ Spec anchors:
     under-charged, which makes the model conservative on exactly the procedure a sceptic
     would expect to have been inflated.
 
-## 6. 5G $d=3$, Anchor Relocation
+## 6. 5G $d=3$, the Session Anchor Changes
 
 Not a geometric mobility depth. Under the SSC mode 1 baseline the anchor is pinned by
 specification:
@@ -430,7 +434,7 @@ Spec anchors:
 *   **TS 23.502 Sec. 4.3.5.8**, handover path-switch followed by target PSA
     establishment.
 
-## 7. 5G $d=4$, the Inter-PLMN Border
+## 7. 5G $d=4$, the Operator Changes
 
 At a border the deployed default is not a handover. The UE reselects the PLMN and a new
 Home-Routed PDU session is built from scratch, so the flow breaks and the accounting

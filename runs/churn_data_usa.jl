@@ -7,9 +7,10 @@ using DesJulia6gRupa, DesJulia6gRupa.Types, ConcurrentSim, Random
 import DesJulia6gRupa.Simulation as DSim
 
 const SCALE = 1000
-const DURATION = 300.0
+const DURATION = parse(Float64, get(ARGS, 2, "1200"))
 const AGENTS = (1_000, 5_000, 25_000, 100_000, 274_700)
 const OUTPUT = get(ARGS, 1, joinpath(pkgdir(DesJulia6gRupa), "results", "churn-data-usa.csv"))
+const ONLY = lowercase(get(ARGS, 3, "all"))
 const BASE = joinpath(pkgdir(DesJulia6gRupa), "data", "usa")
 const TARGETS = (
     ("verizon-opencellid", ["opencellid/310.csv", "opencellid/311.csv"], 480),
@@ -40,6 +41,7 @@ end
 open(OUTPUT, "w") do io
     println(io, "field,agents,users,handovers,core_writes_5g,core_writes_rupa")
     for (field, files, operator) in TARGETS
+        ONLY != "all" && field != ONLY && continue
         topology = build(files, operator)
         for n_agents in AGENTS
             state = run_one(topology, n_agents)

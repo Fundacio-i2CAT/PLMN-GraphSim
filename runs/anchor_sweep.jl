@@ -13,9 +13,23 @@
 #
 # That is defensible only if the reported quantities are insensitive to it. This run
 # tests exactly that. sigma and the core-write columns should not move with the
-# anchor count, because both are set by the edge-UPF partition; rho should fall
-# monotonically as anchors are added, because a denser anchor set puts one nearer
-# the user. Anything else is a finding.
+# anchor count, because both are set by the edge-UPF partition. Confirmed: sigma
+# advantage stays within 66.84-68.64% across a 20x range in anchors, and 6G-RUPA
+# core writes are zero throughout.
+#
+# rho does move, and it moves upward. An earlier version of this comment predicted the
+# opposite, on the reasoning that a denser anchor set puts one nearer the user. It does
+# - but it does so for the optimal reference faster than for the pinned anchor, because
+# 5G fixes the session anchor at attach and never revisits it. rho is the penalty of
+# that pinning, so it grows as the anchor set gets denser. Read it as a cost of SSC-1,
+# not as a deployment-quality score.
+#
+# Caveat when reading the psa column: placement clamps to k = min(requested, #edge UPFs)
+# in perform_hierarchical_clustering, and the column records the request rather than the
+# deployment. At k = #edge UPFs every edge UPF becomes its own anchor, anchor_dist_opt
+# collapses to zero and rho degenerates into the full pinned-anchor distance. Portugal
+# (18 edge UPFs) hits this at 20 and 40; those rows are a boundary artifact, not trend
+# points.
 
 using DesJulia6gRupa
 using DesJulia6gRupa.Types
