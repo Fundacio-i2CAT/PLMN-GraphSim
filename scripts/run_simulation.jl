@@ -63,7 +63,7 @@ function is_scenario_valid_for_country(scenario_name, country_key)
     return true
 end
 
-function process_country(country_key, country_config, sim_config)
+function process_country(country_key, country_config, sim_config, seed)
     if !country_config["enabled"]
         return
     end
@@ -95,7 +95,7 @@ function process_country(country_key, country_config, sim_config)
                 op_id = op_data["id"]
                 op_name = titlecase(op_key)
                 try
-                    run_operator_simulation(op_name, op_id, num_upfs, scenario_name, sim_config, data_dir, mccs, effective_population)
+                    run_operator_simulation(op_name, op_id, num_upfs, scenario_name, sim_config, data_dir, mccs, effective_population; seed)
                 catch e
                     @error "Simulation failed for Operator: $op_name ($op_id) in Scenario: $scenario_name" exception=(e, catch_backtrace())
                 end
@@ -109,12 +109,13 @@ function run_all_scenarios()
     log_level = get(toml_data["simulation"], "log_level", "info")
     setup_logger(log_level)
     sim_config = create_sim_config(toml_data)
+    seed = get(toml_data["simulation"], "seed", nothing)
     @info "Loaded Configuration from config.toml"
     @info "Scale Factor: $(sim_config.scale_factor)"
     @info "Duration: $(sim_config.duration)"
     countries = toml_data["countries"]
     for (country_key, country_config) in countries
-        process_country(country_key, country_config, sim_config)
+        process_country(country_key, country_config, sim_config, seed)
     end
 end
 

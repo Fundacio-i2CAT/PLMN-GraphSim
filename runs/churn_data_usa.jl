@@ -39,13 +39,16 @@ function run_one(topology, n_agents)
 end
 
 open(OUTPUT, "w") do io
-    println(io, "field,agents,users,handovers,core_writes_5g,core_writes_rupa")
-    for (field, files, operator) in TARGETS
+    println(io, "field,topology_seed,simulation_seed,agents,users,handovers,core_writes_5g,core_writes_rupa")
+    for (target_index, (field, files, operator)) in enumerate(TARGETS)
         ONLY != "all" && field != ONLY && continue
+        topology_seed = 20260731 + 1_000_000 * target_index
+        Random.seed!(topology_seed)
         topology = build(files, operator)
         for n_agents in AGENTS
+            simulation_seed = 20260731 + n_agents
             state = run_one(topology, n_agents)
-            row = "$field,$n_agents,$(n_agents * SCALE),$(state.handover_count),$(state.core_writes_5g),$(state.core_writes_rupa)"
+            row = "$field,$topology_seed,$simulation_seed,$n_agents,$(n_agents * SCALE),$(state.handover_count),$(state.core_writes_5g),$(state.core_writes_rupa)"
             println(io, row)
             println(row)
             flush(io)

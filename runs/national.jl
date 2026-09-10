@@ -15,12 +15,14 @@ using DesJulia6gRupa
 using DesJulia6gRupa.Types
 using ConcurrentSim
 import DesJulia6gRupa.Simulation as DSim
+using Random
 
 #   julia --project main.jl national spain 0.05   # 5% inbound roamers (§7.4 phase-1)
 const COUNTRY = lowercase(get(ARGS, 1, "spain"))
 const ROAM = parse(Float64, get(ARGS, 2, "0.0"))  # roamer fraction (0 = legacy intra-PLMN run)
 const SCALE = 1000
 const ADOPTION = 0.82             # mobile_adoption_rate (config.toml)
+const BASE_SEED = 20260902
 
 # (data subdir, gNB csv files relative to data/<sub>, operator net id, #edge UPFs,
 #  #centralized PSAs, population)
@@ -130,16 +132,20 @@ function run_scenario(topology, nupf, name, model; n_agents, duration, dt)
 end
 
 println("Building $(uppercase(COUNTRY)) topology...")
+Random.seed!(BASE_SEED)
 topology, nupf = build_topology()
 NAG = national_agents()
 println("Topology: $(length(topology.gnb_locations)) gNBs, $(length(topology.upf_locations)) edge UPFs, $NUM_PSA PSAs")
 println("Agents: $NAG  (= $(PROFILES[COUNTRY][6]) pop x $ADOPTION adoption / $SCALE scale)")
 
 res = Any[]
+Random.seed!(BASE_SEED + 1)
 push!(res, run_scenario(topology, nupf, "Pedestrian 5km/h (RWP)",
         RandomWaypoint(5.0, 0.0, 2.0);   n_agents=NAG, duration=1200, dt=2))
+Random.seed!(BASE_SEED + 2)
 push!(res, run_scenario(topology, nupf, "Urban 50km/h (RWP)",
         RandomWaypoint(50.0, 0.0, 20.0); n_agents=NAG, duration=1200, dt=2))
+Random.seed!(BASE_SEED + 3)
 push!(res, run_scenario(topology, nupf, "Highway 120km/h (GaussMarkov)",
         GaussMarkov(120.0, 0.85, 5.0);   n_agents=NAG, duration=1200, dt=2))
 

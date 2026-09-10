@@ -52,7 +52,9 @@ julia --project=. -e 'using Pkg; Pkg.instantiate()'
 julia --project=. scripts/download_data.jl
 ```
 
-Spain and USA sample datasets are included under `data/`. The download script is useful when starting from a lean checkout or refreshing external artifacts.
+The script downloads the immutable version 1.0 release from CORA, requests each
+tabular file in its original CSV format, and verifies its SHA-256 digest. Large
+inputs remain outside Git under `data/`.
 
 ### Run The Interactive Simulator
 
@@ -90,7 +92,7 @@ Data follows this layout:
 
 | Path | Purpose |
 | --- | --- |
-| `data/<country>/opencellid/<mcc>.csv` | gNB / cell-site locations |
+| `data/<country>/opencellid/<mcc>.csv` | OpenCellID attachment-point records used as location proxies |
 | `data/<country>/municipalities.csv` | standardized municipality population and coordinates |
 | `data/<country>/regions.geojson` | municipality or county boundaries |
 | `data/processing_scripts/` | Python preprocessing tools for raw geographic datasets |

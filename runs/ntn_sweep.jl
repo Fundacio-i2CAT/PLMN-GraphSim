@@ -147,11 +147,13 @@ for (country, field, sub, csvs, oplabel, mnc, nedge, npsa, pop) in selected
     println("\n", "="^74)
     println("$country/$field/$oplabel: $(length(topo.gnb_locations)) gNBs, $nag agents " *
             "($(round((time()-t_start)/60, digits=1)) min elapsed)")
-    for (ri, r) in enumerate(R_SWEEP), (mi, (mid, mname, model)) in enumerate(models),
+    for r in R_SWEEP, (mid, mname, model) in models,
         ho in HO_SWEEP
         t0 = time()
+        model_index = findfirst(m -> m[1] == mid, MODELS)
+        case_seed = SEED + 1_000 * round(Int, r) + model_index
         res = run_case(topo, tle, r, mid, mname, model, ho, nag, DURATION, 2,
-                       SEED + 100ri + mi)
+                       case_seed)
         push!(rows, merge((; country, field, operator = oplabel, mnc,
                              gnbs = length(topo.gnb_locations)), res))
         println("  r=$(Int(r))km $(rpad(mid,11)) $(rpad(String(ho),3)) " *

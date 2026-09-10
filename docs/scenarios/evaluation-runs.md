@@ -16,7 +16,7 @@ One row of output is one **run**: a deployed topology, a mobility model, and a d
 
 ```mermaid
 flowchart LR
-    A["gNB field<br/>(country, source, operator)"] --> B["k-means<br/>edge UPFs"]
+    A["attachment-point field<br/>(country, source, operator)"] --> B["k-means<br/>edge UPFs"]
     B --> C["hierarchical k-means<br/>session anchors (PSAs)"]
     D["municipalities.csv<br/>regions.geojson"] --> E["population-weighted<br/>agent placement"]
     C --> F["discrete-event run<br/>1200 s, dt = 2 s"]
@@ -25,8 +25,9 @@ flowchart LR
     F --> H["one CSV row:<br/>σ, core writes, ρ, breaks"]
 ```
 
-Nothing in that chain is stored between runs. The topology is rebuilt from the gNB field
-on every invocation, so a result can never drift from its input.
+Nothing in that chain is stored between runs. The topology is rebuilt from the input
+field on every invocation. Fixed seeds and checked input digests make that rebuild
+repeatable.
 
 ### Scaffolding common to every run
 
@@ -72,9 +73,9 @@ used to show the σ ratio does not move when the event rate does.
 
 **Holds fixed:** the deployment rule, duration, adoption, scale.
 
-Six countries; nine gNB fields, three of which pair a crowdsourced OpenCellID field with
-the country's official registry (FCC ASR, ANFR BNIR, ISED); every major operator in each
-country selected by its real MNC.
+Six countries; nine infrastructure-record fields, three of which pair crowdsourced
+OpenCellID records with an official registry (FCC ASR, ANFR BNIR, ISED); operators in
+operator-tagged fields are selected by MNC.
 
 This is the run that answers "is the advantage an artifact of one dataset?". It spans a
 64× handover-rate range, a 45× edge-UPF range (18 → 817), two continents, and two
@@ -82,11 +83,11 @@ independent kinds of data source. If σ advantage were an artifact of density, o
 crowdsourcing bias, or of one country's geography, it would move here.
 
 !!! note "Why the paired registries matter"
-    OpenCellID rows are *cells*; registry rows are *sites*. The crowdsourced fields run
-    2–3× above the registries in station count for the same country and operator. The σ
-    advantage moves by less than a point across the pair. That is a stronger control than
-    varying density synthetically, because the two fields disagree about the same
-    physical network.
+    OpenCellID rows are crowdsourced attachment-point records, not verified physical
+    gNBs or sites. ANFR and ISED provide official operator-tagged station records. FCC
+    ASR instead lists registered antenna structures without operator tags and does not
+    cover every cellular site. These are alternate topology proxies, not lower and upper
+    bounds on one known physical network.
 
 ### `churn_data_usa` — is the churn claim really O(n)?
 
@@ -189,19 +190,17 @@ Emits per-agent traces for the deck.gl viewer. Not an input to any reported numb
 
 ## Reproducibility
 
-Only `ntn_sweep` is bit-reproducible. It calls `Random.seed!` before building each target
-and derives a deterministic per-case seed, so the same command twice gives byte-identical
-output.
+All publication runs now seed Julia's RNG before topology construction and again before
+each simulation case. `national_sweep` derives seeds from stable indices in the complete
+target and mobility lists, so running one shard gives the same case as the full sweep.
+The emitted CSV records both topology and simulation seeds. Reproduction also requires
+the Julia and package versions in `Manifest.toml`; this is sequential reproducibility,
+not an isolated per-thread RNG guarantee.
 
-`national_sweep`, `anchor_sweep`, `federation_continental` and `churn_data_usa` set no
-seed. k-means placement, population-weighted agent placement and mobility all draw from
-Julia's global RNG, which is seeded from system entropy per process, so each run gets a
-different topology and a different agent population.
-
-That is not fatal, but it has to be stated with a number attached. Five (country,
-operator) targets are run at the same anchor count, agent count and duration by both
-`national_sweep` and `anchor_sweep`, in independent processes — ten natural replicate
-pairs at full production scale:
+Before fixed seeds were added, five (country, operator) targets were run at the same
+anchor count, agent count and duration by both `national_sweep` and `anchor_sweep` in
+independent processes. Those ten natural replicate pairs at full production scale
+quantified stochastic variation:
 
 | Quantity | Max deviation | Mean deviation |
 |---|---|---|
@@ -241,7 +240,8 @@ resampled topology and a resampled user population rather than across a replayed
     shrink only 13.85% → 10.21% CV, a ratio of 0.74. That component is the k-means
     topology draw, not the sample — it does not shrink with longer runs or more agents.
     ρ is a sub-percent residual of those distances and inherits the floor amplified.
-    Only seeding the placement, or averaging over many topology draws, removes it.
+    Replaying the fixed topology seed removes run-to-run drift; averaging over several
+    explicitly recorded topology seeds is still required to estimate placement variance.
 
 !!! success "Why the bulk metrics are stable"
     σ advantage is a *ratio over the same event stream*: 5G and 6G-RUPA are charged for
@@ -251,15 +251,11 @@ resampled topology and a resampled user population rather than across a replayed
     plain sums over every event, so ordinary averaging applies. Nothing in either
     quantity depends on a rare tail.
 
-!!! warning "`ntn_sweep` seeds off list position, not range value"
-    The per-case seed is `SEED + 100·ri + mi`, where `ri` indexes the range inside
-    `R_SWEEP`. Passing one range gives `ri = 1`; passing `5,10,20,30` gives r = 10 the
-    index 2. The same physical configuration therefore gets a different seed depending on
-    how the sweep was partitioned — measured at 11.28% versus 9.33% satellite-served
-    share for Portugal at r_terr = 10 km. Published results were produced one
-    (target, range) shard at a time, so reruns must be sharded the same way to match.
-    Keying the seed off the range value instead would remove the coupling, at the cost of
-    invalidating the published numbers.
+!!! note "NTN seeds are shard-independent"
+    NTN case seeds use the terrestrial range value and the stable index in the complete
+    mobility-profile list. A range or profile run alone therefore replays the same case
+    as that row in the complete sweep. Xn and N2 semantics intentionally share a seed so
+    their comparison uses the same attachment and mobility draws.
 
 ## Reading the Runs Together
 

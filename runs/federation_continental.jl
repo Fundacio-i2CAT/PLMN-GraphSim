@@ -24,6 +24,7 @@ using DesJulia6gRupa.Types
 using ConcurrentSim
 import DesJulia6gRupa.Simulation as DSim
 import DesJulia6gRupa.DataLoading as DL
+using Random
 
 const FEDERATION = lowercase(get(ARGS, 1, "europe"))    # europe|north_america
 const SEMANTICS = Symbol(lowercase(get(ARGS, 2, "reestablish")))
@@ -34,6 +35,7 @@ const OUTPUT = get(ARGS, 6, joinpath(pkgdir(DesJulia6gRupa), "results",
                                      "federation-$(FEDERATION).csv"))
 const SCALE = 1000
 const ADOPTION = 0.82
+const BASE_SEED = 20260902
 
 # (label, data subdir, gNB csvs, operator net id, #edge UPFs, #PSAs)
 # Edge and PSA counts follow the same admin-unit rule used everywhere else, so a
@@ -115,7 +117,10 @@ function run_scenario(topology, name, model, K; n_agents, duration, dt)
 end
 
 println("Building member fields once (reused across K)...")
-fields = [build_member(m[2], m[3], m[4], m[5], m[6]) for m in MEMBERS]
+fields = map(enumerate(MEMBERS)) do (member_index, m)
+    Random.seed!(BASE_SEED + 100 * member_index)
+    build_member(m[2], m[3], m[4], m[5], m[6])
+end
 for (m, f) in zip(MEMBERS, fields)
     println("  $(rpad(m[1],14)) $(length(f.gnb_locations)) gNBs, " *
             "$(length(f.upf_locations)) edge, $(length(f.centralized_upf_locations)) PSA")
@@ -137,6 +142,8 @@ for K in 2:length(MEMBERS)
             "RUPA enrollments=$K (O(K))  semantics=:$SEMANTICS")
     println("="^70)
     for (mname, model) in RUN_MODELS
+        model_index = findfirst(m -> m[1] == mname, MODELS)
+        Random.seed!(BASE_SEED + 10_000 + 100 * K + model_index)
         push!(results, run_scenario(topo, mname, model, K;
                                     n_agents=nag, duration=DURATION, dt=2))
     end

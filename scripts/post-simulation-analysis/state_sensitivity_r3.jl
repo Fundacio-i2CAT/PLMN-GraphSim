@@ -20,7 +20,7 @@ Pkg.activate(joinpath(@__DIR__, "../.."))
 using DesJulia6gRupa
 using DesJulia6gRupa.Types
 import DesJulia6gRupa.Simulation as DSim
-using Printf, Logging
+using Printf, Logging, Random
 
 global_logger(ConsoleLogger(stderr, Logging.Warn))
 
@@ -52,6 +52,7 @@ function topo_for(sub, files, opid, nedge)
     paths = filter(isfile, [joinpath(base, f) for f in files])
     isempty(paths) && error("no gNB data under $base for $files")
     cfg = SimConfig(1, 2, 1000, 1.0, 1.0, 1.0, :single_tier, 0, 1.0)
+    Random.seed!(20260902 + 10_000 * opid + nedge)
     return DSim.load_and_deploy_network(paths, opid, nedge, base, cfg)
 end
 

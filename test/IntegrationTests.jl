@@ -4,8 +4,30 @@ using DesJulia6gRupa.Simulation
 using DesJulia6gRupa.DataLoading
 using DesJulia6gRupa.Types
 import ConcurrentSim
+using Random
 
 @testset "Integration Tests (End-to-End)" begin
+
+    @testset "Seeded topology deployment is reproducible" begin
+        mktempdir() do data_dir
+            csv_path = joinpath(data_dir, "cells.csv")
+            open(csv_path, "w") do io
+                for i in 1:12
+                    println(io, "LTE,214,7,1,$i,0,$(-4.0 + i / 10),$(36.0 + i / 10),100,1,1,0,0,-80")
+                end
+            end
+            config = SimConfig(1, 2, 1000, 1.0, 1.0, 1.0, :two_tier, 2, 1.0)
+            Random.seed!(42)
+            first = load_and_deploy_network([csv_path], 7, 3, data_dir, config)
+            Random.seed!(42)
+            second = load_and_deploy_network([csv_path], 7, 3, data_dir, config)
+
+            @test first.upf_locations == second.upf_locations
+            @test first.gnb_to_upf_map == second.gnb_to_upf_map
+            @test first.centralized_upf_locations == second.centralized_upf_locations
+            @test first.edge_upf_parent_map == second.edge_upf_parent_map
+        end
+    end
 
     # Define paths relative to this test file
     # Assuming test is run from project root or test/ folder

@@ -1,6 +1,9 @@
 # Simulation Configuration
 
 [simulation]
+# Replays topology placement, agent placement, sessions, and mobility.
+seed = 20260902
+
 # Scale Factor: 1 Agent represents X real users.
 # Higher values = fewer agents = faster simulation but less granular.
 # Lower values = more agents = slower simulation but more realistic distribution.

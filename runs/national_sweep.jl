@@ -20,7 +20,7 @@ using DesJulia6gRupa
 using DesJulia6gRupa.Types
 using ConcurrentSim
 import DesJulia6gRupa.Simulation as DSim
-using Printf
+using Printf, Random
 
 const ONLY = lowercase(get(ARGS, 1, "all"))
 const AGENT_OVERRIDE = parse(Int, get(ARGS, 2, "0"))
@@ -33,6 +33,7 @@ const OUTPUT = get(ARGS, 4, joinpath(pkgdir(DesJulia6gRupa), "results", "nationa
 const MODEL_ONLY = lowercase(get(ARGS, 5, "all"))
 const SCALE = 1000
 const ADOPTION = 0.82
+const BASE_SEED = 20260902
 
 # country, field, subdir, csvs, operator label, MNC, edge UPFs, PSAs, population
 const TARGETS = [
@@ -71,7 +72,7 @@ const MODELS = [
     ("highway",    120.0, () -> GaussMarkov(120.0, 0.85, 5.0)),
 ]
 
-const HEADER = "country,field,operator,mnc,gnbs,edge_upf,psa,agents,mobility_model,speed_kmh," *
+const HEADER = "country,field,operator,mnc,gnbs,edge_upf,psa,agents,topology_seed,simulation_seed,mobility_model,speed_kmh," *
                "handovers,ho_per_user_hr,l1_xn_pct,l2_n2_pct,psa_region_crossings," *
                "sigma_5g_bytes,sigma_6grupa_bytes,sigma_advantage_pct," *
                "core_writes_5g,core_writes_6grupa,anchor_dist_5g_km,anchor_dist_opt_km,stretch_excess_km"
@@ -120,16 +121,23 @@ isfile(OUTPUT) || open(io -> println(io, HEADER), OUTPUT, "w")
 println("national_sweep: $(length(selected)) targets x $(length(models)) profiles -> $OUTPUT")
 t_start = time()
 
-for (i, (country, field, sub, csvs, oplabel, mnc, nedge, npsa, pop)) in enumerate(selected)
+for (i, target) in enumerate(selected)
+    country, field, sub, csvs, oplabel, mnc, nedge, npsa, pop = target
+    target_index = findfirst(==(target), TARGETS)
+    topology_seed = BASE_SEED + 100 * target_index
     tag = "$country/$field/$oplabel"
     println("\n", "="^72)
     println("[$i/$(length(selected))] $tag  ($(round((time()-t_start)/60, digits=1)) min elapsed)")
+    Random.seed!(topology_seed)
     topo = build(sub, csvs, mnc, nedge, npsa)
     ngnb = length(topo.gnb_locations)
     nag = AGENT_OVERRIDE > 0 ? AGENT_OVERRIDE : ceil(Int, pop * ADOPTION / SCALE)
     println("  gNBs=$ngnb edge=$nedge psa=$npsa agents=$nag duration=$(DURATION)s")
 
     for (mname, speed, mk) in models
+        model_index = findfirst(m -> m[1] == mname, MODELS)
+        simulation_seed = topology_seed + model_index
+        Random.seed!(simulation_seed)
         t0 = time()
         s = run_one(topo, npsa, mk(), nag, DURATION, 2)
         ho = s.handover_count
@@ -142,8 +150,9 @@ for (i, (country, field, sub, csvs, oplabel, mnc, nedge, npsa, pop)) in enumerat
         d5 = ns > 0 ? s.anchor_dist_5g_sum / ns : 0.0
         dop = ns > 0 ? s.anchor_dist_opt_sum / ns : 0.0
         open(OUTPUT, "a") do io
-            @printf(io, "%s,%s,%s,%d,%d,%d,%d,%d,%s,%.0f,%d,%.3f,%.2f,%.2f,%d,%d,%d,%.2f,%d,%d,%.2f,%.2f,%.2f\n",
-                    country, field, oplabel, mnc, ngnb, nedge, npsa, nag, mname, speed,
+            @printf(io, "%s,%s,%s,%d,%d,%d,%d,%d,%d,%d,%s,%.0f,%d,%.3f,%.2f,%.2f,%d,%d,%d,%.2f,%d,%d,%.2f,%.2f,%.2f\n",
+                    country, field, oplabel, mnc, ngnb, nedge, npsa, nag,
+                    topology_seed, simulation_seed, mname, speed,
                     ho, rate, pct(s.ho_l1), pct(s.ho_l2), s.ho_l3,
                     t5, t6, adv, s.core_writes_5g, s.core_writes_rupa, d5, dop, d5 - dop)
         end

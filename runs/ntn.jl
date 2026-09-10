@@ -159,10 +159,10 @@ const MODELS = [
 ]
 
 results = Any[]
-for (ri, r_terr) in enumerate(R_SWEEP), (mi, (model_id, mname, model)) in enumerate(MODELS),
+for r_terr in R_SWEEP, (mi, (model_id, mname, model)) in enumerate(MODELS),
     ho_semantics in HO_SWEEP
     model_id in MODEL_SWEEP || continue
-    case_seed = SEED + 100 * ri + mi
+    case_seed = SEED + 1_000 * round(Int, r_terr) + mi
     push!(results, run_scenario(topology, tle_path, r_terr, model_id, mname, model, ho_semantics;
                                 n_agents = NAG, duration = DURATION, dt = 2,
                                 seed = case_seed))

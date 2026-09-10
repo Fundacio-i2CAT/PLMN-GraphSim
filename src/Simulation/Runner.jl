@@ -12,8 +12,9 @@ function get_valid_data_paths(data_dir::String, mccs::Vector{Int})
     return valid_paths
 end
 
-function run_operator_simulation(operator_name::String, operator_id::Int, num_upfs::Int, scenario_name::String, config::SimConfig, data_dir::String, mccs::Vector{Int}, effective_population::Float64)
+function run_operator_simulation(operator_name::String, operator_id::Int, num_upfs::Int, scenario_name::String, config::SimConfig, data_dir::String, mccs::Vector{Int}, effective_population::Float64; seed::Union{Nothing,Integer}=nothing)
     @info "Running Simulation: $operator_name - ($scenario_name)..."
+    seed === nothing || Random.seed!(seed)
     number_of_agents = ceil(Int, effective_population / config.scale_factor)
     valid_paths = get_valid_data_paths(data_dir, mccs)
     topology = load_and_deploy_network(valid_paths, operator_id, num_upfs, data_dir, config)

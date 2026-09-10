@@ -35,7 +35,7 @@ using DesJulia6gRupa
 using DesJulia6gRupa.Types
 using ConcurrentSim
 import DesJulia6gRupa.Simulation as DSim
-using Printf
+using Printf, Random
 
 const ONLY = lowercase(get(ARGS, 1, "all"))
 const PSA_LIST = [parse(Int, x) for x in split(get(ARGS, 2, "2,5,10,20,40"), ",")]
@@ -44,6 +44,7 @@ const DURATION = parse(Int, get(ARGS, 4, "1200"))
 const OUTPUT = get(ARGS, 5, joinpath(pkgdir(DesJulia6gRupa), "results", "anchor-sweep.csv"))
 const SCALE = 1000
 const ADOPTION = 0.82
+const BASE_SEED = 20260902
 
 # country, subdir, csvs, operator, mnc, edge UPFs, population
 const TARGETS = [
@@ -60,7 +61,7 @@ const MODELS = [
     ("highway",    () -> GaussMarkov(120.0, 0.85, 5.0)),
 ]
 
-const HEADER = "country,operator,gnbs,edge_upf,psa,agents,mobility_model,handovers," *
+const HEADER = "country,operator,gnbs,edge_upf,psa,agents,topology_seed,simulation_seed,mobility_model,handovers," *
                "l2_n2_pct,psa_region_crossings,sigma_5g_bytes,sigma_6grupa_bytes," *
                "sigma_advantage_pct,core_writes_5g,core_writes_6grupa," *
                "anchor_dist_5g_km,anchor_dist_opt_km,stretch_excess_km"
@@ -97,14 +98,21 @@ println("anchor_sweep: $(length(selected)) countries x $(length(PSA_LIST)) ancho
         "x $(length(MODELS)) profiles -> $OUTPUT")
 t0 = time()
 
-for (country, sub, csvs, oplabel, mnc, nedge, pop) in selected
+for target in selected
+    country, sub, csvs, oplabel, mnc, nedge, pop = target
+    target_index = findfirst(==(target), TARGETS)
     nag = AGENT_OVERRIDE > 0 ? AGENT_OVERRIDE : ceil(Int, pop * ADOPTION / SCALE)
     for npsa in PSA_LIST
         # The anchor set is re-clustered for each count, so this is a genuine
         # redeployment rather than a relabelling of the same anchors.
+        topology_seed = BASE_SEED + 10_000 * target_index + 10 * npsa
+        Random.seed!(topology_seed)
         topo = build(sub, csvs, mnc, nedge, npsa)
         ngnb = length(topo.gnb_locations)
         for (mname, mk) in MODELS
+            model_index = findfirst(m -> m[1] == mname, MODELS)
+            simulation_seed = topology_seed + model_index
+            Random.seed!(simulation_seed)
             t = time()
             s = run_one(topo, npsa, mk(), nag, DURATION, 2)
             ho = s.handover_count
@@ -116,8 +124,9 @@ for (country, sub, csvs, oplabel, mnc, nedge, pop) in selected
             d5 = ns > 0 ? s.anchor_dist_5g_sum / ns : 0.0
             dop = ns > 0 ? s.anchor_dist_opt_sum / ns : 0.0
             open(OUTPUT, "a") do io
-                @printf(io, "%s,%s,%d,%d,%d,%d,%s,%d,%.2f,%d,%d,%d,%.3f,%d,%d,%.3f,%.3f,%.3f\n",
-                        country, oplabel, ngnb, nedge, npsa, nag, mname, ho,
+                @printf(io, "%s,%s,%d,%d,%d,%d,%d,%d,%s,%d,%.2f,%d,%d,%d,%.3f,%d,%d,%.3f,%.3f,%.3f\n",
+                        country, oplabel, ngnb, nedge, npsa, nag,
+                        topology_seed, simulation_seed, mname, ho,
                         pct(s.ho_l2), s.ho_l3, t5, t6, adv,
                         s.core_writes_5g, s.core_writes_rupa, d5, dop, d5 - dop)
             end

@@ -36,6 +36,7 @@ println(rpad("UPFs",6), rpad("HO(mean)",10), rpad("N2%(mean)",10),
 results = []
 for nupf in UPF_COUNTS
     cfg0 = SimConfig(1, 2, 1000, 1, 1, 1, :single_tier, 0, 1)
+    Random.seed!(20260902 + nupf)
     topo = DSim.load_and_deploy_network(paths, opid, nupf, base, cfg0)
     advs = Float64[]; hos = Int[]; n2fracs = Float64[]; t5s = Int[]; t6s = Int[]
     for sd in SEEDS

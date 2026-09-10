@@ -12,6 +12,12 @@ using CSV
 using Plots
 using Statistics
 
+const ANALYZE_ONLY = "--analyze-only" in ARGS
+# Replot the combined figure from the cached per-operator CSVs, skipping the sweeps.
+const COMBINED_ONLY = "--combined-only" in ARGS
+const IMAGES_DIR = get(ENV, "PLMN_GRAPHICS_DIR",
+                       joinpath(@__DIR__, "../../../images/two_tier_scenario"))
+
 function run_country_study(country_key, operator_key, operator_id, operator_name, num_edge_upfs, centralized_upf_counts, scale_factor_override)
     println("\n===================================================")
     println("Starting Study for $country_key ($operator_name)")
@@ -39,11 +45,12 @@ function run_country_study(country_key, operator_key, operator_id, operator_name
     # Setup Logger
     setup_logger("info")
 
-    results = DataFrame(Num_Centralized_UPFs = Int[], Avg_Memory_5G_MB = Float64[], Avg_Memory_6G_MB = Float64[])
+    results = DataFrame(Num_Centralized_UPFs = Int[], Avg_Memory_5G_MB = Float64[], Avg_Memory_6G_MB = Float64[], Max_Memory_5G_MB = Float64[], Max_Memory_6G_MB = Float64[])
     
     for num_centralized in centralized_upf_counts
         println("\n---------------------------------------------------")
-        println("Running simulation with $num_centralized Centralized UPFs...")
+        action = ANALYZE_ONLY ? "Analyzing results for" : "Running simulation with"
+        println("$action $num_centralized Centralized UPFs...")
         println("---------------------------------------------------")
         
         # Create Config with specific num_centralized_upfs
@@ -61,12 +68,14 @@ function run_country_study(country_key, operator_key, operator_id, operator_name
         
         scenario_name = "$(scenario_base_name)_$(num_centralized)"
         
-        # Run Simulation
-        try
-            run_operator_simulation(operator_name, operator_id, num_edge_upfs, scenario_name, sim_config, data_dir, mccs, effective_population)
-        catch e
-            @error "Simulation failed for $num_centralized UPFs" exception=(e, catch_backtrace())
-            continue
+        if !ANALYZE_ONLY
+            try
+                seed = 20260902 + 100 * operator_id + num_centralized
+                run_operator_simulation(operator_name, operator_id, num_edge_upfs, scenario_name, sim_config, data_dir, mccs, effective_population; seed)
+            catch e
+                @error "Simulation failed for $num_centralized UPFs" exception=(e, catch_backtrace())
+                continue
+            end
         end
         
         # Analyze Results
@@ -81,23 +90,26 @@ function run_country_study(country_key, operator_key, operator_id, operator_name
 
         df = CSV.read(results_file, DataFrame)
         
-        # Filter for Tier 2 (Centralized) UPFs
-        df_centralized = filter(row -> row.Tier == 2, df)
+        # Compare the completed deployment, not the temporal mean of its ramp-up.
+        final_time = maximum(df.Time)
+        df_centralized = filter(row -> row.Tier == 2 && row.Time == final_time, df)
         
         if nrow(df_centralized) == 0
             @warn "No centralized UPF data found in results for $num_centralized UPFs"
-            push!(results, (num_centralized, NaN, NaN))
+            push!(results, (num_centralized, NaN, NaN, NaN, NaN))
             continue
         end
         
         # Calculate Average Memory
         avg_mem_5g = mean(df_centralized.Memory_5G_MB)
         avg_mem_6g = mean(df_centralized.Memory_6G_MB)
+        max_mem_5g = maximum(df_centralized.Memory_5G_MB)
+        max_mem_6g = maximum(df_centralized.Memory_6G_MB)
         
         println("  -> Avg Memory 5G: $(avg_mem_5g) MB")
         println("  -> Avg Memory 6G: $(avg_mem_6g) MB")
         
-        push!(results, (num_centralized, avg_mem_5g, avg_mem_6g))
+        push!(results, (num_centralized, avg_mem_5g, avg_mem_6g, max_mem_5g, max_mem_6g))
     end
     
     println("\n---------------------------------------------------")
@@ -105,7 +117,7 @@ function run_country_study(country_key, operator_key, operator_id, operator_name
     println("---------------------------------------------------")
     
     # Ensure images directory exists
-    images_dir = joinpath(@__DIR__, "../../../images/two_tier_scenario")
+    images_dir = IMAGES_DIR
     if !isdir(images_dir)
         mkpath(images_dir)
     end
@@ -117,7 +129,7 @@ function run_country_study(country_key, operator_key, operator_id, operator_name
         label=["5G" "6G-RUPA"],
         color=["#E69F00" "#56B4E9"], # Orange for 5G, Sky Blue for 6G-RUPA
         xlabel="Number of Centralized UPFs",
-        ylabel="Average Memory per UPF (MB)",
+        ylabel="Final memory per UPF (MiB)",
         # title="Impact of Centralized UPF Count on Memory ($country_key)",
         marker=:circle,
         lw=2,
@@ -202,6 +214,7 @@ function run_all_studies()
     ]
 
     for study in studies
+        COMBINED_ONLY && break
         run_country_study(
             study.country, 
             study.op_key, 
@@ -224,23 +237,27 @@ function generate_combined_plot(studies)
     
     p = plot(
         xlabel="Number of Centralized UPFs",
-        ylabel="Average Memory per UPF (MB)",
+        ylabel="Final memory per UPF (MiB)",
         yscale=:log10,
-        legend=:outertopright,
+        legend=:right,
+        legendfontsize=10,
         framestyle=:box,
         dpi=300,
-        size=(1100, 650),
-        left_margin=12Plots.mm,
-        right_margin=6Plots.mm,
-        bottom_margin=6Plots.mm,
-        guidefont=font(11),
-        tickfont=font(9)
+        # Sized for a single IEEE Access column: the canvas is kept small so the
+        # fonts stay legible after the ~3x downscale to \columnwidth.
+        size=(660, 520),
+        left_margin=4Plots.mm,
+        right_margin=4Plots.mm,
+        bottom_margin=4Plots.mm,
+        guidefont=font(13),
+        tickfont=font(11)
     )
 
     colors = [:blue, :red, :green, :orange, :purple, :cyan]
     markers = [:circle, :square, :diamond, :utriangle, :dtriangle, :star5]
 
     for (i, study) in enumerate(studies)
+        study.op_key in ("movistar", "verizon") || continue
         csv_path = joinpath(@__DIR__, "../../../results/memory_vs_centralized_upfs_$(study.country)_$(study.op_key).csv")
         if !isfile(csv_path)
             println("  Warning: Results file not found for $(study.op_name) ($csv_path)")
@@ -268,7 +285,7 @@ function generate_combined_plot(studies)
         )
     end
     
-    images_dir = joinpath(@__DIR__, "../../../images/two_tier_scenario")
+    images_dir = IMAGES_DIR
     plot_path_pdf = joinpath(images_dir, "memory_vs_centralized_upfs_combined.pdf")
     savefig(p, plot_path_pdf)
     println("Combined Plot saved to: $plot_path_pdf")
