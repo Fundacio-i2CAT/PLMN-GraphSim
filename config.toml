@@ -28,7 +28,7 @@ sampling_interval = 1.0
 log_level = "info"
 
 # Number of PDU Sessions per User (e.g., Internet + IMS/VoNR)
-# This changes depending on the use case. Since we only are measuring eMBB for now, we only have two.
+# This changes depending on the use case. For eMBB each user gets one or two, drawn uniformly.
 min_sessions_per_user = 1
 max_sessions_per_user = 2
 

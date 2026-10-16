@@ -1,9 +1,64 @@
 # The Signaling Cost Model
 
-The simulator does not measure signaling. It counts mobility events and charges each
-one a constant taken from the relevant 3GPP procedure or 6G-RUPA operation. This page
-gives every constant, its decomposition, and the clause it comes from, so that a
-reader can recompute or contest any of them without rerunning anything.
+The simulator does not measure signaling. It counts mobility events, and the cost of
+each event is computed analytically from the relevant 3GPP procedure or 6G-RUPA
+operation. This page has two parts:
+
+*   **Message counts** (current model, used in the ICC 2027 paper): how many control
+    messages a move produces and *where they are processed*. This is the model to use
+    for comparisons.
+*   **Byte constants** (earlier model, kept because the simulator still computes the
+    `sigma_*` fields): per-event byte estimates. Wire size depends on encodings that
+    neither architecture fixes, so these numbers support no byte-saving claim.
+
+## Message Counts (Current Model)
+
+Counts are logical transmissions $T$ and receptions $R$ at core functions (AMF, SMF
+and UPFs) for one UE with one PDU session, for successful post-Xn path switching.
+Radio and Xn preparation, transport acknowledgements, retries and optional
+policy/charging exchanges are excluded (TS 23.502 Sec. 4.9.1.2).
+
+| Depth | 5G procedure | What changes in 5G | $T$ | $R$ |
+|---|---|---|---:|---:|
+| $d=1$ | Xn, no UPF change (TS 23.502 Sec. 4.9.1.2.2) | downlink tunnel repointed to the new gNB | 6 | 5 |
+| $d=2$ | Xn, I-UPF replacement (TS 23.502 Sec. 4.9.1.2.4) | new I-UPF set up, PSA repointed, old I-UPF released | 10 | 9 |
+| $d=3$ | anchor change, SSC mode 2 or 3 | new PSA and new IP address | SSC-dependent | |
+| $d=4$ | move to another operator | registration and new session, or inter-PLMN handover | context-dependent | |
+
+At $d=2$, allocating new PSA tunnel information adds two messages and two receptions.
+Depth alone does not fix a 5G procedure: an N2 handover without a UPF change has the
+same depth as an Xn one.
+
+For a run with $H$ moves, a share $\beta$ of them at $d=2$, core functions receive
+
+$$R_{5G} = H\,(5 + 4\beta)$$
+
+messages with one PDU session per UE. With $q$ sessions per UE the per-session SBI and
+N4 exchanges repeat, giving $R_{5G} = H\,[1 + 4q + 4q\beta]$, so the one-session form is
+the lowest 5G count.
+
+A 6G-RUPA renumbering costs
+
+$$T_{\mathrm{R}} = E + A + 2F$$
+
+messages: $E$ to acquire and authenticate the new attachment, $A$ for address
+assignment and local routing and directory updates, and $F$ for the active flows in
+the renumbered layer, each notified and confirmed. $E$ and $A$ depend on local policy,
+which the reference model leaves open, so they stay symbolic. $E$ and $A$ are handled
+at the new attachment; only the $2F$ flow updates travel to remote peers, and transit
+routers forward them without processing them. No term depends on depth.
+
+$F$ counts flows in the renumbered layer, not applications or TCP connections: many
+IP connections can share one flow, and with a single egress every flow ends at the
+same peer. The count still grows with $F$, so a device holding many flows in the
+renumbered layer costs more messages per move than one holding few.
+
+The rest of this page documents the earlier byte model.
+
+## Byte Constants (Earlier Model)
+
+This part gives every byte constant, its decomposition, and the clause it comes from,
+so that a reader can recompute or contest any of them without rerunning anything.
 
 That split is deliberate and is what makes the results checkable: simulation supplies
 the **event mix**, analysis supplies the **per-event cost**, and the two never touch.
@@ -148,6 +203,10 @@ A device holding many concurrent flows inverts the signaling comparison, though 
 $\Delta S_{\mathrm{core}}$ nor $\rho$ depends on $F$.
 
 ## From Per-Event Cost to Aggregate Advantage
+
+*Earlier byte model.* The advantage band below is a ratio of byte estimates; it is kept
+for reproducibility of earlier results and is not a byte-saving claim (see the top of
+this page).
 
 Under SSC mode 1 only the first two depths occur, so a deployment's whole event mix
 reduces to one number: $\beta$, the share of events that reach the serving edge UPF.
