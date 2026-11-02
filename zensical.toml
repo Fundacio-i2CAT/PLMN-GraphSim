@@ -18,7 +18,7 @@ site_name = "PLMN-GraphSim"
 
 # The site_description is included in the HTML head for use by search engines.
 # Read more: https://zensical.org/docs/setup/basics/#site_description
-site_description = "Julia-based Discrete Event Simulator for evaluating scalability of 5G Networks and beyond"
+site_description = "Realistic national mobile networks built from open data, and a Julia discrete-event simulator for millions of moving users on top of them"
 
 # The canonical URL for the site. Required for instant navigation and sitemap.
 # Read more: https://zensical.org/docs/setup/basics/#site_url
