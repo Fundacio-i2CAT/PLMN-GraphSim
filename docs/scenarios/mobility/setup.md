@@ -60,7 +60,7 @@ under-counts events at high speed. The sweeps use 1.0 s.
 |---|---|---|
 | `NoMobility` | `NoMobility()` | the stationary baseline of the other scenarios |
 | `RandomWaypoint` | `RandomWaypoint(speed_kmh, pause_time, max_jump_km)` | pedestrian and urban profiles |
-| `GaussMarkov` | `GaussMarkov(speed_kmh, alpha, sigma)` | the highway profile, where heading is correlated between ticks |
+| `GaussMarkov` | `GaussMarkov(speed_kmh, alpha, max_acceleration)` | the highway profile, where heading is correlated between ticks |
 
 Random waypoint picks a destination and walks toward it, which is adequate while the
 displacement per tick stays small relative to the cell size. Gauss-Markov keeps a
