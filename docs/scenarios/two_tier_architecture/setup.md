@@ -65,7 +65,12 @@ The network graph will show two layers of UPF nodes: **Edge UPFs** (Black Square
 === "USA (Verizon)"
 
     **Topology Map**
-    ![Topology Map USA](../../images/two_tier_scenario/topology_map_cities_verizon_usa%20distributed.png)
+    <figure markdown>
+      ![Inferred topology of Verizon, US, as simulated](../../images/two_tier_scenario/inferred_topology_verizon_usa.png)
+      <figcaption>Verizon, US, as simulated: 113 210 base stations, 817 I-UPFs and 5 anchors,
+      with N9 links from each I-UPF to its anchor. A handover within one I-UPF's region is
+      d=1; one between regions is d=2.</figcaption>
+    </figure>
 
     **Network Graph**
     ![Network Graph USA](../../images/two_tier_scenario/graph_viz_verizon_usa%20distributed.png)
