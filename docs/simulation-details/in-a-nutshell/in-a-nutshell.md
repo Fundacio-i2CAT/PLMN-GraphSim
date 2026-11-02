@@ -47,7 +47,7 @@ With that information, we can distribute the agents proportionally to the popula
 ??? note "Data Preparation is a bit tricky..."
     This is a but tricky because every country provides this data in a different format and differnt source.
     
-    For example, in Spain we use data from the INE (Instituto Nacional de Estadística), while in the USA we use data from the Census Bureau. More details about how to prepare the data for each country can be found in the [Agents documentation](agents/getting-data-ready.md).
+    For example, in Spain we use data from the INE (Instituto Nacional de Estadística), while in the USA we use data from the Census Bureau. More details about how to prepare the data for each country can be found in the [Agents documentation](../../agents/getting-data-ready.md).
 
 ??? warning "Sorry..."
     Sorry Alaskans, Hawaiians and people from the Canary Islands, the study of this gets easier if we don't have to deal a lot with un-connected regions, they are removed from the map :)
@@ -92,7 +92,7 @@ graph LR
     gNB -- N3 interface --> UPF[UPF]
 ```
 
-We have the **UEs (agents)** and the **gNBs**, but we still need to add the **UPFs**. So what we do here is to let the simulator place the UPFs in the optimal way taking in account the gNB locations. So we are **optimizing the placement of UPFs to have the minimum squared euclidean distance to the gNBs**. More details on that can be found in the [K-means](simulation-details/k-means.md) section.
+We have the **UEs (agents)** and the **gNBs**, but we still need to add the **UPFs**. So what we do here is to let the simulator place the UPFs in the optimal way taking in account the gNB locations. So we are **optimizing the placement of UPFs to have the minimum squared euclidean distance to the gNBs**. More details on that can be found in the [K-means](../k-means.md) section.
 
 !!! note 
     Note that for simplicity **we are not taking in account the orography, road distances, or other real-world** factors that operators would consider when deploying UPFs. However, this approach gives us a reasonable approximation of how UPFs could be distributed in a real network.
@@ -166,4 +166,4 @@ This is not realistic for large operators that would have a more hierarchical st
 
 * For more information on how the simulation works internally refer to the [Simulation Details](simulation-details/overview.md) documentation.
 
-* For more information on how to extend the simulator for other countries, refer to the [Agents](agents/getting-data-ready.md) documentation. -->
+* For more information on how to extend the simulator for other countries, refer to the [Agents](../../agents/getting-data-ready.md) documentation. -->

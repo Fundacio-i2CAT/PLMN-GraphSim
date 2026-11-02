@@ -18,11 +18,11 @@ site_name = "PLMN-GraphSim"
 
 # The site_description is included in the HTML head for use by search engines.
 # Read more: https://zensical.org/docs/setup/basics/#site_description
-site_description = "Julia-based Discrete Event Simulator for evaluating scalability of 5G Networks and beyond"
+site_description = "Realistic national mobile networks built from open data, and a Julia discrete-event simulator for millions of moving users on top of them"
 
 # The canonical URL for the site. Required for instant navigation and sitemap.
 # Read more: https://zensical.org/docs/setup/basics/#site_url
-site_url = "https://fundacio-i2cat.github.io/PLMN-GraphSim/"
+site_url = "https://docs.plmngraphsim.org/"
 
 # Repository information rendered next to the search bar.
 # Read more: https://zensical.org/docs/setup/repository/
@@ -87,6 +87,9 @@ nav = [
   ]}
 ]
 
+# Additional CSS: the palette taken from the logo (blue gNBs, orange I-UPFs).
+extra_css = ["stylesheets/extra.css"]
+
 # Additional JavaScript. Mermaid.js is initialized natively by Zensical when a
 # `mermaid` code block is present, so only the MathJax runtime is needed here.
 # Read more: https://zensical.org/docs/setup/extensions/python-markdown-extensions/#arithmatex
@@ -106,6 +109,11 @@ extra_javascript = [
 variant = "modern"
 
 language = "en"
+
+# Logo in the header and favicon: one anchor UPF with its N9 fan to I-UPFs and gNBs.
+# Read more: https://zensical.org/docs/setup/logo-and-icons/
+logo = "images/logo.svg"
+favicon = "images/logo.svg"
 
 # Feature toggles. This is the default modern feature set from `zensical new`,
 # which keeps the project's prior behavior (tabs/sections/indexes, code copy
@@ -134,7 +142,7 @@ features = [
 ]
 
 # ----------------------------------------------------------------------------
-# Color palette. Preserves the project's teal/teal palette with an automatic
+# Color palette. Uses the logo's blue/orange (see docs/stylesheets/extra.css) with an automatic
 # light/dark mode that defers to the OS preference, plus manual toggles.
 # Read more: https://zensical.org/docs/setup/colors/#automatic-light-dark-mode
 # ----------------------------------------------------------------------------
@@ -142,8 +150,8 @@ features = [
 # Palette toggle for automatic mode (follows OS preference).
 [[project.theme.palette]]
 media = "(prefers-color-scheme)"
-primary = "teal"
-accent = "teal"
+primary = "custom"
+accent = "custom"
 toggle.icon = "lucide/sun-moon"
 toggle.name = "Switch to light mode"
 
@@ -151,8 +159,8 @@ toggle.name = "Switch to light mode"
 [[project.theme.palette]]
 media = "(prefers-color-scheme: light)"
 scheme = "default"
-primary = "teal"
-accent = "teal"
+primary = "custom"
+accent = "custom"
 toggle.icon = "lucide/sun"
 toggle.name = "Switch to dark mode"
 
@@ -160,7 +168,7 @@ toggle.name = "Switch to dark mode"
 [[project.theme.palette]]
 media = "(prefers-color-scheme: dark)"
 scheme = "slate"
-primary = "teal"
-accent = "teal"
+primary = "custom"
+accent = "custom"
 toggle.icon = "lucide/moon"
 toggle.name = "Switch to system preference"

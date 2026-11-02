@@ -82,6 +82,13 @@ This is the run that answers "is the advantage an artifact of one dataset?". It 
 independent kinds of data source. If σ advantage were an artifact of density, of
 crowdsourcing bias, or of one country's geography, it would move here.
 
+<figure markdown>
+  ![5G forwarding-rule writes per second by country](../images/comparisons/writes_by_country.svg){ width="100%" }
+  <figcaption>5G forwarding-rule writes per second in the realistic set, one pair per
+  topology (mean of three seeds): filled, the whole topology; hollow, its busiest I-UPF.
+  6G-RUPA writes none, by design.</figcaption>
+</figure>
+
 !!! note "Why the paired registries matter"
     OpenCellID rows are crowdsourced attachment-point records, not verified physical
     gNBs or sites. ANFR and ISED provide official operator-tagged station records. FCC

@@ -1,0 +1,11 @@
+/* Colours taken from the logo: base stations in blue, I-UPFs in orange. */
+:root {
+  --md-primary-fg-color:        #3C7DDB;
+  --md-primary-fg-color--light: #6A9CE4;
+  --md-primary-fg-color--dark:  #2A62B3;
+  --md-accent-fg-color:         #E8692F;
+}
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color:        #6A9CE4;
+  --md-typeset-a-color:         #6A9CE4;
+}

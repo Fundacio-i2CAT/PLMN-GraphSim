@@ -52,10 +52,8 @@ figure, what it holds fixed, and what it is evidence for — start with
 
     ---
 
-    Scenarios involving user movement and handovers.
-
-    !!! warning ":construction_worker: Work in Progress :construction_worker:"
-        This scenario is still under development. Stay tuned for updates!
+    Users move under pedestrian, urban and highway profiles; every serving-gNB change is a
+    handover, charged in signalling and forwarding state for 5G and 6G-RUPA.
 
     [:octicons-arrow-right-24: View Setup](mobility/setup.md)
     [:octicons-graph-24: View Analysis](mobility/analysis.md)
